@@ -1,45 +1,32 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-import 'token_storage.dart';
-
 class AuthApi {
-  static const String baseUrl = 'http://192.168.11.215:8000';
+  static const String _baseUrl = 'http://192.168.11.215:8000'; // <- Cambia a tu backend real
 
-  static Future<void> login({
+  /// Login devuelve un Map con 'access' y 'refresh'
+  static Future<Map<String, dynamic>> login({
     required String username,
     required String password,
   }) async {
-    final url = Uri.parse('$baseUrl/api/auth/login/');
-
+    final url = Uri.parse('$_baseUrl/login'); // Endpoint de login
     final response = await http.post(
       url,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        'username': username,
-        'password': password,
-      }),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'username': username, 'password': password}),
     );
 
-    print('STATUS CODE: ${response.statusCode}');
-    print('RESPONSE BODY: ${response.body}');
-
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
+      final body = jsonDecode(response.body);
 
-      final accessToken = data['access'];
-      final refreshToken = data['refresh'];
-
-      await TokenStorage.saveTokens(
-        access: accessToken,
-        refresh: refreshToken,
-      );
-
-      print('TOKENS GUARDADOS CORRECTAMENTE');
+      // Validar que venga access y refresh
+      if (body['access'] != null && body['refresh'] != null) {
+        return body;
+      } else {
+        throw Exception('Tokens no encontrados en la respuesta');
+      }
     } else {
-      throw Exception('Error en login');
+      throw Exception('Login fallido: ${response.statusCode}');
     }
   }
 }
