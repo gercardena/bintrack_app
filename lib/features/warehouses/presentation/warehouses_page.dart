@@ -1,26 +1,19 @@
 import 'package:flutter/material.dart';
 import '../../auth/presentation/protected_page.dart';
-import '../../auth/presentation/logout.dart';
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+class WarehousesPage extends StatelessWidget {
+  const WarehousesPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return ProtectedPage(
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('BinTrack'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.logout),
-              onPressed: () => logout(context),
-            ),
-          ],
+          title: const Text('Warehouses'),
         ),
         body: const Center(
           child: Text(
-            'HOME – Usuario autenticado',
+            'WAREHOUSES – Usuario autenticado',
             style: TextStyle(fontSize: 18),
           ),
         ),
@@ -28,4 +21,3 @@ class HomePage extends StatelessWidget {
     );
   }
 }
-

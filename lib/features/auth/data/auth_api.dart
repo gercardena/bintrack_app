@@ -2,31 +2,28 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class AuthApi {
-  static const String _baseUrl = 'http://192.168.11.215:8000'; // <- Cambia a tu backend real
+  static const String _baseUrl = 'http://192.168.11.215:8000';
 
-  /// Login devuelve un Map con 'access' y 'refresh'
   static Future<Map<String, dynamic>> login({
     required String username,
     required String password,
   }) async {
-    final url = Uri.parse('$_baseUrl/login'); // Endpoint de login
     final response = await http.post(
-      url,
+      Uri.parse('$_baseUrl/api/auth/login/'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'username': username, 'password': password}),
+      body: jsonEncode({
+        'username': username,
+        'password': password,
+      }),
     );
 
     if (response.statusCode == 200) {
-      final body = jsonDecode(response.body);
-
-      // Validar que venga access y refresh
-      if (body['access'] != null && body['refresh'] != null) {
-        return body;
-      } else {
-        throw Exception('Tokens no encontrados en la respuesta');
-      }
+      return jsonDecode(response.body);
     } else {
-      throw Exception('Login fallido: ${response.statusCode}');
+      throw Exception(
+        'Login failed (${response.statusCode}) ${response.body}',
+      );
     }
   }
 }
+
