@@ -14,7 +14,7 @@ class HomePage extends StatelessWidget {
           actions: [
             IconButton(
               icon: const Icon(Icons.logout),
-              onPressed: () => logout(context),
+              onPressed: () => Logout.execute(context),
             ),
           ],
         ),
@@ -28,4 +28,3 @@ class HomePage extends StatelessWidget {
     );
   }
 }
-
