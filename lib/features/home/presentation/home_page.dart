@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../../auth/presentation/protected_page.dart';
 import '../../auth/presentation/logout.dart';
 import '../../../core/auth/auth_controller.dart';
-import '../../user/data/user_api.dart'; // 👈 IMPORT NUEVO
+import '../../../core/auth/user_controller.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -23,6 +23,10 @@ class _HomePageState extends State<HomePage> {
 
     // 👂 Escuchar logout global
     _logoutSub = AuthController().onLogout.listen((_) {
+
+      // 🔥 limpiar usuario global
+      UserController().clear();
+
       if (!mounted) return;
 
       Navigator.pushNamedAndRemoveUntil(
@@ -31,21 +35,6 @@ class _HomePageState extends State<HomePage> {
         (route) => false,
       );
     });
-
-    // 🚀 Primera request protegida
-    _loadProfile();
-  }
-
-  /// 🔥 Request protegida real
-  Future<void> _loadProfile() async {
-    try {
-      final profile = await UserApi.getProfile();
-
-      print('PROFILE OK: $profile');
-
-    } catch (e) {
-      print('ERROR PROFILE: $e');
-    }
   }
 
   @override
@@ -56,6 +45,9 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+
+    final user = UserController().user;
+
     return ProtectedPage(
       child: Scaffold(
         appBar: AppBar(
@@ -67,10 +59,10 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
         ),
-        body: const Center(
+        body: Center(
           child: Text(
-            'HOME – Usuario autenticado',
-            style: TextStyle(fontSize: 18),
+            'HOME – Usuario autenticado: ${user?['username'] ?? ''}',
+            style: const TextStyle(fontSize: 18),
           ),
         ),
       ),

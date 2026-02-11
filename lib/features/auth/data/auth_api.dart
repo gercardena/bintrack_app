@@ -2,11 +2,14 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import 'token_storage.dart';
+import '../../../core/auth/user_controller.dart';
 
 class AuthApi {
 
+  // ⭐ URL BASE BACKEND DJANGO
   static const String _baseUrl = 'http://192.168.11.215:8000';
 
+  /// 🔥 LOGIN
   static Future<Map<String, dynamic>> login({
     required String username,
     required String password,
@@ -14,7 +17,9 @@ class AuthApi {
 
     final response = await http.post(
       Uri.parse('$_baseUrl/api/auth/login/'),
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: jsonEncode({
         'username': username,
         'password': password,
@@ -25,11 +30,14 @@ class AuthApi {
 
       final data = jsonDecode(response.body);
 
-      // ✅ Guardar tokens reales
+      // ✅ Guardar tokens JWT
       await TokenStorage.saveTokens(
         access: data['access'],
         refresh: data['refresh'],
       );
+
+      // ⭐ Cargar usuario global (PROFILE)
+      await UserController().loadUser();
 
       return data;
 
