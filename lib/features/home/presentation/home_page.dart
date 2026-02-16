@@ -6,6 +6,8 @@ import '../../auth/presentation/logout.dart';
 import '../../../core/auth/auth_controller.dart';
 import '../../../core/auth/user_controller.dart';
 
+import '../../warehouses/presentation/warehouses_page.dart';
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -24,7 +26,7 @@ class _HomePageState extends State<HomePage> {
     // 👂 Escuchar logout global
     _logoutSub = AuthController().onLogout.listen((_) {
 
-      // 🔥 limpiar usuario global
+      // limpiar usuario global
       UserController().clear();
 
       if (!mounted) return;
@@ -60,9 +62,30 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
         body: Center(
-          child: Text(
-            'HOME – Usuario autenticado: ${user?['username'] ?? ''}',
-            style: const TextStyle(fontSize: 18),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+
+              Text(
+                'HOME – Usuario autenticado: ${user?['username'] ?? ''}',
+                style: const TextStyle(fontSize: 18),
+              ),
+
+              const SizedBox(height: 20),
+
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const WarehousesPage(),
+                    ),
+                  );
+                },
+                child: const Text('Ir a Bins'),
+              ),
+
+            ],
           ),
         ),
       ),
