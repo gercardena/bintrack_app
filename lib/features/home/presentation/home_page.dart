@@ -7,6 +7,7 @@ import '../../../core/auth/auth_controller.dart';
 import '../../../core/auth/user_controller.dart';
 
 import '../../warehouses/presentation/warehouses_page.dart';
+import '../../inventory/presentation/inventory_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -71,8 +72,9 @@ class _HomePageState extends State<HomePage> {
                 style: const TextStyle(fontSize: 18),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 30),
 
+              // 🔥 BOTÓN BINS
               ElevatedButton(
                 onPressed: () {
                   Navigator.push(
@@ -83,6 +85,21 @@ class _HomePageState extends State<HomePage> {
                   );
                 },
                 child: const Text('Ir a Bins'),
+              ),
+
+              const SizedBox(height: 10),
+
+              // 🔥 BOTÓN INVENTORY
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const InventoryPage(),
+                    ),
+                  );
+                },
+                child: const Text('Ir a Inventory'),
               ),
 
             ],
