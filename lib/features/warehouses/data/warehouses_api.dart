@@ -1,3 +1,4 @@
+import 'dart:convert';
 import '../../../core/http/http_client.dart';
 
 class WarehousesApi {
@@ -8,7 +9,21 @@ class WarehousesApi {
       '/api/bins/clientes/',
     );
 
-    return response;
+    // Verificar respuesta OK
+    if (response.statusCode == 200) {
+
+      // Convertir JSON string → List
+      final data = jsonDecode(response.body);
+
+      return data;
+
+    } else {
+
+      throw Exception(
+        "Error cargando clientes: ${response.statusCode}"
+      );
+
+    }
 
   }
 
