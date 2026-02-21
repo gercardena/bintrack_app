@@ -55,8 +55,14 @@ class _InventoryPageState extends State<InventoryPage> {
               final item = inventory[index];
 
               return ListTile(
-                title: Text(item['nombre'] ?? 'Sin nombre'),
-                subtitle: Text("Stock: ${item['cantidad'] ?? 0}"),
+                title: Text(item['product_nombre'] ?? 'Sin producto'),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Bin: ${item['bin_nombre'] ?? 'Sin bin'}"),
+                    Text("Stock: ${item['cantidad'] ?? 0}"),
+                  ],
+                ),
               );
             },
           );
