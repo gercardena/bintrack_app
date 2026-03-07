@@ -26,6 +26,10 @@ class AuthApi {
       }),
     );
 
+    // 👇 DEBUG
+    print("LOGIN STATUS: ${response.statusCode}");
+    print("LOGIN BODY: ${response.body}");
+
     if (response.statusCode == 200) {
 
       final data = jsonDecode(response.body);

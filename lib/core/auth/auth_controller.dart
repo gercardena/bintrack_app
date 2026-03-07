@@ -10,7 +10,21 @@ class AuthController {
 
   Stream<void> get onLogout => _logoutController.stream;
 
+  // 🔑 TOKEN JWT
+  String? _token;
+
+  String? get token => _token;
+
+  void setToken(String token) {
+    _token = token;
+  }
+
+  void clearToken() {
+    _token = null;
+  }
+
   void forceLogout() {
+    _token = null;
     _logoutController.add(null);
   }
 

@@ -1,109 +1,179 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 
-import '../../auth/presentation/protected_page.dart';
-import '../../auth/presentation/logout.dart';
-import '../../../core/auth/auth_controller.dart';
-import '../../../core/auth/user_controller.dart';
-
-import '../../warehouses/presentation/warehouses_page.dart';
+import '../../clientes/presentation/clientes_page.dart';
+import '../../products/presentation/products_page.dart';
 import '../../inventory/presentation/inventory_page.dart';
+import '../../warehouses/presentation/warehouses_page.dart';
+import '../../sales/presentation/sales_page.dart';
 
-class HomePage extends StatefulWidget {
+class HomePage extends StatelessWidget {
   const HomePage({super.key});
-
-  @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-
-  StreamSubscription? _logoutSub;
-
-  @override
-  void initState() {
-    super.initState();
-
-    // 👂 Escuchar logout global
-    _logoutSub = AuthController().onLogout.listen((_) {
-
-      // limpiar usuario global
-      UserController().clear();
-
-      if (!mounted) return;
-
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        '/login',
-        (route) => false,
-      );
-    });
-  }
-
-  @override
-  void dispose() {
-    _logoutSub?.cancel();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
 
-    final user = UserController().user;
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Dashboard"),
+      ),
 
-    return ProtectedPage(
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('BinTrack'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.logout),
-              onPressed: () => Logout.execute(context),
+      body: Padding(
+        padding: const EdgeInsets.all(20),
+
+        child: GridView.count(
+          crossAxisCount: 2,
+          crossAxisSpacing: 20,
+          mainAxisSpacing: 20,
+
+          children: [
+
+            /// CLIENTES
+            _menuButton(
+              context,
+              "Clientes",
+              Icons.people,
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const ClientesPage(),
+                  ),
+                );
+              },
             ),
+
+            /// PRODUCTOS
+            _menuButton(
+              context,
+              "Productos",
+              Icons.inventory,
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const ProductsPage(),
+                  ),
+                );
+              },
+            ),
+
+            /// INVENTARIO
+            _menuButton(
+              context,
+              "Inventario",
+              Icons.storage,
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const InventoryPage(),
+                  ),
+                );
+              },
+            ),
+
+            /// BINS / WAREHOUSES
+            _menuButton(
+              context,
+              "Bins",
+              Icons.warehouse,
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const WarehousesPage(),
+                  ),
+                );
+              },
+            ),
+
+            /// VENTAS
+            _menuButton(
+               context,
+                "Ventas",
+                Icons.point_of_sale,
+               () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const SalesPage(),
+                    ),
+                 );
+              },
+            ),
+
+            /// FACTURAS
+            _menuButton(
+              context,
+              "Facturas",
+              Icons.receipt_long,
+              () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Pantalla Facturas próximamente"),
+                  ),
+                );
+              },
+            ),
+
+            /// PAGOS
+            _menuButton(
+              context,
+              "Pagos",
+              Icons.payments,
+              () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Pantalla Pagos próximamente"),
+                  ),
+                );
+              },
+            ),
+
           ],
         ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
+      ),
+    );
+  }
 
-              Text(
-                'HOME – Usuario autenticado: ${user?['username'] ?? ''}',
-                style: const TextStyle(fontSize: 18),
+  /// Botón reutilizable
+  Widget _menuButton(
+    BuildContext context,
+    String title,
+    IconData icon,
+    VoidCallback onTap,
+  ) {
+
+    return GestureDetector(
+      onTap: onTap,
+
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.blue,
+          borderRadius: BorderRadius.circular(12),
+        ),
+
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+
+            Icon(
+              icon,
+              size: 40,
+              color: Colors.white,
+            ),
+
+            const SizedBox(height: 10),
+
+            Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
               ),
+            ),
 
-              const SizedBox(height: 30),
-
-              // 🔥 BOTÓN BINS
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const WarehousesPage(),
-                    ),
-                  );
-                },
-                child: const Text('Ir a Bins'),
-              ),
-
-              const SizedBox(height: 10),
-
-              // 🔥 BOTÓN INVENTORY
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const InventoryPage(),
-                    ),
-                  );
-                },
-                child: const Text('Ir a Inventory'),
-              ),
-
-            ],
-          ),
+          ],
         ),
       ),
     );
