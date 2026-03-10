@@ -5,6 +5,8 @@ import '../../products/presentation/products_page.dart';
 import '../../inventory/presentation/inventory_page.dart';
 import '../../warehouses/presentation/warehouses_page.dart';
 import '../../sales/presentation/sales_page.dart';
+import '../../invoices/presentation/invoices_page.dart';
+import '../../payments/presentation/payments_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -13,8 +15,11 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
 
     return Scaffold(
+      backgroundColor: Colors.grey[100],
+
       appBar: AppBar(
-        title: const Text("Dashboard"),
+        title: const Text("BINTRACK"),
+        centerTitle: true,
       ),
 
       body: Padding(
@@ -89,16 +94,16 @@ class HomePage extends StatelessWidget {
 
             /// VENTAS
             _menuButton(
-               context,
-                "Ventas",
-                Icons.point_of_sale,
-               () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const SalesPage(),
-                    ),
-                 );
+              context,
+              "Ventas",
+              Icons.point_of_sale,
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const SalesPage(),
+                  ),
+                );
               },
             ),
 
@@ -108,9 +113,10 @@ class HomePage extends StatelessWidget {
               "Facturas",
               Icons.receipt_long,
               () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Pantalla Facturas próximamente"),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const InvoicesPage(),
                   ),
                 );
               },
@@ -122,9 +128,10 @@ class HomePage extends StatelessWidget {
               "Pagos",
               Icons.payments,
               () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Pantalla Pagos próximamente"),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const PaymentsPage(),
                   ),
                 );
               },
@@ -136,7 +143,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  /// Botón reutilizable
+  /// BOTÓN REUTILIZABLE DEL DASHBOARD
   Widget _menuButton(
     BuildContext context,
     String title,
@@ -144,13 +151,22 @@ class HomePage extends StatelessWidget {
     VoidCallback onTap,
   ) {
 
-    return GestureDetector(
+    return InkWell(
+      borderRadius: BorderRadius.circular(20),
       onTap: onTap,
 
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.blue,
-          borderRadius: BorderRadius.circular(12),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            )
+          ],
         ),
 
         child: Column(
@@ -159,17 +175,18 @@ class HomePage extends StatelessWidget {
 
             Icon(
               icon,
-              size: 40,
-              color: Colors.white,
+              size: 42,
+              color: Colors.blue,
             ),
 
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
 
             Text(
               title,
               style: const TextStyle(
-                color: Colors.white,
                 fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
               ),
             ),
 
