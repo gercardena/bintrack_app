@@ -12,6 +12,8 @@ class BinTypeService {
 
     final token = await TokenStorage.getAccessToken();
 
+    print("TOKEN TYPES: $token");
+
     final response = await http.get(
       Uri.parse("$baseUrl/bins/types/"),
       headers: {
@@ -19,6 +21,9 @@ class BinTypeService {
         "Authorization": "Bearer $token",
       },
     );
+
+    print("STATUS TYPES: ${response.statusCode}");
+    print("BODY TYPES: ${response.body}");
 
     if (response.statusCode == 200) {
 
@@ -33,4 +38,5 @@ class BinTypeService {
     }
 
   }
+
 }

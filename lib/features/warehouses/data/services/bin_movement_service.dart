@@ -12,6 +12,8 @@ class BinMovementService {
 
     final token = await TokenStorage.getAccessToken();
 
+    print("TOKEN MOVEMENTS: $token");
+
     final response = await http.get(
       Uri.parse("$baseUrl/bins/movements/"),
       headers: {
@@ -19,6 +21,9 @@ class BinMovementService {
         "Authorization": "Bearer $token",
       },
     );
+
+    print("STATUS MOVEMENTS: ${response.statusCode}");
+    print("BODY MOVEMENTS: ${response.body}");
 
     if (response.statusCode == 200) {
 
@@ -33,4 +38,5 @@ class BinMovementService {
     }
 
   }
+
 }
