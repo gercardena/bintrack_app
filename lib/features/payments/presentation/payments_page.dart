@@ -24,8 +24,12 @@ class _PaymentsPageState extends State<PaymentsPage> {
   Widget build(BuildContext context) {
 
     return Scaffold(
+
+      backgroundColor: Colors.grey[100],
+
       appBar: AppBar(
         title: const Text("Pagos"),
+        elevation: 0,
       ),
 
       body: FutureBuilder<List<Payment>>(
@@ -52,17 +56,106 @@ class _PaymentsPageState extends State<PaymentsPage> {
           }
 
           return ListView.builder(
+            padding: const EdgeInsets.all(12),
             itemCount: payments.length,
 
             itemBuilder: (context, index) {
 
               final payment = payments[index];
 
-              return ListTile(
-                leading: const Icon(Icons.payments),
-                title: Text("Pago #${payment.id}"),
-                subtitle: Text("Factura ${payment.factura}"),
-                trailing: Text("\$${payment.monto}"),
+              return Card(
+                elevation: 3,
+                margin: const EdgeInsets.only(bottom: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+
+                  child: Row(
+                    children: [
+
+                      // 🟢 ICONO
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.payments,
+                          color: Colors.green,
+                        ),
+                      ),
+
+                      const SizedBox(width: 12),
+
+                      // 📄 INFO
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+
+                            Text(
+                              "Pago #${payment.id}",
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+
+                            const SizedBox(height: 6),
+
+                            Text(
+                              "Factura: ${payment.factura}",
+                              style: TextStyle(
+                                color: Colors.grey[700],
+                              ),
+                            ),
+
+                            const SizedBox(height: 4),
+
+                            Text(
+                              "Fecha: ${payment.fecha ?? '---'}",
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 12,
+                              ),
+                            ),
+
+                          ],
+                        ),
+                      ),
+
+                      // 💰 MONTO
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+
+                          Text(
+                            "\$${payment.monto}",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
+
+                          const SizedBox(height: 6),
+
+                          Icon(
+                            Icons.arrow_forward_ios,
+                            size: 14,
+                            color: Colors.grey[500],
+                          ),
+
+                        ],
+                      )
+
+                    ],
+                  ),
+                ),
               );
             },
           );

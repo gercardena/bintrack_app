@@ -1,6 +1,6 @@
 class Sale {
   final int id;
-  final String? cliente;
+  final int? clienteId; // 🔥 ID del cliente
   final double total;
   final String estado;
 
@@ -8,13 +8,13 @@ class Sale {
     required this.id,
     required this.total,
     required this.estado,
-    this.cliente,
+    this.clienteId,
   });
 
   factory Sale.fromJson(Map<String, dynamic> json) {
     return Sale(
       id: json['id'],
-      cliente: json['cliente']?['nombre'],
+      clienteId: json['cliente'], // 🔥 ahora es int
       total: double.parse(json['total'].toString()),
       estado: json['estado'] ?? '',
     );

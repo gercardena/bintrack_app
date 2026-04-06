@@ -7,7 +7,7 @@ class ApiService {
 
   static const String baseUrl = "http://192.168.11.215:8000/api";
 
-  // 🔥 GET GENÉRICO CON REFRESH AUTOMÁTICO
+  // 🔥 GET CON MANEJO PRO
   static Future<http.Response> get(String endpoint) async {
 
     String? token = await TokenStorage.getAccessToken();
@@ -20,23 +20,29 @@ class ApiService {
       },
     );
 
-    // 🔥 SI EXPIRÓ
+    // 🔥 TOKEN EXPIRADO
     if (response.statusCode == 401) {
 
       print("TOKEN EXPIRADO → REFRESH GLOBAL");
 
-      token = await AuthApi.refreshToken();
+      final newToken = await AuthApi.refreshToken();
 
-      if (token == null) {
+      // ❗ SI FALLA REFRESH
+      if (newToken == null) {
+
+        print("REFRESH FALLÓ → LOGOUT");
+
+        await TokenStorage.clearTokens(); // 🔥 CLAVE
+
         throw Exception("Sesión expirada");
       }
 
-      // 🔁 REINTENTO
+      // 🔁 REINTENTO CON TOKEN NUEVO
       final retry = await http.get(
         Uri.parse("$baseUrl$endpoint"),
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer $token",
+          "Authorization": "Bearer $newToken",
         },
       );
 

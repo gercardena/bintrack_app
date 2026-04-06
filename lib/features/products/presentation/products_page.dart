@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../data/products_api.dart';
 import '../models/product.dart';
+import 'editar_producto_page.dart';
+import 'crear_producto_page.dart';
 
 class ProductsPage extends StatefulWidget {
   const ProductsPage({super.key});
@@ -12,12 +14,73 @@ class ProductsPage extends StatefulWidget {
 
 class _ProductsPageState extends State<ProductsPage> {
 
-  late Future<List<Product>> _futureProducts;
+  List<Product> products = [];
+  bool loading = true;
 
   @override
   void initState() {
     super.initState();
-    _futureProducts = ProductsApi.getProducts();
+    cargarProductos();
+  }
+
+  Future<void> cargarProductos() async {
+    setState(() => loading = true);
+
+    try {
+      final data = await ProductsApi.getProducts();
+
+      setState(() {
+        products = data;
+        loading = false;
+      });
+
+    } catch (e) {
+
+      print("ERROR PRODUCTS: $e");
+
+      setState(() => loading = false);
+    }
+  }
+
+  // 🔥 ELIMINAR CON CONFIRMACIÓN
+  Future<void> eliminarProducto(int id) async {
+
+    final confirm = await showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Eliminar producto"),
+        content: const Text("¿Estás seguro?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancelar"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Eliminar"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    final ok = await ProductsApi.eliminarProducto(id);
+
+    if (ok) {
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Producto eliminado")),
+      );
+
+      cargarProductos();
+
+    } else {
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Error al eliminar")),
+      );
+    }
   }
 
   @override
@@ -26,49 +89,157 @@ class _ProductsPageState extends State<ProductsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Productos"),
+        elevation: 0,
       ),
 
-      body: FutureBuilder<List<Product>>(
-        future: _futureProducts,
+      backgroundColor: Colors.grey[100],
 
-        builder: (context, snapshot) {
+      body: RefreshIndicator(
+        onRefresh: cargarProductos,
+        child: loading
+            ? const Center(child: CircularProgressIndicator())
+            : products.isEmpty
+                ? _emptyState()
+                : ListView.builder(
+                    padding: const EdgeInsets.all(12),
+                    itemCount: products.length,
+                    itemBuilder: (context, index) {
 
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
+                      final product = products[index];
 
-          if (snapshot.hasError) {
-            return const Center(
-              child: Text("Error cargando productos"),
-            );
-          }
+                      return _productCard(product);
+                    },
+                  ),
+      ),
 
-          final products = snapshot.data!;
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.blue,
+        onPressed: () async {
 
-          if (products.isEmpty) {
-            return const Center(
-              child: Text("No hay productos"),
-            );
-          }
-
-          return ListView.builder(
-            itemCount: products.length,
-
-            itemBuilder: (context, index) {
-
-              final product = products[index];
-
-              return ListTile(
-                title: Text(product.name),
-                subtitle: Text("SKU: ${product.sku}"),
-                trailing: Text("\$${product.price}"),
-              );
-            },
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const CrearProductoPage(),
+            ),
           );
+
+          if (result == true) {
+            cargarProductos();
+          }
+        },
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  // 🔥 CARD GLOBAL PRO
+  Widget _productCard(Product product) {
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          )
+        ],
+      ),
+
+      child: ListTile(
+        contentPadding: const EdgeInsets.all(12),
+
+        leading: CircleAvatar(
+          backgroundColor: Colors.blue,
+          child: Text(
+            product.name.isNotEmpty ? product.name[0] : "?",
+            style: const TextStyle(color: Colors.white),
+          ),
+        ),
+
+        title: Text(
+          product.name,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+
+            if (product.description != null &&
+                product.description!.isNotEmpty)
+              Text("📝 ${product.description}"),
+
+            Text("💰 \$${product.price}"),
+          ],
+        ),
+
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+
+            // ✏️ EDITAR
+            IconButton(
+              icon: const Icon(Icons.edit, color: Colors.orange),
+              onPressed: () async {
+
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => EditarProductoPage(product: product),
+                  ),
+                );
+
+                if (result == true) {
+                  cargarProductos();
+                }
+              },
+            ),
+
+            // 🗑️ ELIMINAR
+            IconButton(
+              icon: const Icon(Icons.delete, color: Colors.red),
+              onPressed: () => eliminarProducto(product.id),
+            ),
+          ],
+        ),
+
+        onTap: () async {
+
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => EditarProductoPage(product: product),
+            ),
+          );
+
+          if (result == true) {
+            cargarProductos();
+          }
         },
       ),
+    );
+  }
+
+  // 🔥 EMPTY STATE
+  Widget _emptyState() {
+    return ListView(
+      children: const [
+        SizedBox(height: 100),
+        Icon(Icons.inventory_2_outlined, size: 80, color: Colors.grey),
+        SizedBox(height: 16),
+        Center(
+          child: Text(
+            "No hay productos",
+            style: TextStyle(fontSize: 18, color: Colors.grey),
+          ),
+        ),
+      ],
     );
   }
 }

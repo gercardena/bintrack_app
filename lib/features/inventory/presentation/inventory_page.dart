@@ -10,15 +10,33 @@ class InventoryPage extends StatefulWidget {
 
 class _InventoryPageState extends State<InventoryPage> {
 
-  late Future<List<dynamic>> inventoryFuture;
+  List<dynamic> inventory = [];
+  bool loading = true;
 
   @override
   void initState() {
     super.initState();
+    cargarInventory();
+  }
 
-    print("LLAMANDO API INVENTORY");
+  Future<void> cargarInventory() async {
+    setState(() => loading = true);
 
-    inventoryFuture = InventoryApi.getInventory();
+    try {
+
+      final data = await InventoryApi.getInventory();
+
+      setState(() {
+        inventory = data;
+        loading = false;
+      });
+
+    } catch (e) {
+
+      print("ERROR INVENTORY: $e");
+
+      setState(() => loading = false);
+    }
   }
 
   @override
@@ -26,48 +44,101 @@ class _InventoryPageState extends State<InventoryPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Inventory'),
+        title: const Text('Inventario'),
+        elevation: 0,
       ),
-      body: FutureBuilder<List<dynamic>>(
-        future: inventoryFuture,
-        builder: (context, snapshot) {
 
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      backgroundColor: Colors.grey[100],
 
-          if (snapshot.hasError) {
-            return Center(
-              child: Text("Error: ${snapshot.error}"),
-            );
-          }
+      body: RefreshIndicator(
+        onRefresh: cargarInventory,
+        child: loading
+            ? const Center(child: CircularProgressIndicator())
+            : inventory.isEmpty
+                ? _emptyState()
+                : ListView.builder(
+                    padding: const EdgeInsets.all(12),
+                    itemCount: inventory.length,
+                    itemBuilder: (context, index) {
 
-          final inventory = snapshot.data!;
+                      final item = inventory[index];
 
-          if (inventory.isEmpty) {
-            return const Center(child: Text("Sin inventario"));
-          }
+                      return _inventoryCard(item);
+                    },
+                  ),
+      ),
+    );
+  }
 
-          return ListView.builder(
-            itemCount: inventory.length,
-            itemBuilder: (context, index) {
+  // 🔥 CARD ESTILO CLIENTES (REUTILIZABLE)
+  Widget _inventoryCard(dynamic item) {
 
-              final item = inventory[index];
+    final product = item['product_nombre'] ?? 'Sin producto';
+    final bin = item['bin_nombre'] ?? 'Sin bin';
+    final cantidad = item['cantidad'] ?? 0;
 
-              return ListTile(
-                title: Text(item['product_nombre'] ?? 'Sin producto'),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("Bin: ${item['bin_nombre'] ?? 'Sin bin'}"),
-                    Text("Stock: ${item['cantidad'] ?? 0}"),
-                  ],
-                ),
-              );
-            },
-          );
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          )
+        ],
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.all(12),
+
+        leading: CircleAvatar(
+          backgroundColor: Colors.blue,
+          child: Text(
+            product.isNotEmpty ? product[0] : "?",
+            style: const TextStyle(color: Colors.white),
+          ),
+        ),
+
+        title: Text(
+          product,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("📦 Bin: $bin"),
+            Text("📊 Stock: $cantidad"),
+          ],
+        ),
+
+        trailing: const Icon(Icons.chevron_right),
+
+        onTap: () {
+          // 👉 futura pantalla detalle inventario
         },
       ),
+    );
+  }
+
+  // 🔥 ESTADO VACÍO CONSISTENTE
+  Widget _emptyState() {
+    return ListView(
+      children: const [
+        SizedBox(height: 100),
+        Icon(Icons.inventory_2_outlined, size: 80, color: Colors.grey),
+        SizedBox(height: 16),
+        Center(
+          child: Text(
+            "Sin inventario",
+            style: TextStyle(fontSize: 18, color: Colors.grey),
+          ),
+        ),
+      ],
     );
   }
 }

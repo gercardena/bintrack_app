@@ -24,8 +24,12 @@ class _InvoicesPageState extends State<InvoicesPage> {
   Widget build(BuildContext context) {
 
     return Scaffold(
+
+      backgroundColor: Colors.grey[100],
+
       appBar: AppBar(
         title: const Text("Facturas"),
+        elevation: 0,
       ),
 
       body: FutureBuilder<List<Invoice>>(
@@ -52,17 +56,106 @@ class _InvoicesPageState extends State<InvoicesPage> {
           }
 
           return ListView.builder(
+            padding: const EdgeInsets.all(12),
             itemCount: invoices.length,
 
             itemBuilder: (context, index) {
 
               final invoice = invoices[index];
 
-              return ListTile(
-                leading: const Icon(Icons.receipt_long),
-                title: Text("Factura #${invoice.id}"),
-                subtitle: Text(invoice.cliente),
-                trailing: Text("\$${invoice.total}"),
+              return Card(
+                elevation: 3,
+                margin: const EdgeInsets.only(bottom: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+
+                  child: Row(
+                    children: [
+
+                      // 🟣 ICONO
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.deepPurple.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.receipt_long,
+                          color: Colors.deepPurple,
+                        ),
+                      ),
+
+                      const SizedBox(width: 12),
+
+                      // 📄 INFO
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+
+                            Text(
+                              "Factura #${invoice.id}",
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+
+                            const SizedBox(height: 6),
+
+                            Text(
+                              invoice.cliente,
+                              style: TextStyle(
+                                color: Colors.grey[700],
+                              ),
+                            ),
+
+                            const SizedBox(height: 4),
+
+                            Text(
+                              "Fecha: ${invoice.fecha.isNotEmpty ? invoice.fecha : '---'}",
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 12,
+                              ),
+                            ),
+
+                          ],
+                        ),
+                      ),
+
+                      // 💰 TOTAL
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+
+                          Text(
+                            "\$${invoice.total}",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
+
+                          const SizedBox(height: 6),
+
+                          Icon(
+                            Icons.arrow_forward_ios,
+                            size: 14,
+                            color: Colors.grey[500],
+                          ),
+
+                        ],
+                      )
+
+                    ],
+                  ),
+                ),
               );
             },
           );
