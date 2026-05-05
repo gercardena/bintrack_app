@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+
 import '../../auth/presentation/protected_page.dart';
 import '../data/sales_service.dart';
 import '../models/sale_model.dart';
+import 'create_sale_page.dart'; // 🔥 IMPORTANTE
 
 class SalesPage extends StatefulWidget {
   const SalesPage({super.key});
@@ -15,6 +17,7 @@ class _SalesPageState extends State<SalesPage> {
   final SalesService _service = SalesService();
 
   List<Sale> sales = [];
+
   bool loading = true;
 
   @override
@@ -24,11 +27,18 @@ class _SalesPageState extends State<SalesPage> {
   }
 
   Future<void> cargarVentas() async {
-    setState(() => loading = true);
+
+    if (!mounted) return;
+
+    setState(() {
+      loading = true;
+    });
 
     try {
 
       final data = await _service.getSales();
+
+      if (!mounted) return;
 
       setState(() {
         sales = data;
@@ -39,130 +49,249 @@ class _SalesPageState extends State<SalesPage> {
 
       print("ERROR SALES: $e");
 
-      setState(() => loading = false);
+      if (!mounted) return;
+
+      setState(() {
+        loading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+        ),
+      );
     }
   }
 
-  Future<void> _generateInvoice(int saleId) async {
+  // =========================================
+  // 🔥 CONFIRMAR
+  // =========================================
+
+  Future<void> _confirm(int id) async {
+
     try {
 
-      await _service.generateInvoice(saleId);
+      await _service.confirmSale(id);
+
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Factura generada correctamente')),
+        const SnackBar(
+          content: Text("Venta confirmada"),
+        ),
       );
 
-      cargarVentas(); // 🔄 recargar
+      await cargarVentas();
 
     } catch (e) {
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+      if (!mounted) return;
 
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+        ),
+      );
     }
   }
+
+  // =========================================
+  // 🔥 PAGAR
+  // =========================================
+
+  Future<void> _pay(int id) async {
+
+    try {
+
+      await _service.paySale(id);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Venta pagada"),
+        ),
+      );
+
+      await cargarVentas();
+
+    } catch (e) {
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+        ),
+      );
+    }
+  }
+
+  // =========================================
+  // 🔥 FACTURAR
+  // =========================================
+
+  Future<void> _invoice(int id) async {
+
+    try {
+
+      await _service.generateInvoice(id);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Factura generada"),
+        ),
+      );
+
+      await cargarVentas();
+
+    } catch (e) {
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+        ),
+      );
+    }
+  }
+
+  // =========================================
+  // 🔥 UI
+  // =========================================
 
   @override
   Widget build(BuildContext context) {
 
     return ProtectedPage(
+
       child: Scaffold(
+
         appBar: AppBar(
-          title: const Text('Ventas'),
-          elevation: 0,
+          title: const Text("Ventas"),
         ),
 
-        backgroundColor: Colors.grey[100],
+        // 🔥 FAB AGREGADO AQUÍ
+        floatingActionButton: FloatingActionButton(
+          onPressed: () async {
 
-        body: RefreshIndicator(
-          onRefresh: cargarVentas,
-          child: loading
-              ? const Center(child: CircularProgressIndicator())
-              : sales.isEmpty
-                  ? _emptyState()
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(12),
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const CreateSalePage(),
+              ),
+            );
+
+            // 🔥 RECARGA AUTOMÁTICA
+            if (result == true) {
+              cargarVentas();
+            }
+          },
+          child: const Icon(Icons.add),
+        ),
+
+        body: loading
+
+            ? const Center(
+                child: CircularProgressIndicator(),
+              )
+
+            : sales.isEmpty
+
+                ? const Center(
+                    child: Text("No hay ventas"),
+                  )
+
+                : RefreshIndicator(
+
+                    onRefresh: cargarVentas,
+
+                    child: ListView.builder(
                       itemCount: sales.length,
+
                       itemBuilder: (context, index) {
-
-                        final sale = sales[index];
-
-                        return _saleCard(sale);
+                        return _saleCard(sales[index]);
                       },
                     ),
-        ),
+                  ),
       ),
     );
   }
 
-  // 🔥 CARD GLOBAL
+  // =========================================
+  // 🔥 CARD VENTA
+  // =========================================
+
   Widget _saleCard(Sale sale) {
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          )
-        ],
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(12),
+    return Card(
 
-        leading: CircleAvatar(
-          backgroundColor: Colors.blue,
-          child: Text(
-            sale.id.toString(),
-            style: const TextStyle(color: Colors.white),
-          ),
-        ),
+      margin: const EdgeInsets.all(10),
 
-        title: Text(
-          "Venta #${sale.id}",
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
+      child: Padding(
 
-        subtitle: Column(
+        padding: const EdgeInsets.all(12),
+
+        child: Column(
+
           crossAxisAlignment: CrossAxisAlignment.start,
+
           children: [
-            Text("👤 Cliente ID: ${sale.clienteId ?? 'N/A'}"),
-            Text("💰 Total: \$${sale.total}"),
-            Text("📌 Estado: ${sale.estado}"),
+
+            Text(
+              "Venta #${sale.numero}", // 🔥 mejor usar numero
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            Text("Cliente: ${sale.clienteNombre ?? ''}"),
+
+            Text("Estado: ${sale.estado}"),
+
+            Text("Total: \$${sale.total}"),
+
+            const SizedBox(height: 10),
+
+            Row(
+
+              children: [
+
+                // 🔥 CONFIRMAR
+                if (sale.estado == "draft")
+                  ElevatedButton(
+                    onPressed: () => _confirm(sale.id),
+                    child: const Text("Confirmar"),
+                  ),
+
+                const SizedBox(width: 8),
+
+                // 🔥 PAGAR
+                if (sale.estado == "confirmed")
+                  ElevatedButton(
+                    onPressed: () => _pay(sale.id),
+                    child: const Text("Pagar"),
+                  ),
+
+                const SizedBox(width: 8),
+
+                // 🔥 FACTURAR
+                if (sale.estado == "paid")
+                  ElevatedButton(
+                    onPressed: () => _invoice(sale.id),
+                    child: const Text("Facturar"),
+                  ),
+              ],
+            ),
           ],
         ),
-
-        trailing: IconButton(
-          icon: const Icon(Icons.receipt_long, color: Colors.green),
-          onPressed: () => _generateInvoice(sale.id),
-        ),
-
-        onTap: () {
-          // 👉 detalle venta
-        },
       ),
-    );
-  }
-
-  // 🔥 EMPTY STATE
-  Widget _emptyState() {
-    return ListView(
-      children: const [
-        SizedBox(height: 100),
-        Icon(Icons.point_of_sale_outlined, size: 80, color: Colors.grey),
-        SizedBox(height: 16),
-        Center(
-          child: Text(
-            "No hay ventas",
-            style: TextStyle(fontSize: 18, color: Colors.grey),
-          ),
-        ),
-      ],
     );
   }
 }

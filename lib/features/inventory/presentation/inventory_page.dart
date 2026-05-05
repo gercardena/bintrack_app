@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../data/inventory_api.dart';
+import 'ajustar_stock_page.dart';
 
 class InventoryPage extends StatefulWidget {
   const InventoryPage({super.key});
@@ -16,14 +17,13 @@ class _InventoryPageState extends State<InventoryPage> {
   @override
   void initState() {
     super.initState();
-    cargarInventory();
+    cargarInventario();
   }
 
-  Future<void> cargarInventory() async {
+  Future<void> cargarInventario() async {
     setState(() => loading = true);
 
     try {
-
       final data = await InventoryApi.getInventory();
 
       setState(() {
@@ -51,7 +51,7 @@ class _InventoryPageState extends State<InventoryPage> {
       backgroundColor: Colors.grey[100],
 
       body: RefreshIndicator(
-        onRefresh: cargarInventory,
+        onRefresh: cargarInventario,
         child: loading
             ? const Center(child: CircularProgressIndicator())
             : inventory.isEmpty
@@ -70,12 +70,8 @@ class _InventoryPageState extends State<InventoryPage> {
     );
   }
 
-  // 🔥 CARD ESTILO CLIENTES (REUTILIZABLE)
+  // 🔥 CARD ESTILO GLOBAL
   Widget _inventoryCard(dynamic item) {
-
-    final product = item['product_nombre'] ?? 'Sin producto';
-    final bin = item['bin_nombre'] ?? 'Sin bin';
-    final cantidad = item['cantidad'] ?? 0;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -90,42 +86,51 @@ class _InventoryPageState extends State<InventoryPage> {
           )
         ],
       ),
+
       child: ListTile(
         contentPadding: const EdgeInsets.all(12),
 
         leading: CircleAvatar(
-          backgroundColor: Colors.blue,
+          backgroundColor: Colors.orange,
           child: Text(
-            product.isNotEmpty ? product[0] : "?",
+            (item['product_nombre'] ?? "?")[0],
             style: const TextStyle(color: Colors.white),
           ),
         ),
 
         title: Text(
-          product,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          item['product_nombre'] ?? "Sin producto",
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
 
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("📦 Bin: $bin"),
-            Text("📊 Stock: $cantidad"),
+            Text("📦 Bin: ${item['bin_nombre'] ?? '---'}"),
+            Text("📊 Stock: ${item['cantidad'] ?? 0}"),
           ],
         ),
 
         trailing: const Icon(Icons.chevron_right),
 
-        onTap: () {
-          // 👉 futura pantalla detalle inventario
+        onTap: () async {
+
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => AjustarStockPage(item: item),
+            ),
+          );
+
+          if (result == true) {
+            cargarInventario();
+          }
         },
       ),
     );
   }
 
-  // 🔥 ESTADO VACÍO CONSISTENTE
+  // 🔥 EMPTY STATE
   Widget _emptyState() {
     return ListView(
       children: const [
