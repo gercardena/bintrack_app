@@ -5,6 +5,8 @@ import '../../clientes/models/client_model.dart';
 
 import '../data/sales_service.dart';
 
+import 'sale_detail_page.dart';
+
 class CreateSalePage extends StatefulWidget {
   const CreateSalePage({super.key});
 
@@ -17,7 +19,6 @@ class _CreateSalePageState extends State<CreateSalePage> {
   final SalesService _salesService = SalesService();
   final ClientsService _clientsService = ClientsService();
 
-  // 🔥 CORREGIDO: Cliente (no Client)
   List<Cliente> clientes = [];
 
   Cliente? clienteSeleccionado;
@@ -94,7 +95,17 @@ class _CreateSalePageState extends State<CreateSalePage> {
         ),
       );
 
-      Navigator.pop(context, true);
+      Navigator.push(
+
+        context,
+
+        MaterialPageRoute(
+
+          builder: (_) => SaleDetailPage(
+            saleId: saleId,
+          ),
+        ),
+      );
 
     } catch (e) {
 
@@ -146,7 +157,6 @@ class _CreateSalePageState extends State<CreateSalePage> {
 
                   const SizedBox(height: 10),
 
-                  // 🔥 CORREGIDO: Cliente
                   DropdownButtonFormField<Cliente>(
 
                     value: clienteSeleccionado,

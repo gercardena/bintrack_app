@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-
 import '../../clientes/presentation/clientes_page.dart';
 import '../../products/presentation/products_page.dart';
 import '../../inventory/presentation/inventory_page.dart';
 import '../../warehouses/presentation/warehouses_page.dart';
 import '../../sales/presentation/sales_page.dart';
+import '../../sales/presentation/create_sale_page.dart'; // 🔥 IMPORTANTE
 import '../../invoices/presentation/invoices_page.dart';
 import '../../payments/presentation/payments_page.dart';
 
@@ -13,7 +13,6 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       backgroundColor: Colors.grey[100],
 
@@ -23,134 +22,183 @@ class HomePage extends StatelessWidget {
       ),
 
       body: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
 
-        child: GridView.count(
-          crossAxisCount: 2,
-          crossAxisSpacing: 20,
-          mainAxisSpacing: 20,
-
+        child: Column(
           children: [
 
-            /// CLIENTES
-            _menuButton(
-              context,
-              "Clientes",
-              Icons.people,
-              () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const ClientesPage(),
-                  ),
-                );
-              },
+            // 🔥 BOTÓN PRINCIPAL → NUEVA VENTA
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const CreateSalePage(),
+                    ),
+                  );
+                },
+                child: const Text("➕ Nueva Venta"),
+              ),
             ),
 
-            /// PRODUCTOS
-            _menuButton(
-              context,
-              "Productos",
-              Icons.inventory,
-              () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const ProductsPage(),
-                  ),
-                );
-              },
+            const SizedBox(height: 10),
+
+            // 🔥 ACCESO RÁPIDO INVENTARIO
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  backgroundColor: Colors.orange,
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const InventoryPage(),
+                    ),
+                  );
+                },
+                child: const Text("📦 Inventario"),
+              ),
             ),
 
-            /// INVENTARIO
-            _menuButton(
-              context,
-              "Inventario",
-              Icons.storage,
-              () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const InventoryPage(),
-                  ),
-                );
-              },
-            ),
+            const SizedBox(height: 20),
 
-            /// BINS / WAREHOUSES
-            _menuButton(
-              context,
-              "Bins",
-              Icons.warehouse,
-              () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const WarehousesPage(),
-                  ),
-                );
-              },
-            ),
+            // 🔥 GRID ORIGINAL (NO SE ROMPE)
+            Expanded(
+              child: GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: 20,
+                mainAxisSpacing: 20,
 
-            /// VENTAS
-            _menuButton(
-              context,
-              "Ventas",
-              Icons.point_of_sale,
-              () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const SalesPage(),
-                  ),
-                );
-              },
-            ),
+                children: [
 
-            /// FACTURAS
-            _menuButton(
-              context,
-              "Facturas",
-              Icons.receipt_long,
-              () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const InvoicesPage(),
+                  /// CLIENTES
+                  _menuButton(
+                    context,
+                    "Clientes",
+                    Icons.people,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ClientesPage(),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
 
-            /// PAGOS
-            _menuButton(
-              context,
-              "Pagos",
-              Icons.payments,
-              () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const PaymentsPage(),
+                  /// PRODUCTOS
+                  _menuButton(
+                    context,
+                    "Productos",
+                    Icons.inventory,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ProductsPage(),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
 
+                  /// INVENTARIO
+                  _menuButton(
+                    context,
+                    "Inventario",
+                    Icons.storage,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const InventoryPage(),
+                        ),
+                      );
+                    },
+                  ),
+
+                  /// BINS
+                  _menuButton(
+                    context,
+                    "Bins",
+                    Icons.warehouse,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const WarehousesPage(),
+                        ),
+                      );
+                    },
+                  ),
+
+                  /// VENTAS
+                  _menuButton(
+                    context,
+                    "Ventas",
+                    Icons.point_of_sale,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const SalesPage(),
+                        ),
+                      );
+                    },
+                  ),
+
+                  /// FACTURAS
+                  _menuButton(
+                    context,
+                    "Facturas",
+                    Icons.receipt_long,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const InvoicesPage(),
+                        ),
+                      );
+                    },
+                  ),
+
+                  /// PAGOS
+                  _menuButton(
+                    context,
+                    "Pagos",
+                    Icons.payments,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const PaymentsPage(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  /// BOTÓN REUTILIZABLE DEL DASHBOARD
+  /// BOTÓN REUTILIZABLE
   Widget _menuButton(
     BuildContext context,
     String title,
     IconData icon,
     VoidCallback onTap,
   ) {
-
     return InkWell(
       borderRadius: BorderRadius.circular(20),
       onTap: onTap,
@@ -159,7 +207,6 @@ class HomePage extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-
           boxShadow: const [
             BoxShadow(
               color: Colors.black12,
@@ -189,7 +236,6 @@ class HomePage extends StatelessWidget {
                 color: Colors.black87,
               ),
             ),
-
           ],
         ),
       ),
