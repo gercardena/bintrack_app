@@ -11,7 +11,6 @@ class PaymentsPage extends StatefulWidget {
 }
 
 class _PaymentsPageState extends State<PaymentsPage> {
-
   late Future<List<Payment>> _futurePayments;
 
   @override
@@ -22,9 +21,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-
       backgroundColor: Colors.grey[100],
 
       appBar: AppBar(
@@ -38,7 +35,9 @@ class _PaymentsPageState extends State<PaymentsPage> {
         builder: (context, snapshot) {
 
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
           }
 
           if (snapshot.hasError) {
@@ -47,7 +46,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
             );
           }
 
-          final payments = snapshot.data!;
+          final payments = snapshot.data ?? [];
 
           if (payments.isEmpty) {
             return const Center(
@@ -66,6 +65,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
               return Card(
                 elevation: 3,
                 margin: const EdgeInsets.only(bottom: 12),
+
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -76,13 +76,15 @@ class _PaymentsPageState extends State<PaymentsPage> {
                   child: Row(
                     children: [
 
-                      // 🟢 ICONO
+                      // ICONO
                       Container(
                         padding: const EdgeInsets.all(12),
+
                         decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.1),
+                          color: Colors.green.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
+
                         child: const Icon(
                           Icons.payments,
                           color: Colors.green,
@@ -91,7 +93,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
 
                       const SizedBox(width: 12),
 
-                      // 📄 INFO
+                      // INFO
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,7 +119,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
                             const SizedBox(height: 4),
 
                             Text(
-                              "Fecha: ${payment.fecha ?? '---'}",
+                              "Fecha: ${payment.fecha}",
                               style: TextStyle(
                                 color: Colors.grey[600],
                                 fontSize: 12,
@@ -128,7 +130,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
                         ),
                       ),
 
-                      // 💰 MONTO
+                      // MONTO
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
@@ -151,7 +153,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
                           ),
 
                         ],
-                      )
+                      ),
 
                     ],
                   ),
