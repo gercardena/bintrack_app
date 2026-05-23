@@ -25,7 +25,9 @@ class ProductsApi {
     print("PRODUCTS BODY: ${response.body}");
 
     if (response.statusCode == 200) {
+
       final List data = jsonDecode(response.body);
+
       return data.map((e) => Product.fromJson(e)).toList();
     }
 
@@ -33,7 +35,7 @@ class ProductsApi {
   }
 
   // 🔥 CREAR PRODUCTO
-  static Future<bool> crearProducto({
+  static Future<Map<String, dynamic>?> crearProducto({
     required String nombre,
     required String precio,
     String? descripcion,
@@ -47,17 +49,25 @@ class ProductsApi {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
+
       body: jsonEncode({
+
         "nombre": nombre,
         "precio": precio,
         "descripcion": descripcion ?? "",
+
       }),
     );
 
     print("CREATE PRODUCT STATUS: ${response.statusCode}");
     print("CREATE PRODUCT BODY: ${response.body}");
 
-    return response.statusCode == 201;
+    if (response.statusCode == 201) {
+
+      return jsonDecode(response.body);
+    }
+
+    return null;
   }
 
   // 🔥 ELIMINAR PRODUCTO
@@ -93,10 +103,13 @@ class ProductsApi {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
+
       body: jsonEncode({
+
         "nombre": nombre,
         "precio": precio,
         "descripcion": descripcion ?? "",
+
       }),
     );
 

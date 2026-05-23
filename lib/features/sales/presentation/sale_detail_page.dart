@@ -8,6 +8,7 @@ import '../../warehouses/data/services/bin_type_service.dart';
 import '../../warehouses/data/models/bin_type_model.dart';
 
 class SaleDetailPage extends StatefulWidget {
+
   final int saleId;
 
   const SaleDetailPage({
@@ -21,11 +22,14 @@ class SaleDetailPage extends StatefulWidget {
 
 class _SaleDetailPageState extends State<SaleDetailPage> {
 
-  final ProductsService _productsService = ProductsService();
+  final ProductsService _productsService =
+      ProductsService();
 
-  final SalesService _salesService = SalesService();
+  final SalesService _salesService =
+      SalesService();
 
-  final BinTypeService _binTypeService = BinTypeService();
+  final BinTypeService _binTypeService =
+      BinTypeService();
 
   List<Product> productos = [];
 
@@ -81,6 +85,7 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
+
         SnackBar(
           content: Text(e.toString()),
         ),
@@ -97,8 +102,11 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
     if (productoSeleccionado == null) {
 
       ScaffoldMessenger.of(context).showSnackBar(
+
         const SnackBar(
-          content: Text("Selecciona un producto"),
+          content: Text(
+            "Selecciona un producto",
+          ),
         ),
       );
 
@@ -108,8 +116,11 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
     if (binSeleccionado == null) {
 
       ScaffoldMessenger.of(context).showSnackBar(
+
         const SnackBar(
-          content: Text("Selecciona un BIN"),
+          content: Text(
+            "Selecciona un BIN",
+          ),
         ),
       );
 
@@ -119,8 +130,11 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
     if (cantidadController.text.isEmpty) {
 
       ScaffoldMessenger.of(context).showSnackBar(
+
         const SnackBar(
-          content: Text("Ingresa cantidad"),
+          content: Text(
+            "Ingresa cantidad",
+          ),
         ),
       );
 
@@ -149,8 +163,11 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
+
         const SnackBar(
-          content: Text("Item agregado correctamente"),
+          content: Text(
+            "Item agregado correctamente",
+          ),
         ),
       );
 
@@ -161,11 +178,62 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
+
         SnackBar(
-          content: Text(e.toString()),
+          content: Text(
+            e.toString(),
+          ),
         ),
       );
     }
+  }
+
+  // =========================================
+  // 🔥 CONFIRMAR VENTA
+  // =========================================
+
+  Future<void> confirmarVenta() async {
+
+    try {
+
+      await _salesService.confirmSale(
+        widget.saleId,
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+
+        const SnackBar(
+          content: Text(
+            "Venta confirmada correctamente",
+          ),
+        ),
+      );
+
+      Navigator.pop(context, true);
+
+    } catch (e) {
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+
+        SnackBar(
+          content: Text(
+            e.toString(),
+          ),
+        ),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+
+    cantidadController.dispose();
+
+    super.dispose();
   }
 
   // =========================================
@@ -178,7 +246,9 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
     return Scaffold(
 
       appBar: AppBar(
-        title: Text("Venta #${widget.saleId}"),
+        title: Text(
+          "Venta #${widget.saleId}",
+        ),
       ),
 
       body: loading
@@ -199,6 +269,7 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
                 children: [
 
                   Text(
+
                     "Detalle Venta #${widget.saleId}",
 
                     style: const TextStyle(
@@ -214,6 +285,7 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
                   // =====================================
 
                   const Text(
+
                     "Producto",
 
                     style: TextStyle(
@@ -259,6 +331,7 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
                   // =====================================
 
                   const Text(
+
                     "BIN",
 
                     style: TextStyle(
@@ -279,7 +352,7 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
                         value: bin,
 
                         child: Text(
-                          "${bin.nombre}",
+                          bin.nombre,
                         ),
                       );
 
@@ -318,7 +391,7 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
                   const SizedBox(height: 30),
 
                   // =====================================
-                  // BOTON
+                  // BOTON AGREGAR ITEM
                   // =====================================
 
                   SizedBox(
@@ -331,6 +404,26 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
 
                       child: const Text(
                         "Agregar Item",
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // =====================================
+                  // BOTON CONFIRMAR
+                  // =====================================
+
+                  SizedBox(
+
+                    width: double.infinity,
+
+                    child: ElevatedButton(
+
+                      onPressed: confirmarVenta,
+
+                      child: const Text(
+                        "Confirmar Venta",
                       ),
                     ),
                   ),

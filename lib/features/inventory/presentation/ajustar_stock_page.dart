@@ -38,19 +38,50 @@ class _AjustarStockPageState extends State<AjustarStockPage> {
 
     print("ITEM COMPLETO: ${widget.item}");
 
-    // 🔥 SOPORTA INVENTARIO Y PRODUCTOS
-    final int productId = widget.item['product'] ?? widget.item['id'];
+    // =====================================================
+    // 🔥 PRODUCT ID
+    // =====================================================
+
+    final int productId =
+        widget.item['product'] ??
+        widget.item['id'];
+
+    // =====================================================
+    // 🔥 BIN ID
+    // =====================================================
+
+    final int binId =
+        widget.item['bin'] ?? 1;
 
     print("PRODUCT ID: $productId");
+    print("BIN ID: $binId");
 
     setState(() {
       loading = true;
     });
 
-    final ok = await InventoryApi.ajustarStock(
+    // =====================================================
+    // 🔥 CREAR INVENTARIO
+    // =====================================================
+
+    await InventoryApi.crearInventario(
+
       productId: productId,
-      binId: widget.item['bin'] ?? 5,
+      binId: binId,
+      cantidad: 0,
+
+    );
+
+    // =====================================================
+    // 🔥 AJUSTAR STOCK
+    // =====================================================
+
+    final ok = await InventoryApi.ajustarStock(
+
+      productId: productId,
+      binId: binId,
       cantidad: cantidad,
+
     );
 
     setState(() {
@@ -63,7 +94,7 @@ class _AjustarStockPageState extends State<AjustarStockPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Stock actualizado"),
+          content: Text("Stock actualizado correctamente"),
         ),
       );
 
@@ -101,7 +132,8 @@ class _AjustarStockPageState extends State<AjustarStockPage> {
         widget.item['cantidad'] ?? 0;
 
     final bin =
-        widget.item['bin_nombre'] ?? "SIN BIN";
+        widget.item['bin_nombre'] ??
+        "Bin Principal";
 
     return Scaffold(
 
@@ -163,7 +195,9 @@ class _AjustarStockPageState extends State<AjustarStockPage> {
 
               child: ElevatedButton(
 
-                onPressed: loading ? null : guardar,
+                onPressed: loading
+                    ? null
+                    : guardar,
 
                 child: loading
 
