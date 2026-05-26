@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/primary_button.dart';
+
 import '../data/products_api.dart';
 import '../../inventory/data/inventory_api.dart';
 
@@ -221,29 +223,13 @@ class _CrearProductoPageState
               // 🔹 BOTÓN
               // =====================================
 
-              SizedBox(
+              PrimaryButton(
 
-                width: double.infinity,
+                text: "Guardar Producto",
 
-                child: ElevatedButton(
+                isLoading: loading,
 
-                  onPressed:
-                      loading ? null : guardar,
-
-                  child: loading
-
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child:
-                              CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-
-                      : const Text("Guardar"),
-                ),
+                onPressed: guardar,
               ),
             ],
           ),
