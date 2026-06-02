@@ -1,20 +1,18 @@
 import 'package:flutter/material.dart';
 
-import '../theme/colors.dart';
-
 class PrimaryButton extends StatelessWidget {
 
   final String text;
 
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
-  final bool isLoading;
+  final bool loading;
 
   const PrimaryButton({
     super.key,
     required this.text,
     required this.onPressed,
-    this.isLoading = false,
+    this.loading = false,
   });
 
   @override
@@ -24,43 +22,25 @@ class PrimaryButton extends StatelessWidget {
 
       width: double.infinity,
 
-      height: 50,
+      height: 52,
 
       child: ElevatedButton(
 
-        onPressed: isLoading ? null : onPressed,
+        onPressed:
+            loading ? null : onPressed,
 
-        style: ElevatedButton.styleFrom(
-
-          backgroundColor: AppColors.primary,
-
-          foregroundColor: Colors.white,
-
-          elevation: 0,
-
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-
-        child: isLoading
+        child: loading
 
             ? const SizedBox(
-                width: 20,
-                height: 20,
+                height: 22,
+                width: 22,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
                   color: Colors.white,
                 ),
               )
 
-            : Text(
-                text,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+            : Text(text),
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/primary_button.dart';
 
 import '../data/products_api.dart';
@@ -23,7 +24,7 @@ class _CrearProductoPageState
   final precioCtrl = TextEditingController();
   final descripcionCtrl = TextEditingController();
 
-  // 🔥 NUEVO
+  // 🔥 STOCK INICIAL
   final stockCtrl = TextEditingController();
 
   bool loading = false;
@@ -45,7 +46,6 @@ class _CrearProductoPageState
       nombre: nombreCtrl.text,
       precio: precioCtrl.text,
       descripcion: descripcionCtrl.text,
-
     );
 
     // =====================================
@@ -153,13 +153,11 @@ class _CrearProductoPageState
               // 🔹 NOMBRE
               // =====================================
 
-              TextFormField(
+              AppTextField(
 
                 controller: nombreCtrl,
 
-                decoration: const InputDecoration(
-                  labelText: "Nombre",
-                ),
+                label: "Nombre",
 
                 validator: (v) =>
                     v!.isEmpty ? "Requerido" : null,
@@ -171,13 +169,11 @@ class _CrearProductoPageState
               // 🔹 PRECIO
               // =====================================
 
-              TextFormField(
+              AppTextField(
 
                 controller: precioCtrl,
 
-                decoration: const InputDecoration(
-                  labelText: "Precio",
-                ),
+                label: "Precio",
 
                 keyboardType: TextInputType.number,
 
@@ -191,13 +187,11 @@ class _CrearProductoPageState
               // 🔹 DESCRIPCIÓN
               // =====================================
 
-              TextFormField(
+              AppTextField(
 
                 controller: descripcionCtrl,
 
-                decoration: const InputDecoration(
-                  labelText: "Descripción",
-                ),
+                label: "Descripción",
               ),
 
               const SizedBox(height: 16),
@@ -206,13 +200,11 @@ class _CrearProductoPageState
               // 🔥 STOCK INICIAL
               // =====================================
 
-              TextFormField(
+              AppTextField(
 
                 controller: stockCtrl,
 
-                decoration: const InputDecoration(
-                  labelText: "Stock inicial",
-                ),
+                label: "Stock inicial",
 
                 keyboardType: TextInputType.number,
               ),
@@ -225,9 +217,9 @@ class _CrearProductoPageState
 
               PrimaryButton(
 
-                text: "Guardar Producto",
+                text: "Guardar",
 
-                isLoading: loading,
+                loading: loading,
 
                 onPressed: guardar,
               ),

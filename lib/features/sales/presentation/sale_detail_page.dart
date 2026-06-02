@@ -1,5 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/spacing.dart';
+
+import '../../../core/widgets/app_loader.dart';
+import '../../../core/widgets/app_text_field.dart';
+import '../../../core/widgets/primary_button.dart';
+import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/app_section_title.dart';
+
 import '../data/sales_service.dart';
 
 import '../../products/data/products_service.dart';
@@ -17,10 +25,12 @@ class SaleDetailPage extends StatefulWidget {
   });
 
   @override
-  State<SaleDetailPage> createState() => _SaleDetailPageState();
+  State<SaleDetailPage> createState() =>
+      _SaleDetailPageState();
 }
 
-class _SaleDetailPageState extends State<SaleDetailPage> {
+class _SaleDetailPageState
+    extends State<SaleDetailPage> {
 
   final ProductsService _productsService =
       ProductsService();
@@ -43,6 +53,8 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
       TextEditingController();
 
   bool loading = true;
+
+  bool saving = false;
 
   @override
   void initState() {
@@ -141,6 +153,10 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
       return;
     }
 
+    setState(() {
+      saving = true;
+    });
+
     try {
 
       await _salesService.addItemToSale(
@@ -185,6 +201,15 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
           ),
         ),
       );
+
+    } finally {
+
+      if (mounted) {
+
+        setState(() {
+          saving = false;
+        });
+      }
     }
   }
 
@@ -193,6 +218,10 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
   // =========================================
 
   Future<void> confirmarVenta() async {
+
+    setState(() {
+      saving = true;
+    });
 
     try {
 
@@ -225,6 +254,15 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
           ),
         ),
       );
+
+    } finally {
+
+      if (mounted) {
+
+        setState(() {
+          saving = false;
+        });
+      }
     }
   }
 
@@ -253,13 +291,13 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
 
       body: loading
 
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
+          ? const AppLoader()
 
           : SingleChildScrollView(
 
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(
+                AppSpacing.screenPadding,
+              ),
 
               child: Column(
 
@@ -272,159 +310,174 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
 
                     "Detalle Venta #${widget.saleId}",
 
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: Theme.of(context)
+                        .textTheme
+                        .headlineMedium,
                   ),
 
-                  const SizedBox(height: 30),
+                  const SizedBox(
+                    height: AppSpacing.xl,
+                  ),
 
                   // =====================================
                   // PRODUCTO
                   // =====================================
 
-                  const Text(
+                  const AppSectionTitle(
+                    title: "Producto",
+                  ),
 
-                    "Producto",
+                  const SizedBox(
+                    height: AppSpacing.sm,
+                  ),
 
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
+                  AppCard(
+
+                    child: DropdownButtonFormField<Product>(
+
+                      value: productoSeleccionado,
+
+                      items: productos.map((producto) {
+
+                        return DropdownMenuItem<Product>(
+
+                          value: producto,
+
+                          child: Text(
+                            "${producto.nombre} - \$${producto.precio}",
+                          ),
+                        );
+
+                      }).toList(),
+
+                      onChanged: (value) {
+
+                        setState(() {
+                          productoSeleccionado = value;
+                        });
+                      },
+
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                      ),
                     ),
                   ),
 
-                  const SizedBox(height: 10),
-
-                  DropdownButtonFormField<Product>(
-
-                    value: productoSeleccionado,
-
-                    items: productos.map((producto) {
-
-                      return DropdownMenuItem<Product>(
-
-                        value: producto,
-
-                        child: Text(
-                          "${producto.nombre} - \$${producto.precio}",
-                        ),
-                      );
-
-                    }).toList(),
-
-                    onChanged: (value) {
-
-                      setState(() {
-                        productoSeleccionado = value;
-                      });
-                    },
-
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                    ),
+                  const SizedBox(
+                    height: AppSpacing.lg,
                   ),
-
-                  const SizedBox(height: 20),
 
                   // =====================================
                   // BIN
                   // =====================================
 
-                  const Text(
+                  const AppSectionTitle(
+                    title: "BIN",
+                  ),
 
-                    "BIN",
+                  const SizedBox(
+                    height: AppSpacing.sm,
+                  ),
 
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
+                  AppCard(
+
+                    child: DropdownButtonFormField<BinType>(
+
+                      value: binSeleccionado,
+
+                      items:
+                          bins.map<DropdownMenuItem<BinType>>((bin) {
+
+                        return DropdownMenuItem<BinType>(
+
+                          value: bin,
+
+                          child: Text(
+                            bin.nombre,
+                          ),
+                        );
+
+                      }).toList(),
+
+                      onChanged: (value) {
+
+                        setState(() {
+                          binSeleccionado = value;
+                        });
+                      },
+
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                      ),
                     ),
                   ),
 
-                  const SizedBox(height: 10),
+                  const SizedBox(
+                    height: AppSpacing.lg,
+                  ),
 
-                  DropdownButtonFormField<BinType>(
+                  // =====================================
+                  // CANTIDAD Y ACCIONES
+                  // =====================================
 
-                    value: binSeleccionado,
+                  const AppSectionTitle(
+                    title: "Cantidad",
+                  ),
 
-                    items: bins.map<DropdownMenuItem<BinType>>((bin) {
+                  const SizedBox(
+                    height: AppSpacing.sm,
+                  ),
 
-                      return DropdownMenuItem<BinType>(
+                  AppCard(
 
-                        value: bin,
+                    child: Column(
 
-                        child: Text(
-                          bin.nombre,
+                      children: [
+
+                        AppTextField(
+
+                          controller: cantidadController,
+
+                          label: "Cantidad",
+
+                          keyboardType:
+                              TextInputType.number,
                         ),
-                      );
 
-                    }).toList(),
+                        const SizedBox(
+                          height: AppSpacing.xl,
+                        ),
 
-                    onChanged: (value) {
+                        // ===============================
+                        // BOTON AGREGAR ITEM
+                        // ===============================
 
-                      setState(() {
-                        binSeleccionado = value;
-                      });
-                    },
+                        PrimaryButton(
 
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
+                          text: "Agregar Item",
 
-                  const SizedBox(height: 20),
+                          loading: saving,
 
-                  // =====================================
-                  // CANTIDAD
-                  // =====================================
+                          onPressed: agregarItem,
+                        ),
 
-                  TextField(
+                        const SizedBox(
+                          height: AppSpacing.md,
+                        ),
 
-                    controller: cantidadController,
+                        // ===============================
+                        // BOTON CONFIRMAR
+                        // ===============================
 
-                    keyboardType: TextInputType.number,
+                        PrimaryButton(
 
-                    decoration: const InputDecoration(
-                      labelText: "Cantidad",
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
+                          text: "Confirmar Venta",
 
-                  const SizedBox(height: 30),
+                          loading: saving,
 
-                  // =====================================
-                  // BOTON AGREGAR ITEM
-                  // =====================================
-
-                  SizedBox(
-
-                    width: double.infinity,
-
-                    child: ElevatedButton(
-
-                      onPressed: agregarItem,
-
-                      child: const Text(
-                        "Agregar Item",
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // =====================================
-                  // BOTON CONFIRMAR
-                  // =====================================
-
-                  SizedBox(
-
-                    width: double.infinity,
-
-                    child: ElevatedButton(
-
-                      onPressed: confirmarVenta,
-
-                      child: const Text(
-                        "Confirmar Venta",
-                      ),
+                          onPressed: confirmarVenta,
+                        ),
+                      ],
                     ),
                   ),
                 ],

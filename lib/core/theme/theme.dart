@@ -4,9 +4,7 @@ import 'colors.dart';
 import 'typography.dart';
 
 class AppTheme {
-
   static ThemeData lightTheme = ThemeData(
-
     useMaterial3: true,
 
     // =================================
@@ -17,14 +15,10 @@ class AppTheme {
 
     scaffoldBackgroundColor: AppColors.background,
 
-    colorScheme: ColorScheme.light(
-
+    colorScheme: const ColorScheme.light(
       primary: AppColors.primary,
-
       secondary: AppColors.primaryLight,
-
       surface: AppColors.surface,
-
       error: AppColors.error,
     ),
 
@@ -33,13 +27,9 @@ class AppTheme {
     // =================================
 
     appBarTheme: const AppBarTheme(
-
       backgroundColor: AppColors.primary,
-
       foregroundColor: Colors.white,
-
       elevation: 0,
-
       centerTitle: true,
     ),
 
@@ -48,24 +38,19 @@ class AppTheme {
     // =================================
 
     cardTheme: CardThemeData(
-
-    color: AppColors.surface,
-
-    elevation: 1,
-
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(12),
+      color: AppColors.surface,
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
     ),
-  ),
 
     // =================================
     // INPUTS
     // =================================
 
     inputDecorationTheme: InputDecorationTheme(
-
       filled: true,
-
       fillColor: AppColors.surface,
 
       contentPadding: const EdgeInsets.symmetric(
@@ -74,27 +59,21 @@ class AppTheme {
       ),
 
       border: OutlineInputBorder(
-
         borderRadius: BorderRadius.circular(12),
-
         borderSide: const BorderSide(
           color: AppColors.border,
         ),
       ),
 
       enabledBorder: OutlineInputBorder(
-
         borderRadius: BorderRadius.circular(12),
-
         borderSide: const BorderSide(
           color: AppColors.border,
         ),
       ),
 
       focusedBorder: OutlineInputBorder(
-
         borderRadius: BorderRadius.circular(12),
-
         borderSide: const BorderSide(
           color: AppColors.primary,
           width: 2,
@@ -107,13 +86,9 @@ class AppTheme {
     // =================================
 
     elevatedButtonTheme: ElevatedButtonThemeData(
-
       style: ElevatedButton.styleFrom(
-
         backgroundColor: AppColors.primary,
-
         foregroundColor: Colors.white,
-
         elevation: 0,
 
         padding: const EdgeInsets.symmetric(
@@ -137,9 +112,13 @@ class AppTheme {
 
       headlineMedium: AppTypography.heading2,
 
-      bodyLarge: AppTypography.body,
+      headlineSmall: AppTypography.heading3,
 
-      bodyMedium: AppTypography.caption,
+      bodyLarge: AppTypography.bodyLarge,
+
+      bodyMedium: AppTypography.bodyMedium,
+
+      bodySmall: AppTypography.bodySmall,
     ),
   );
 }
