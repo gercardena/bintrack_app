@@ -107,13 +107,31 @@ class SalesService {
   // =========================================
   Future<void> generateInvoice(int saleId) async {
 
-    final response = await ApiService.post("/facturas/$saleId/generar/");
+  final response = await ApiService.post(
+    "/facturas/$saleId/generar/",
+  );
 
-    print("INVOICE STATUS: ${response.statusCode}");
-    print("INVOICE BODY: ${response.body}");
+  print("INVOICE STATUS: ${response.statusCode}");
+  print("INVOICE BODY: ${response.body}");
 
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception("Solo se puede facturar una venta pagada");
-    }
+  if (response.statusCode == 200 ||
+      response.statusCode == 201) {
+    return;
   }
+
+  try {
+
+    final data = jsonDecode(response.body);
+
+    throw Exception(
+      data["error"] ?? "Error generando factura",
+    );
+
+  } catch (_) {
+
+    throw Exception(
+      "Error generando factura",
+    );
+  }
+}
 }
