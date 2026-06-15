@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+
 import '../data/token_storage.dart';
+import '../data/auth_api.dart';
 
 import '../../home/presentation/home_page.dart';
 import 'login_page.dart';
@@ -19,19 +21,42 @@ class _AuthGateState extends State<AuthGate> {
   }
 
   Future<void> _checkAuth() async {
-    final token = await TokenStorage.getAccessToken();
+    final accessToken =
+        await TokenStorage.getAccessToken();
+
+    if (accessToken == null) {
+      if (!mounted) return;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const LoginPage(),
+        ),
+      );
+
+      return;
+    }
+
+    // 🔥 Intentar renovar token automáticamente
+
+    final refreshedToken =
+        await AuthApi.refreshToken();
 
     if (!mounted) return;
 
-    if (token == null) {
+    if (refreshedToken != null) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const LoginPage()),
+        MaterialPageRoute(
+          builder: (_) => const HomePage(),
+        ),
       );
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const HomePage()),
+        MaterialPageRoute(
+          builder: (_) => const LoginPage(),
+        ),
       );
     }
   }
@@ -39,7 +64,9 @@ class _AuthGateState extends State<AuthGate> {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      body: Center(child: CircularProgressIndicator()),
+      body: Center(
+        child: CircularProgressIndicator(),
+      ),
     );
   }
 }

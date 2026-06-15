@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+
 import '../../clientes/presentation/clientes_page.dart';
 import '../../products/presentation/products_page.dart';
 import '../../inventory/presentation/inventory_page.dart';
 import '../../warehouses/presentation/warehouses_page.dart';
 import '../../sales/presentation/sales_page.dart';
-import '../../sales/presentation/create_sale_page.dart'; // 🔥 IMPORTANTE
+import '../../sales/presentation/create_sale_page.dart';
 import '../../invoices/presentation/invoices_page.dart';
 import '../../payments/presentation/payments_page.dart';
 
@@ -27,7 +28,7 @@ class HomePage extends StatelessWidget {
         child: Column(
           children: [
 
-            // 🔥 BOTÓN PRINCIPAL → NUEVA VENTA
+            // NUEVA VENTA
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -48,7 +49,7 @@ class HomePage extends StatelessWidget {
 
             const SizedBox(height: 10),
 
-            // 🔥 ACCESO RÁPIDO INVENTARIO
+            // INVENTARIO RÁPIDO
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -70,7 +71,6 @@ class HomePage extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // 🔥 GRID ORIGINAL (NO SE ROMPE)
             Expanded(
               child: GridView.count(
                 crossAxisCount: 2,
@@ -79,55 +79,10 @@ class HomePage extends StatelessWidget {
 
                 children: [
 
-                  /// CLIENTES
+                  // ① TIPOS DE ENVASE
                   _menuButton(
                     context,
-                    "Clientes",
-                    Icons.people,
-                    () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const ClientesPage(),
-                        ),
-                      );
-                    },
-                  ),
-
-                  /// PRODUCTOS
-                  _menuButton(
-                    context,
-                    "Productos",
-                    Icons.inventory,
-                    () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const ProductsPage(),
-                        ),
-                      );
-                    },
-                  ),
-
-                  /// INVENTARIO
-                  _menuButton(
-                    context,
-                    "Inventario",
-                    Icons.storage,
-                    () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const InventoryPage(),
-                        ),
-                      );
-                    },
-                  ),
-
-                  /// BINS
-                  _menuButton(
-                    context,
-                    "Bins",
+                    "① Tipos de Envase",
                     Icons.warehouse,
                     () {
                       Navigator.push(
@@ -139,10 +94,55 @@ class HomePage extends StatelessWidget {
                     },
                   ),
 
-                  /// VENTAS
+                  // ② PRODUCTOS
                   _menuButton(
                     context,
-                    "Ventas",
+                    "② Productos",
+                    Icons.inventory,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ProductsPage(),
+                        ),
+                      );
+                    },
+                  ),
+
+                  // ③ INVENTARIO
+                  _menuButton(
+                    context,
+                    "③ Inventario",
+                    Icons.storage,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const InventoryPage(),
+                        ),
+                      );
+                    },
+                  ),
+
+                  // ④ CLIENTES
+                  _menuButton(
+                    context,
+                    "④ Clientes",
+                    Icons.people,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ClientesPage(),
+                        ),
+                      );
+                    },
+                  ),
+
+                  // ⑤ VENTAS
+                  _menuButton(
+                    context,
+                    "⑤ Ventas",
                     Icons.point_of_sale,
                     () {
                       Navigator.push(
@@ -154,10 +154,10 @@ class HomePage extends StatelessWidget {
                     },
                   ),
 
-                  /// FACTURAS
+                  // ⑥ FACTURAS
                   _menuButton(
                     context,
-                    "Facturas",
+                    "⑥ Facturas",
                     Icons.receipt_long,
                     () {
                       Navigator.push(
@@ -169,10 +169,10 @@ class HomePage extends StatelessWidget {
                     },
                   ),
 
-                  /// PAGOS
+                  // ⑦ PAGOS
                   _menuButton(
                     context,
-                    "Pagos",
+                    "⑦ Pagos",
                     Icons.payments,
                     () {
                       Navigator.push(
@@ -192,7 +192,6 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  /// BOTÓN REUTILIZABLE
   Widget _menuButton(
     BuildContext context,
     String title,
@@ -230,6 +229,7 @@ class HomePage extends StatelessWidget {
 
             Text(
               title,
+              textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
