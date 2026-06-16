@@ -39,4 +39,37 @@ class BinMovementService {
 
   }
 
+  Future<bool> createMovement({
+    required int cliente,
+    required int binType,
+    required String tipoMovimiento,
+    required int cantidad,
+    required double depositoPagado,
+    String? referencia,
+  }) async {
+
+    final token = await TokenStorage.getAccessToken();
+
+    final response = await http.post(
+      Uri.parse("$baseUrl/bins/movements/"),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
+      },
+      body: jsonEncode({
+        "cliente": cliente,
+        "bin_type": binType,
+        "tipo_movimiento": tipoMovimiento,
+        "cantidad": cantidad,
+        "deposito_pagado": depositoPagado,
+        "referencia": referencia ?? "",
+      }),
+    );
+
+    print("CREATE MOVEMENT STATUS: ${response.statusCode}");
+    print("CREATE MOVEMENT BODY: ${response.body}");
+
+    return response.statusCode == 201;
+  }
+
 }

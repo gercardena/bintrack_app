@@ -38,6 +38,26 @@ class _BinMovementsPageState extends State<BinMovementsPage> {
 
       appBar: AppBar(
         title: const Text("Movimientos de Bins"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () async {
+
+              final ok = await service.createMovement(
+                cliente: 3,
+                binType: 3,
+                tipoMovimiento: "prestamo",
+                cantidad: 10,
+                depositoPagado: 5000,
+                referencia: "Prueba Flutter",
+              );
+
+              print("MOVEMENT CREATED: $ok");
+
+              await loadMovements();
+              },
+            ),
+          ],
       ),
 
       body: movements.isEmpty
