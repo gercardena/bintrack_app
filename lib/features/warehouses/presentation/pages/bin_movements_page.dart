@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../data/services/bin_movement_service.dart';
 import '../../data/models/bin_movement_model.dart';
+import 'create_bin_movement_page.dart';
 
 class BinMovementsPage extends StatefulWidget {
   const BinMovementsPage({super.key});
@@ -43,22 +44,22 @@ class _BinMovementsPageState extends State<BinMovementsPage> {
             icon: const Icon(Icons.add),
             onPressed: () async {
 
-              final ok = await service.createMovement(
-                cliente: 3,
-                binType: 3,
-                tipoMovimiento: "prestamo",
-                cantidad: 10,
-                depositoPagado: 5000,
-                referencia: "Prueba Flutter",
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      const CreateBinMovementPage(),
+                ),
               );
 
-              print("MOVEMENT CREATED: $ok");
+              if (result == true) {
+                await loadMovements();
+              }
 
-              await loadMovements();
-              },
-            ),
-          ],
-      ),
+            },
+        ),
+      ],
+    ),
 
       body: movements.isEmpty
           ? const Center(child: CircularProgressIndicator())
