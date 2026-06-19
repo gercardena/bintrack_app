@@ -80,7 +80,10 @@ class _BinBalancePageState extends State<BinBalancePage> {
         final colorSaldo = b.saldo > 0 ? Colors.red : Colors.green;
 
         return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          margin: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 6,
+          ),
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
@@ -96,14 +99,35 @@ class _BinBalancePageState extends State<BinBalancePage> {
                   ),
                 ),
 
+                const SizedBox(height: 4),
+
+                // 📦 TIPO DE ENVASE
+                Text(
+                  b.binNombre,
+                  style: const TextStyle(
+                    color: Colors.blue,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+
+                Text(
+                  "Valor depósito: \$${b.valorDeposito}",
+                ),
+
                 const SizedBox(height: 8),
 
                 // 📊 DATOS
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment:
+                      MainAxisAlignment.spaceBetween,
                   children: [
-                    Text("Entregados: ${b.entregados}"),
-                    Text("Devueltos: ${b.devueltos}"),
+                    Text(
+                      "Entregados: ${b.entregados}",
+                    ),
+                    Text(
+                      "Devueltos: ${b.devueltos}",
+                    ),
                   ],
                 ),
 
@@ -120,13 +144,12 @@ class _BinBalancePageState extends State<BinBalancePage> {
                 const SizedBox(height: 6),
 
                 Text(
-                  "Depósito: \$${b.depositoPendiente}",
+                  "Depósito pendiente: \$${b.depositoPendiente}",
                   style: const TextStyle(
                     color: Colors.green,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-
               ],
             ),
           ),
