@@ -10,8 +10,8 @@ import '../../../core/widgets/primary_button.dart';
 
 import '../../auth/presentation/protected_page.dart';
 
-import '../data/sales_service.dart';
-import '../models/sale_model.dart';
+import '../data/services/sale_service.dart';
+import '../data/models/sale_model.dart';
 
 import 'create_sale_page.dart';
 

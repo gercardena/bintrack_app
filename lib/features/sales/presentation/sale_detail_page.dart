@@ -8,7 +8,7 @@ import '../../../core/widgets/primary_button.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_section_title.dart';
 
-import '../data/sales_service.dart';
+import '../data/services/sale_service.dart';
 
 import '../../products/data/products_service.dart';
 

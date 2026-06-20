@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../clientes/data/clients_service.dart';
 import '../../clientes/models/client_model.dart';
 
-import '../data/sales_service.dart';
+import '../data/services/sale_service.dart';
 
 import 'sale_detail_page.dart';
 

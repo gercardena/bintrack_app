@@ -1,6 +1,6 @@
 import 'dart:convert';
 import '../models/sale_model.dart';
-import '../../../core/services/api_service.dart';
+import '../../../../core/services/api_service.dart';
 
 class SalesService {
 
@@ -23,7 +23,7 @@ class SalesService {
   }
 
   // =========================================
-  // 🔥 CREAR VENTA (🔥 AHORA SÍ DENTRO DE LA CLASE)
+  // 🔥 CREAR VENTA
   // =========================================
   Future<int> createSale({
     required int clienteId,
@@ -86,6 +86,9 @@ class SalesService {
   Future<void> confirmSale(int id) async {
     final response = await ApiService.post("/ventas/sales/$id/confirm/");
 
+    print("CONFIRM SALE STATUS: ${response.statusCode}");
+    print("CONFIRM SALE BODY: ${response.body}");
+
     if (response.statusCode != 200) {
       throw Exception("Error al confirmar venta");
     }
@@ -97,6 +100,9 @@ class SalesService {
   Future<void> paySale(int id) async {
     final response = await ApiService.post("/ventas/sales/$id/pay/");
 
+    print("PAY SALE STATUS: ${response.statusCode}");
+    print("PAY SALE BODY: ${response.body}");
+
     if (response.statusCode != 200) {
       throw Exception("Error al pagar venta");
     }
@@ -107,31 +113,31 @@ class SalesService {
   // =========================================
   Future<void> generateInvoice(int saleId) async {
 
-  final response = await ApiService.post(
-    "/facturas/$saleId/generar/",
-  );
-
-  print("INVOICE STATUS: ${response.statusCode}");
-  print("INVOICE BODY: ${response.body}");
-
-  if (response.statusCode == 200 ||
-      response.statusCode == 201) {
-    return;
-  }
-
-  try {
-
-    final data = jsonDecode(response.body);
-
-    throw Exception(
-      data["error"] ?? "Error generando factura",
+    final response = await ApiService.post(
+      "/facturas/$saleId/generar/",
     );
 
-  } catch (_) {
+    print("INVOICE STATUS: ${response.statusCode}");
+    print("INVOICE BODY: ${response.body}");
 
-    throw Exception(
-      "Error generando factura",
-    );
+    if (response.statusCode == 200 ||
+        response.statusCode == 201) {
+      return;
+    }
+
+    try {
+
+      final data = jsonDecode(response.body);
+
+      throw Exception(
+        data["error"] ?? "Error generando factura",
+      );
+
+    } catch (_) {
+
+      throw Exception(
+        "Error generando factura",
+      );
+    }
   }
-}
 }
