@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../clientes/presentation/clientes_page.dart';
 import '../../products/presentation/products_page.dart';
-import '../../inventory/presentation/inventory_page.dart';
+import '../../inventory/presentation/pages/inventory_page.dart';
 import '../../warehouses/presentation/warehouses_page.dart';
 import '../../sales/presentation/sales_page.dart';
 import '../../sales/presentation/create_sale_page.dart';
