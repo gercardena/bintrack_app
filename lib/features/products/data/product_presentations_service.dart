@@ -101,4 +101,32 @@ class ProductPresentationsService {
       );
     }
   }
+  Future<ProductPresentation> createPresentation({
+  required int productId,
+  required int binTypeId,
+  required double precio,
+}) async {
+  final response = await ApiService.post(
+    "/productos/presentations/",
+    body: {
+      "product": productId,
+      "bin_type": binTypeId,
+      "precio": precio.toStringAsFixed(2),
+      "activo": true,
+    },
+  );
+
+  if (response.statusCode != 201) {
+    throw Exception(
+      "Error creando presentación: ${response.body}",
+    );
+  }
+
+  final data = jsonDecode(response.body);
+
+  return ProductPresentation.fromJson(
+    data as Map<String, dynamic>,
+  );
+}
+
 }
