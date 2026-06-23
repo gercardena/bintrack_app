@@ -1,5 +1,4 @@
 class Inventory {
-
   final int binTypeId;
   final String binNombre;
 
@@ -8,6 +7,8 @@ class Inventory {
   final int devoluciones;
   final int bajas;
 
+  final int enClientes;
+  final int llenos;
   final int disponible;
 
   Inventory({
@@ -17,25 +18,31 @@ class Inventory {
     required this.prestamos,
     required this.devoluciones,
     required this.bajas,
+    required this.enClientes,
+    required this.llenos,
     required this.disponible,
   });
 
   factory Inventory.fromJson(
     Map<String, dynamic> json,
   ) {
+    int parseInt(dynamic value) {
+      return int.tryParse(value.toString()) ?? 0;
+    }
 
     return Inventory(
-      binTypeId: json["bin_type_id"],
-      binNombre: json["bin_nombre"],
-
-      entradas: json["entradas"],
-      prestamos: json["prestamos"],
-      devoluciones: json["devoluciones"],
-      bajas: json["bajas"],
-
-      disponible: json["disponible"],
+      binTypeId: parseInt(json["bin_type_id"]),
+      binNombre:
+          (json["bin_nombre"] ?? "").toString(),
+      entradas: parseInt(json["entradas"]),
+      prestamos: parseInt(json["prestamos"]),
+      devoluciones: parseInt(
+        json["devoluciones"],
+      ),
+      bajas: parseInt(json["bajas"]),
+      enClientes: parseInt(json["en_clientes"]),
+      llenos: parseInt(json["llenos"]),
+      disponible: parseInt(json["disponible"]),
     );
-
   }
-
 }

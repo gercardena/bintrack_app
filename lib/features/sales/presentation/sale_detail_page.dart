@@ -10,6 +10,7 @@ import '../../../core/widgets/primary_button.dart';
 import '../../products/data/models/product_presentation_model.dart';
 import '../../products/data/product_presentations_service.dart';
 
+import '../data/models/sale_model.dart';
 import '../data/services/sale_service.dart';
 
 class SaleDetailPage extends StatefulWidget {
@@ -38,6 +39,7 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
   List<ProductPresentation> presentations = [];
 
   ProductPresentation? presentationSeleccionada;
+  Sale? venta;
 
   bool loading = true;
   bool saving = false;
@@ -45,17 +47,22 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
   @override
   void initState() {
     super.initState();
-    cargarPresentaciones();
+    cargarDatos();
   }
 
-  Future<void> cargarPresentaciones() async {
+  Future<void> cargarDatos() async {
     try {
-      final data = await _presentationsService.getAll();
+      final presentationsData =
+          await _presentationsService.getAll();
+
+      final saleData = await _salesService.getSale(
+        widget.saleId,
+      );
 
       if (!mounted) return;
 
       setState(() {
-        presentations = data
+        presentations = presentationsData
             .where(
               (presentation) =>
                   presentation.activo &&
@@ -63,6 +70,7 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
             )
             .toList();
 
+        venta = saleData;
         loading = false;
       });
     } catch (e) {
@@ -75,11 +83,23 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            "Error cargando presentaciones: $e",
+            "Error cargando venta: $e",
           ),
         ),
       );
     }
+  }
+
+  Future<void> recargarVenta() async {
+    final saleData = await _salesService.getSale(
+      widget.saleId,
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      venta = saleData;
+    });
   }
 
   Future<void> agregarItem() async {
@@ -138,9 +158,15 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
         cantidad: cantidad,
       );
 
+      await recargarVenta();
+
       if (!mounted) return;
 
       cantidadController.clear();
+
+      setState(() {
+        presentationSeleccionada = null;
+      });
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -167,6 +193,53 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
   }
 
   Future<void> confirmarVenta() async {
+    final currentSale = venta;
+
+    if (currentSale == null ||
+        currentSale.items.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Agrega al menos un producto",
+          ),
+        ),
+      );
+
+      return;
+    }
+
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text(
+            "Confirmar venta",
+          ),
+          content: Text(
+            "Se descontará el stock y se registrarán "
+            "los envases entregados al cliente.\n\n"
+            "Total: \$${precioFormateado(currentSale.total)}",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, false);
+              },
+              child: const Text("Volver"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, true);
+              },
+              child: const Text("Confirmar"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmar != true || !mounted) return;
+
     setState(() {
       saving = true;
     });
@@ -208,6 +281,118 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
     return precio.toStringAsFixed(0);
   }
 
+  Widget construirArticulos() {
+    final items = venta?.items ?? [];
+
+    if (items.isEmpty) {
+      return const AppCard(
+        child: Text(
+          "Todavía no se han agregado productos.",
+        ),
+      );
+    }
+
+    return Column(
+      children: items.map((item) {
+        return Padding(
+          padding: const EdgeInsets.only(
+            bottom: AppSpacing.sm,
+          ),
+          child: AppCard(
+            child: Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "${item.productNombre} + "
+                  "${item.binNombre}",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(
+                  height: AppSpacing.sm,
+                ),
+                Text(
+                  "Cantidad: ${item.cantidad}",
+                ),
+                Text(
+                  "Precio unitario: "
+                  "\$${precioFormateado(item.precioUnitario)}",
+                ),
+                Text(
+                  "Subtotal: "
+                  "\$${precioFormateado(item.subtotal)}",
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget construirTotales() {
+    final currentSale = venta;
+
+    if (currentSale == null ||
+        currentSale.items.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return AppCard(
+      child: Column(
+        children: [
+          filaTotal(
+            "Subtotal",
+            currentSale.subtotal,
+          ),
+          const SizedBox(
+            height: AppSpacing.sm,
+          ),
+          filaTotal(
+            "IVA",
+            currentSale.iva,
+          ),
+          const Divider(),
+          filaTotal(
+            "Total",
+            currentSale.total,
+            destacado: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget filaTotal(
+    String etiqueta,
+    double valor, {
+    bool destacado = false,
+  }) {
+    final style = TextStyle(
+      fontWeight: destacado
+          ? FontWeight.bold
+          : FontWeight.normal,
+      fontSize: destacado ? 18 : 14,
+    );
+
+    return Row(
+      mainAxisAlignment:
+          MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          etiqueta,
+          style: style,
+        ),
+        Text(
+          "\$${precioFormateado(valor)}",
+          style: style,
+        ),
+      ],
+    );
+  }
+
   @override
   void dispose() {
     cantidadController.dispose();
@@ -219,7 +404,7 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "Venta #${widget.saleId}",
+          "Venta #${venta?.numero ?? widget.saleId}",
         ),
       ),
       body: loading
@@ -232,17 +417,8 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
                 crossAxisAlignment:
                     CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    "Detalle Venta #${widget.saleId}",
-                    style: Theme.of(context)
-                        .textTheme
-                        .headlineMedium,
-                  ),
-                  const SizedBox(
-                    height: AppSpacing.xl,
-                  ),
                   const AppSectionTitle(
-                    title: "Presentación",
+                    title: "Agregar producto",
                   ),
                   const SizedBox(
                     height: AppSpacing.sm,
@@ -292,13 +468,7 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
                           ),
                   ),
                   const SizedBox(
-                    height: AppSpacing.lg,
-                  ),
-                  const AppSectionTitle(
-                    title: "Cantidad",
-                  ),
-                  const SizedBox(
-                    height: AppSpacing.sm,
+                    height: AppSpacing.md,
                   ),
                   AppCard(
                     child: Column(
@@ -311,7 +481,7 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
                               TextInputType.number,
                         ),
                         const SizedBox(
-                          height: AppSpacing.xl,
+                          height: AppSpacing.lg,
                         ),
                         PrimaryButton(
                           text: "Agregar producto",
@@ -321,16 +491,30 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
                                   ? null
                                   : agregarItem,
                         ),
-                        const SizedBox(
-                          height: AppSpacing.md,
-                        ),
-                        PrimaryButton(
-                          text: "Confirmar venta",
-                          loading: saving,
-                          onPressed: confirmarVenta,
-                        ),
                       ],
                     ),
+                  ),
+                  const SizedBox(
+                    height: AppSpacing.xl,
+                  ),
+                  const AppSectionTitle(
+                    title: "Artículos de la venta",
+                  ),
+                  const SizedBox(
+                    height: AppSpacing.sm,
+                  ),
+                  construirArticulos(),
+                  const SizedBox(
+                    height: AppSpacing.lg,
+                  ),
+                  construirTotales(),
+                  const SizedBox(
+                    height: AppSpacing.xl,
+                  ),
+                  PrimaryButton(
+                    text: "Confirmar venta",
+                    loading: saving,
+                    onPressed: confirmarVenta,
                   ),
                 ],
               ),

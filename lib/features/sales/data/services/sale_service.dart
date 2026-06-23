@@ -32,6 +32,28 @@ class SalesService {
         .toList();
   }
 
+  Future<Sale> getSale(int id) async {
+    final response = await ApiService.get(
+      "/ventas/sales/$id/",
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        "Error cargando venta: ${response.body}",
+      );
+    }
+
+    final decoded = jsonDecode(response.body);
+
+    if (decoded is! Map<String, dynamic>) {
+      throw Exception(
+        "Respuesta inválida al cargar la venta",
+      );
+    }
+
+    return Sale.fromJson(decoded);
+  }
+
   Future<int> createSale({
     required int clienteId,
   }) async {
@@ -49,9 +71,16 @@ class SalesService {
       );
     }
 
-    final data = jsonDecode(response.body);
+    final decoded = jsonDecode(response.body);
 
-    return data["id"] as int;
+    if (decoded is! Map<String, dynamic> ||
+        decoded["id"] is! int) {
+      throw Exception(
+        "Respuesta inválida al crear la venta",
+      );
+    }
+
+    return decoded["id"] as int;
   }
 
   Future<void> addItemToSale({
