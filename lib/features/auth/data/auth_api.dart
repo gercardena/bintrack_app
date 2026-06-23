@@ -26,9 +26,7 @@ class AuthApi {
       }),
     );
 
-    print("LOGIN STATUS: ${response.statusCode}");
-    print("LOGIN BODY: ${response.body}");
-
+    
     if (response.statusCode == 200) {
 
       final data = jsonDecode(response.body);
@@ -71,9 +69,6 @@ class AuthApi {
         'refresh': refresh,
       }),
     );
-
-    print("REFRESH STATUS: ${response.statusCode}");
-    print("REFRESH BODY: ${response.body}");
 
     if (response.statusCode == 200) {
 

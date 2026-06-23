@@ -4,9 +4,7 @@ import '../../../core/services/api_service.dart';
 import 'models/product_presentation_model.dart';
 
 class ProductPresentationsService {
-  Future<List<ProductPresentation>> getByProduct(
-    int productId,
-  ) async {
+  Future<List<ProductPresentation>> getAll() async {
     final response = await ApiService.get(
       "/productos/presentations/",
     );
@@ -32,11 +30,48 @@ class ProductPresentationsService {
             item as Map<String, dynamic>,
           ),
         )
+        .toList();
+  }
+
+  Future<List<ProductPresentation>> getByProduct(
+    int productId,
+  ) async {
+    final presentations = await getAll();
+
+    return presentations
         .where(
           (presentation) =>
               presentation.productId == productId,
         )
         .toList();
+  }
+
+  Future<ProductPresentation> createPresentation({
+    required int productId,
+    required int binTypeId,
+    required double precio,
+  }) async {
+    final response = await ApiService.post(
+      "/productos/presentations/",
+      body: {
+        "product": productId,
+        "bin_type": binTypeId,
+        "precio": precio.toStringAsFixed(2),
+        "activo": true,
+      },
+    );
+
+    if (response.statusCode != 201) {
+      throw Exception(
+        "Error creando presentación: ${response.body}",
+      );
+    }
+
+    final data = jsonDecode(response.body);
+
+    return ProductPresentation.fromJson(
+      data as Map<String, dynamic>,
+    );
   }
 
   Future<void> saveStock({
@@ -101,64 +136,39 @@ class ProductPresentationsService {
       );
     }
   }
-  Future<ProductPresentation> createPresentation({
-  required int productId,
-  required int binTypeId,
-  required double precio,
-}) async {
-  final response = await ApiService.post(
-    "/productos/presentations/",
-    body: {
-      "product": productId,
-      "bin_type": binTypeId,
-      "precio": precio.toStringAsFixed(2),
-      "activo": true,
-    },
-  );
 
-  if (response.statusCode != 201) {
-    throw Exception(
-      "Error creando presentación: ${response.body}",
+  Future<void> saveActive({
+    required ProductPresentation presentation,
+    required bool activo,
+  }) async {
+    final response = await ApiService.put(
+      "/productos/presentations/${presentation.id}/",
+      body: {
+        "product": presentation.productId,
+        "bin_type": presentation.binTypeId,
+        "precio": presentation.precio.toStringAsFixed(2),
+        "activo": activo,
+      },
     );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        "Error cambiando estado: ${response.body}",
+      );
+    }
   }
 
-  final data = jsonDecode(response.body);
-
-  return ProductPresentation.fromJson(
-    data as Map<String, dynamic>,
-  );
-}
-Future<void> deletePresentation(
-  int presentationId,
-) async {
-  final response = await ApiService.delete(
-    "/productos/presentations/$presentationId/",
-  );
-
-  if (response.statusCode != 204) {
-    throw Exception(
-      "Error eliminando presentación incompleta",
+  Future<void> deletePresentation(
+    int presentationId,
+  ) async {
+    final response = await ApiService.delete(
+      "/productos/presentations/$presentationId/",
     );
-  }
-}
-Future<void> saveActive({
-  required ProductPresentation presentation,
-  required bool activo,
-}) async {
-  final response = await ApiService.put(
-    "/productos/presentations/${presentation.id}/",
-    body: {
-      "product": presentation.productId,
-      "bin_type": presentation.binTypeId,
-      "precio": presentation.precio.toStringAsFixed(2),
-      "activo": activo,
-    },
-  );
 
-  if (response.statusCode != 200) {
-    throw Exception(
-      "Error cambiando estado: ${response.body}",
-    );
+    if (response.statusCode != 204) {
+      throw Exception(
+        "Error eliminando presentación incompleta",
+      );
+    }
   }
-}
 }
