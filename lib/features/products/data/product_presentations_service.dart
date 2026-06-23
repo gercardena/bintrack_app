@@ -74,4 +74,31 @@ class ProductPresentationsService {
       );
     }
   }
+
+  Future<void> savePrice({
+    required ProductPresentation presentation,
+    required double precio,
+  }) async {
+    if (precio <= 0) {
+      throw Exception(
+        "El precio debe ser mayor que cero",
+      );
+    }
+
+    final response = await ApiService.put(
+      "/productos/presentations/${presentation.id}/",
+      body: {
+        "product": presentation.productId,
+        "bin_type": presentation.binTypeId,
+        "precio": precio.toStringAsFixed(2),
+        "activo": presentation.activo,
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        "Error guardando precio: ${response.body}",
+      );
+    }
+  }
 }

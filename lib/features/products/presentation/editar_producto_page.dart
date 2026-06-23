@@ -32,10 +32,13 @@ class _EditarProductoPageState
   List<ProductPresentation> presentations = [];
 
   final Map<int, TextEditingController> stockControllers = {};
+  final Map<int, TextEditingController> priceControllers = {};
 
   bool loading = false;
   bool loadingPresentations = true;
-  int? savingPresentationId;
+
+  int? savingStockId;
+  int? savingPriceId;
 
   @override
   void initState() {
@@ -45,6 +48,8 @@ class _EditarProductoPageState
       text: widget.product.nombre,
     );
 
+    // Se conserva temporalmente porque Django todavía
+    // requiere el precio antiguo al actualizar Product.
     precioCtrl = TextEditingController(
       text: widget.product.precio.toString(),
     );
@@ -68,12 +73,22 @@ class _EditarProductoPageState
         controller.dispose();
       }
 
+      for (final controller in priceControllers.values) {
+        controller.dispose();
+      }
+
       stockControllers.clear();
+      priceControllers.clear();
 
       for (final presentation in data) {
         stockControllers[presentation.id] =
             TextEditingController(
           text: presentation.stockCantidad.toString(),
+        );
+
+        priceControllers[presentation.id] =
+            TextEditingController(
+          text: presentation.precio.toStringAsFixed(0),
         );
       }
 
@@ -98,10 +113,12 @@ class _EditarProductoPageState
     }
   }
 
-  Future<void> guardar() async {
+  Future<void> guardarProducto() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => loading = true);
+    setState(() {
+      loading = true;
+    });
 
     final ok = await ProductsApi.actualizarProducto(
       id: widget.product.id,
@@ -112,10 +129,18 @@ class _EditarProductoPageState
 
     if (!mounted) return;
 
-    setState(() => loading = false);
+    setState(() {
+      loading = false;
+    });
 
     if (ok) {
-      Navigator.pop(context, true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Producto actualizado correctamente",
+          ),
+        ),
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -124,6 +149,64 @@ class _EditarProductoPageState
           ),
         ),
       );
+    }
+  }
+
+  Future<void> guardarPrecio(
+    ProductPresentation presentation,
+  ) async {
+    final controller = priceControllers[presentation.id];
+
+    final precio = double.tryParse(
+      controller?.text.trim().replaceAll(",", ".") ?? "",
+    );
+
+    if (precio == null || precio <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Ingresa un precio válido",
+          ),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      savingPriceId = presentation.id;
+    });
+
+    try {
+      await presentationsService.savePrice(
+        presentation: presentation,
+        precio: precio,
+      );
+
+      await cargarPresentaciones();
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Precio actualizado correctamente",
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          savingPriceId = null;
+        });
+      }
     }
   }
 
@@ -144,12 +227,11 @@ class _EditarProductoPageState
           ),
         ),
       );
-
       return;
     }
 
     setState(() {
-      savingPresentationId = presentation.id;
+      savingStockId = presentation.id;
     });
 
     try {
@@ -180,7 +262,7 @@ class _EditarProductoPageState
     } finally {
       if (mounted) {
         setState(() {
-          savingPresentationId = null;
+          savingStockId = null;
         });
       }
     }
@@ -209,7 +291,9 @@ class _EditarProductoPageState
 
     if (confirm != true || !mounted) return;
 
-    setState(() => loading = true);
+    setState(() {
+      loading = true;
+    });
 
     final ok = await ProductsApi.eliminarProducto(
       widget.product.id,
@@ -217,7 +301,9 @@ class _EditarProductoPageState
 
     if (!mounted) return;
 
-    setState(() => loading = false);
+    setState(() {
+      loading = false;
+    });
 
     if (ok) {
       Navigator.pop(context, true);
@@ -239,6 +325,10 @@ class _EditarProductoPageState
     descripcionCtrl.dispose();
 
     for (final controller in stockControllers.values) {
+      controller.dispose();
+    }
+
+    for (final controller in priceControllers.values) {
       controller.dispose();
     }
 
@@ -269,19 +359,8 @@ class _EditarProductoPageState
               controller: nombreCtrl,
               decoration: const InputDecoration(
                 labelText: "Nombre",
+                border: OutlineInputBorder(),
               ),
-              validator: (value) =>
-                  value == null || value.trim().isEmpty
-                      ? "Requerido"
-                      : null,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: precioCtrl,
-              decoration: const InputDecoration(
-                labelText: "Precio base temporal",
-              ),
-              keyboardType: TextInputType.number,
               validator: (value) =>
                   value == null || value.trim().isEmpty
                       ? "Requerido"
@@ -292,18 +371,23 @@ class _EditarProductoPageState
               controller: descripcionCtrl,
               decoration: const InputDecoration(
                 labelText: "Descripción",
+                border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: loading ? null : guardar,
+              onPressed: loading ? null : guardarProducto,
               child: loading
-                  ? const CircularProgressIndicator()
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(),
+                    )
                   : const Text("Guardar producto"),
             ),
             const SizedBox(height: 32),
             Text(
-              "Presentaciones y stock",
+              "Presentaciones, precios y stock",
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 12),
@@ -318,7 +402,7 @@ class _EditarProductoPageState
             else
               ...presentations.map(
                 (presentation) => Card(
-                  margin: const EdgeInsets.only(bottom: 12),
+                  margin: const EdgeInsets.only(bottom: 16),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
@@ -331,12 +415,46 @@ class _EditarProductoPageState
                               .textTheme
                               .titleMedium,
                         ),
-                        const SizedBox(height: 6),
-                        Text(
-                          "Precio: "
-                          "\$${presentation.precio.toStringAsFixed(0)}",
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: priceControllers[
+                              presentation.id],
+                          keyboardType:
+                              const TextInputType
+                                  .numberWithOptions(
+                            decimal: true,
+                          ),
+                          decoration: const InputDecoration(
+                            labelText:
+                                "Precio de esta presentación",
+                            prefixText: "\$",
+                            border: OutlineInputBorder(),
+                          ),
                         ),
                         const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: savingPriceId ==
+                                    presentation.id
+                                ? null
+                                : () => guardarPrecio(
+                                      presentation,
+                                    ),
+                            child: savingPriceId ==
+                                    presentation.id
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child:
+                                        CircularProgressIndicator(),
+                                  )
+                                : const Text(
+                                    "Actualizar precio",
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
                         TextFormField(
                           controller: stockControllers[
                               presentation.id],
@@ -351,20 +469,23 @@ class _EditarProductoPageState
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed:
-                                savingPresentationId ==
-                                        presentation.id
-                                    ? null
-                                    : () => guardarStock(
-                                          presentation,
-                                        ),
-                            child:
-                                savingPresentationId ==
-                                        presentation.id
-                                    ? const CircularProgressIndicator()
-                                    : const Text(
-                                        "Actualizar stock",
-                                      ),
+                            onPressed: savingStockId ==
+                                    presentation.id
+                                ? null
+                                : () => guardarStock(
+                                      presentation,
+                                    ),
+                            child: savingStockId ==
+                                    presentation.id
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child:
+                                        CircularProgressIndicator(),
+                                  )
+                                : const Text(
+                                    "Actualizar stock",
+                                  ),
                           ),
                         ),
                       ],
