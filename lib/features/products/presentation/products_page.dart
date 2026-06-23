@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/products_api.dart';
-import '../models/product.dart';
+import '../data/models/product_model.dart';
 import 'editar_producto_page.dart';
 import 'crear_producto_page.dart';
 
@@ -155,13 +155,17 @@ class _ProductsPageState extends State<ProductsPage> {
         leading: CircleAvatar(
           backgroundColor: Colors.blue,
           child: Text(
-            product.name.isNotEmpty ? product.name[0] : "?",
-            style: const TextStyle(color: Colors.white),
+            product.nombre.isNotEmpty
+                ? product.nombre[0]
+              : "?",
+            style: const TextStyle(
+              color: Colors.white,
+            ),
           ),
         ),
 
         title: Text(
-          product.name,
+          product.nombre,
           style: const TextStyle(
             fontWeight: FontWeight.bold,
           ),
@@ -171,11 +175,15 @@ class _ProductsPageState extends State<ProductsPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
 
-            if (product.description != null &&
-                product.description!.isNotEmpty)
-              Text("📝 ${product.description}"),
+            if (product.descripcion.isNotEmpty)
+              Text(
+                "📝 ${product.descripcion}",
+              ),
 
-            Text("💰 \$${product.price}"),
+            Text(
+              "💰 \$${product.precio}",
+            ),
+
           ],
         ),
 

@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../auth/data/token_storage.dart';
-import '../models/product.dart';
+import 'models/product_model.dart';
 
 class ProductsApi {
 
