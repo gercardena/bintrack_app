@@ -5,6 +5,8 @@ import '../data/product_presentations_service.dart';
 import '../data/models/product_model.dart';
 import '../data/models/product_presentation_model.dart';
 
+import 'agregar_presentacion_page.dart';
+
 class EditarProductoPage extends StatefulWidget {
   final Product product;
 
@@ -39,6 +41,7 @@ class _EditarProductoPageState
 
   int? savingStockId;
   int? savingPriceId;
+  int? savingActiveId;
 
   @override
   void initState() {
@@ -110,6 +113,32 @@ class _EditarProductoPageState
           ),
         ),
       );
+    }
+  }
+
+  Future<void> agregarPresentacion() async {
+    final existingBinTypeIds = presentations
+        .map(
+          (presentation) => presentation.binTypeId,
+        )
+        .toSet();
+
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AgregarPresentacionPage(
+          productId: widget.product.id,
+          existingBinTypeIds: existingBinTypeIds,
+        ),
+      ),
+    );
+
+    if (result == true && mounted) {
+      setState(() {
+        loadingPresentations = true;
+      });
+
+      await cargarPresentaciones();
     }
   }
 
@@ -268,6 +297,81 @@ class _EditarProductoPageState
     }
   }
 
+  Future<void> cambiarEstado(
+    ProductPresentation presentation,
+  ) async {
+    final nuevoEstado = !presentation.activo;
+
+    if (!nuevoEstado) {
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text(
+            "Desactivar presentación",
+          ),
+          content: Text(
+            "¿Quieres desactivar "
+            "${presentation.binNombre}?\n\n"
+            "Solo será posible si su stock es cero.",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () =>
+                  Navigator.pop(context, false),
+              child: const Text("Cancelar"),
+            ),
+            TextButton(
+              onPressed: () =>
+                  Navigator.pop(context, true),
+              child: const Text("Desactivar"),
+            ),
+          ],
+        ),
+      );
+
+      if (confirm != true || !mounted) return;
+    }
+
+    setState(() {
+      savingActiveId = presentation.id;
+    });
+
+    try {
+      await presentationsService.saveActive(
+        presentation: presentation,
+        activo: nuevoEstado,
+      );
+
+      await cargarPresentaciones();
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            nuevoEstado
+                ? "Presentación activada"
+                : "Presentación desactivada",
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          savingActiveId = null;
+        });
+      }
+    }
+  }
+
   Future<void> eliminar() async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -278,11 +382,13 @@ class _EditarProductoPageState
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () =>
+                Navigator.pop(context, false),
             child: const Text("Cancelar"),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () =>
+                Navigator.pop(context, true),
             child: const Text("Eliminar"),
           ),
         ],
@@ -376,7 +482,8 @@ class _EditarProductoPageState
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: loading ? null : guardarProducto,
+              onPressed:
+                  loading ? null : guardarProducto,
               child: loading
                   ? const SizedBox(
                       width: 20,
@@ -388,7 +495,22 @@ class _EditarProductoPageState
             const SizedBox(height: 32),
             Text(
               "Presentaciones, precios y stock",
-              style: Theme.of(context).textTheme.titleLarge,
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge,
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: loadingPresentations
+                    ? null
+                    : agregarPresentacion,
+                icon: const Icon(Icons.add),
+                label: const Text(
+                  "Agregar presentación",
+                ),
+              ),
             ),
             const SizedBox(height: 12),
             if (loadingPresentations)
@@ -402,29 +524,52 @@ class _EditarProductoPageState
             else
               ...presentations.map(
                 (presentation) => Card(
-                  margin: const EdgeInsets.only(bottom: 16),
+                  margin:
+                      const EdgeInsets.only(bottom: 16),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
                       crossAxisAlignment:
                           CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          presentation.binNombre,
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium,
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                presentation.binNombre,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium,
+                              ),
+                            ),
+                            Chip(
+                              label: Text(
+                                presentation.activo
+                                    ? "Activa"
+                                    : "Inactiva",
+                              ),
+                              backgroundColor:
+                                  (presentation.activo
+                                          ? Colors.green
+                                          : Colors.grey)
+                                      .withValues(
+                                alpha: 0.12,
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: priceControllers[
                               presentation.id],
+                          enabled: presentation.activo,
                           keyboardType:
                               const TextInputType
                                   .numberWithOptions(
                             decimal: true,
                           ),
-                          decoration: const InputDecoration(
+                          decoration:
+                              const InputDecoration(
                             labelText:
                                 "Precio de esta presentación",
                             prefixText: "\$",
@@ -435,12 +580,14 @@ class _EditarProductoPageState
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: savingPriceId ==
-                                    presentation.id
-                                ? null
-                                : () => guardarPrecio(
-                                      presentation,
-                                    ),
+                            onPressed:
+                                !presentation.activo ||
+                                        savingPriceId ==
+                                            presentation.id
+                                    ? null
+                                    : () => guardarPrecio(
+                                          presentation,
+                                        ),
                             child: savingPriceId ==
                                     presentation.id
                                 ? const SizedBox(
@@ -458,8 +605,11 @@ class _EditarProductoPageState
                         TextFormField(
                           controller: stockControllers[
                               presentation.id],
-                          keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(
+                          enabled: presentation.activo,
+                          keyboardType:
+                              TextInputType.number,
+                          decoration:
+                              const InputDecoration(
                             labelText:
                                 "Stock de envases llenos",
                             border: OutlineInputBorder(),
@@ -469,12 +619,14 @@ class _EditarProductoPageState
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: savingStockId ==
-                                    presentation.id
-                                ? null
-                                : () => guardarStock(
-                                      presentation,
-                                    ),
+                            onPressed:
+                                !presentation.activo ||
+                                        savingStockId ==
+                                            presentation.id
+                                    ? null
+                                    : () => guardarStock(
+                                          presentation,
+                                        ),
                             child: savingStockId ==
                                     presentation.id
                                 ? const SizedBox(
@@ -486,6 +638,43 @@ class _EditarProductoPageState
                                 : const Text(
                                     "Actualizar stock",
                                   ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            style:
+                                OutlinedButton.styleFrom(
+                              foregroundColor:
+                                  presentation.activo
+                                      ? Colors.red
+                                      : Colors.green,
+                            ),
+                            onPressed: savingActiveId ==
+                                    presentation.id
+                                ? null
+                                : () => cambiarEstado(
+                                      presentation,
+                                    ),
+                            icon: savingActiveId ==
+                                    presentation.id
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child:
+                                        CircularProgressIndicator(),
+                                  )
+                                : Icon(
+                                    presentation.activo
+                                        ? Icons.block
+                                        : Icons.check_circle,
+                                  ),
+                            label: Text(
+                              presentation.activo
+                                  ? "Desactivar presentación"
+                                  : "Activar presentación",
+                            ),
                           ),
                         ),
                       ],

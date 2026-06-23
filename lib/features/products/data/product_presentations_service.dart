@@ -128,5 +128,37 @@ class ProductPresentationsService {
     data as Map<String, dynamic>,
   );
 }
+Future<void> deletePresentation(
+  int presentationId,
+) async {
+  final response = await ApiService.delete(
+    "/productos/presentations/$presentationId/",
+  );
 
+  if (response.statusCode != 204) {
+    throw Exception(
+      "Error eliminando presentación incompleta",
+    );
+  }
+}
+Future<void> saveActive({
+  required ProductPresentation presentation,
+  required bool activo,
+}) async {
+  final response = await ApiService.put(
+    "/productos/presentations/${presentation.id}/",
+    body: {
+      "product": presentation.productId,
+      "bin_type": presentation.binTypeId,
+      "precio": presentation.precio.toStringAsFixed(2),
+      "activo": activo,
+    },
+  );
+
+  if (response.statusCode != 200) {
+    throw Exception(
+      "Error cambiando estado: ${response.body}",
+    );
+  }
+}
 }
