@@ -1,34 +1,40 @@
 import 'dart:convert';
-import '../models/sale_model.dart';
+
 import '../../../../core/services/api_service.dart';
+import '../models/sale_model.dart';
 
 class SalesService {
-
-  // =========================================
-  // 🔥 GET SALES
-  // =========================================
   Future<List<Sale>> getSales() async {
+    final response = await ApiService.get(
+      "/ventas/sales/",
+    );
 
-    final response = await ApiService.get("/ventas/sales/");
-
-    print("SALES STATUS: ${response.statusCode}");
-    print("SALES BODY: ${response.body}");
-
-    if (response.statusCode == 200) {
-      final List data = jsonDecode(response.body);
-      return data.map((e) => Sale.fromJson(e)).toList();
-    } else {
-      throw Exception("Error cargando ventas");
+    if (response.statusCode != 200) {
+      throw Exception(
+        "Error cargando ventas: ${response.body}",
+      );
     }
+
+    final decoded = jsonDecode(response.body);
+
+    if (decoded is! List) {
+      throw Exception(
+        "Respuesta inválida al cargar ventas",
+      );
+    }
+
+    return decoded
+        .map(
+          (item) => Sale.fromJson(
+            item as Map<String, dynamic>,
+          ),
+        )
+        .toList();
   }
 
-  // =========================================
-  // 🔥 CREAR VENTA
-  // =========================================
   Future<int> createSale({
     required int clienteId,
   }) async {
-
     final response = await ApiService.post(
       "/ventas/sales/",
       body: {
@@ -36,29 +42,29 @@ class SalesService {
       },
     );
 
-    print("CREATE SALE STATUS: ${response.statusCode}");
-    print("CREATE SALE BODY: ${response.body}");
-
-    if (response.statusCode == 201 || response.statusCode == 200) {
-
-      final data = jsonDecode(response.body);
-
-      return data["id"];
+    if (response.statusCode != 200 &&
+        response.statusCode != 201) {
+      throw Exception(
+        "Error creando venta: ${response.body}",
+      );
     }
 
-    throw Exception("Error creando venta");
+    final data = jsonDecode(response.body);
+
+    return data["id"] as int;
   }
 
-  // =========================================
-  // 🔥 AGREGAR ITEM
-  // =========================================
   Future<void> addItemToSale({
     required int saleId,
     required int productId,
     required int binId,
     required int cantidad,
-    required double precio,
   }) async {
+    if (cantidad <= 0) {
+      throw Exception(
+        "La cantidad debe ser mayor que cero",
+      );
+    }
 
     final response = await ApiService.post(
       "/ventas/items/",
@@ -67,76 +73,50 @@ class SalesService {
         "product": productId,
         "bin": binId,
         "cantidad": cantidad,
-        "bins_cantidad": cantidad,
-        "precio_unitario": precio,
       },
     );
 
-    print("ADD ITEM STATUS: ${response.statusCode}");
-    print("ADD ITEM BODY: ${response.body}");
-
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception("Error al agregar item a la venta");
+    if (response.statusCode != 200 &&
+        response.statusCode != 201) {
+      throw Exception(
+        "Error agregando producto: ${response.body}",
+      );
     }
   }
 
-  // =========================================
-  // 🔥 CONFIRMAR
-  // =========================================
   Future<void> confirmSale(int id) async {
-    final response = await ApiService.post("/ventas/sales/$id/confirm/");
-
-    print("CONFIRM SALE STATUS: ${response.statusCode}");
-    print("CONFIRM SALE BODY: ${response.body}");
+    final response = await ApiService.post(
+      "/ventas/sales/$id/confirm/",
+    );
 
     if (response.statusCode != 200) {
-      throw Exception("Error al confirmar venta");
+      throw Exception(
+        "Error confirmando venta: ${response.body}",
+      );
     }
   }
 
-  // =========================================
-  // 🔥 PAGAR
-  // =========================================
   Future<void> paySale(int id) async {
-    final response = await ApiService.post("/ventas/sales/$id/pay/");
-
-    print("PAY SALE STATUS: ${response.statusCode}");
-    print("PAY SALE BODY: ${response.body}");
+    final response = await ApiService.post(
+      "/ventas/sales/$id/pay/",
+    );
 
     if (response.statusCode != 200) {
-      throw Exception("Error al pagar venta");
+      throw Exception(
+        "Error pagando venta: ${response.body}",
+      );
     }
   }
 
-  // =========================================
-  // 🔥 FACTURAR
-  // =========================================
   Future<void> generateInvoice(int saleId) async {
-
     final response = await ApiService.post(
       "/facturas/$saleId/generar/",
     );
 
-    print("INVOICE STATUS: ${response.statusCode}");
-    print("INVOICE BODY: ${response.body}");
-
-    if (response.statusCode == 200 ||
-        response.statusCode == 201) {
-      return;
-    }
-
-    try {
-
-      final data = jsonDecode(response.body);
-
+    if (response.statusCode != 200 &&
+        response.statusCode != 201) {
       throw Exception(
-        data["error"] ?? "Error generando factura",
-      );
-
-    } catch (_) {
-
-      throw Exception(
-        "Error generando factura",
+        "Error generando factura: ${response.body}",
       );
     }
   }

@@ -1,22 +1,18 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/spacing.dart';
-
+import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_loader.dart';
+import '../../../core/widgets/app_section_title.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/primary_button.dart';
-import '../../../core/widgets/app_card.dart';
-import '../../../core/widgets/app_section_title.dart';
+
+import '../../products/data/models/product_presentation_model.dart';
+import '../../products/data/product_presentations_service.dart';
 
 import '../data/services/sale_service.dart';
 
-import '../../products/data/products_service.dart';
-
-import '../../warehouses/data/services/bin_type_service.dart';
-import '../../warehouses/data/models/bin_type_model.dart';
-
 class SaleDetailPage extends StatefulWidget {
-
   final int saleId;
 
   const SaleDetailPage({
@@ -29,67 +25,47 @@ class SaleDetailPage extends StatefulWidget {
       _SaleDetailPageState();
 }
 
-class _SaleDetailPageState
-    extends State<SaleDetailPage> {
+class _SaleDetailPageState extends State<SaleDetailPage> {
+  final SalesService _salesService = SalesService();
 
-  final ProductsService _productsService =
-      ProductsService();
-
-  final SalesService _salesService =
-      SalesService();
-
-  final BinTypeService _binTypeService =
-      BinTypeService();
-
-  List<Product> productos = [];
-
-  List<BinType> bins = [];
-
-  Product? productoSeleccionado;
-
-  BinType? binSeleccionado;
+  final ProductPresentationsService
+      _presentationsService =
+      ProductPresentationsService();
 
   final TextEditingController cantidadController =
       TextEditingController();
 
-  bool loading = true;
+  List<ProductPresentation> presentations = [];
 
+  ProductPresentation? presentationSeleccionada;
+
+  bool loading = true;
   bool saving = false;
 
   @override
   void initState() {
     super.initState();
-    cargarDatos();
+    cargarPresentaciones();
   }
 
-  // =========================================
-  // 🔥 CARGAR DATOS
-  // =========================================
-
-  Future<void> cargarDatos() async {
-
+  Future<void> cargarPresentaciones() async {
     try {
-
-      final productosData =
-          await _productsService.getProducts();
-
-      final binsData =
-          await _binTypeService.getBinTypes();
+      final data = await _presentationsService.getAll();
 
       if (!mounted) return;
 
       setState(() {
-
-        productos = productosData;
-
-        bins = binsData;
+        presentations = data
+            .where(
+              (presentation) =>
+                  presentation.activo &&
+                  presentation.stockCantidad > 0,
+            )
+            .toList();
 
         loading = false;
-
       });
-
     } catch (e) {
-
       if (!mounted) return;
 
       setState(() {
@@ -97,27 +73,23 @@ class _SaleDetailPageState
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-
         SnackBar(
-          content: Text(e.toString()),
+          content: Text(
+            "Error cargando presentaciones: $e",
+          ),
         ),
       );
     }
   }
-
-  // =========================================
-  // 🔥 AGREGAR ITEM
-  // =========================================
 
   Future<void> agregarItem() async {
+    final presentation = presentationSeleccionada;
 
-    if (productoSeleccionado == null) {
-
+    if (presentation == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-
         const SnackBar(
           content: Text(
-            "Selecciona un producto",
+            "Selecciona una presentación",
           ),
         ),
       );
@@ -125,13 +97,15 @@ class _SaleDetailPageState
       return;
     }
 
-    if (binSeleccionado == null) {
+    final cantidad = int.tryParse(
+      cantidadController.text.trim(),
+    );
 
+    if (cantidad == null || cantidad <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-
         const SnackBar(
           content: Text(
-            "Selecciona un BIN",
+            "Ingresa una cantidad válida",
           ),
         ),
       );
@@ -139,13 +113,12 @@ class _SaleDetailPageState
       return;
     }
 
-    if (cantidadController.text.isEmpty) {
-
+    if (cantidad > presentation.stockCantidad) {
       ScaffoldMessenger.of(context).showSnackBar(
-
-        const SnackBar(
+        SnackBar(
           content: Text(
-            "Ingresa cantidad",
+            "Solo hay ${presentation.stockCantidad} "
+            "unidades disponibles",
           ),
         ),
       );
@@ -158,54 +131,34 @@ class _SaleDetailPageState
     });
 
     try {
-
       await _salesService.addItemToSale(
-
         saleId: widget.saleId,
-
-        productId: productoSeleccionado!.id,
-
-        binId: binSeleccionado!.id,
-
-        cantidad: int.parse(
-          cantidadController.text,
-        ),
-
-        precio: double.parse(
-          productoSeleccionado!.precio.toString(),
-        ),
+        productId: presentation.productId,
+        binId: presentation.binTypeId,
+        cantidad: cantidad,
       );
 
       if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-
-        const SnackBar(
-          content: Text(
-            "Item agregado correctamente",
-          ),
-        ),
-      );
 
       cantidadController.clear();
 
-    } catch (e) {
-
-      if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
-
-        SnackBar(
+        const SnackBar(
           content: Text(
-            e.toString(),
+            "Producto agregado correctamente",
           ),
         ),
       );
+    } catch (e) {
+      if (!mounted) return;
 
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+        ),
+      );
     } finally {
-
       if (mounted) {
-
         setState(() {
           saving = false;
         });
@@ -213,18 +166,12 @@ class _SaleDetailPageState
     }
   }
 
-  // =========================================
-  // 🔥 CONFIRMAR VENTA
-  // =========================================
-
   Future<void> confirmarVenta() async {
-
     setState(() {
       saving = true;
     });
 
     try {
-
       await _salesService.confirmSale(
         widget.saleId,
       );
@@ -232,7 +179,6 @@ class _SaleDetailPageState
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-
         const SnackBar(
           content: Text(
             "Venta confirmada correctamente",
@@ -241,24 +187,16 @@ class _SaleDetailPageState
       );
 
       Navigator.pop(context, true);
-
     } catch (e) {
-
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-
         SnackBar(
-          content: Text(
-            e.toString(),
-          ),
+          content: Text(e.toString()),
         ),
       );
-
     } finally {
-
       if (mounted) {
-
         setState(() {
           saving = false;
         });
@@ -266,215 +204,129 @@ class _SaleDetailPageState
     }
   }
 
+  String precioFormateado(double precio) {
+    return precio.toStringAsFixed(0);
+  }
+
   @override
   void dispose() {
-
     cantidadController.dispose();
-
     super.dispose();
   }
 
-  // =========================================
-  // 🔥 UI
-  // =========================================
-
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-
       appBar: AppBar(
         title: Text(
           "Venta #${widget.saleId}",
         ),
       ),
-
       body: loading
-
           ? const AppLoader()
-
           : SingleChildScrollView(
-
               padding: const EdgeInsets.all(
                 AppSpacing.screenPadding,
               ),
-
               child: Column(
-
                 crossAxisAlignment:
                     CrossAxisAlignment.start,
-
                 children: [
-
                   Text(
-
                     "Detalle Venta #${widget.saleId}",
-
                     style: Theme.of(context)
                         .textTheme
                         .headlineMedium,
                   ),
-
                   const SizedBox(
                     height: AppSpacing.xl,
                   ),
-
-                  // =====================================
-                  // PRODUCTO
-                  // =====================================
-
                   const AppSectionTitle(
-                    title: "Producto",
+                    title: "Presentación",
                   ),
-
                   const SizedBox(
                     height: AppSpacing.sm,
                   ),
-
                   AppCard(
-
-                    child: DropdownButtonFormField<Product>(
-
-                      value: productoSeleccionado,
-
-                      items: productos.map((producto) {
-
-                        return DropdownMenuItem<Product>(
-
-                          value: producto,
-
-                          child: Text(
-                            "${producto.nombre} - \$${producto.precio}",
+                    child: presentations.isEmpty
+                        ? const Text(
+                            "No hay presentaciones activas "
+                            "con stock disponible.",
+                          )
+                        : DropdownButtonFormField<
+                            ProductPresentation>(
+                            value:
+                                presentationSeleccionada,
+                            isExpanded: true,
+                            items: presentations.map(
+                              (presentation) {
+                                return DropdownMenuItem<
+                                    ProductPresentation>(
+                                  value: presentation,
+                                  child: Text(
+                                    "${presentation.productNombre} "
+                                    "+ ${presentation.binNombre} "
+                                    "- \$${precioFormateado(presentation.precio)} "
+                                    "(Stock: ${presentation.stockCantidad})",
+                                    overflow:
+                                        TextOverflow.ellipsis,
+                                  ),
+                                );
+                              },
+                            ).toList(),
+                            onChanged: saving
+                                ? null
+                                : (value) {
+                                    setState(() {
+                                      presentationSeleccionada =
+                                          value;
+                                    });
+                                  },
+                            decoration:
+                                const InputDecoration(
+                              border:
+                                  OutlineInputBorder(),
+                              labelText:
+                                  "Producto y envase",
+                            ),
                           ),
-                        );
-
-                      }).toList(),
-
-                      onChanged: (value) {
-
-                        setState(() {
-                          productoSeleccionado = value;
-                        });
-                      },
-
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
                   ),
-
                   const SizedBox(
                     height: AppSpacing.lg,
                   ),
-
-                  // =====================================
-                  // BIN
-                  // =====================================
-
-                  const AppSectionTitle(
-                    title: "BIN",
-                  ),
-
-                  const SizedBox(
-                    height: AppSpacing.sm,
-                  ),
-
-                  AppCard(
-
-                    child: DropdownButtonFormField<BinType>(
-
-                      value: binSeleccionado,
-
-                      items:
-                          bins.map<DropdownMenuItem<BinType>>((bin) {
-
-                        return DropdownMenuItem<BinType>(
-
-                          value: bin,
-
-                          child: Text(
-                            bin.nombre,
-                          ),
-                        );
-
-                      }).toList(),
-
-                      onChanged: (value) {
-
-                        setState(() {
-                          binSeleccionado = value;
-                        });
-                      },
-
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(
-                    height: AppSpacing.lg,
-                  ),
-
-                  // =====================================
-                  // CANTIDAD Y ACCIONES
-                  // =====================================
-
                   const AppSectionTitle(
                     title: "Cantidad",
                   ),
-
                   const SizedBox(
                     height: AppSpacing.sm,
                   ),
-
                   AppCard(
-
                     child: Column(
-
                       children: [
-
                         AppTextField(
-
-                          controller: cantidadController,
-
+                          controller:
+                              cantidadController,
                           label: "Cantidad",
-
                           keyboardType:
                               TextInputType.number,
                         ),
-
                         const SizedBox(
                           height: AppSpacing.xl,
                         ),
-
-                        // ===============================
-                        // BOTON AGREGAR ITEM
-                        // ===============================
-
                         PrimaryButton(
-
-                          text: "Agregar Item",
-
+                          text: "Agregar producto",
                           loading: saving,
-
-                          onPressed: agregarItem,
+                          onPressed:
+                              presentations.isEmpty
+                                  ? null
+                                  : agregarItem,
                         ),
-
                         const SizedBox(
                           height: AppSpacing.md,
                         ),
-
-                        // ===============================
-                        // BOTON CONFIRMAR
-                        // ===============================
-
                         PrimaryButton(
-
-                          text: "Confirmar Venta",
-
+                          text: "Confirmar venta",
                           loading: saving,
-
                           onPressed: confirmarVenta,
                         ),
                       ],
