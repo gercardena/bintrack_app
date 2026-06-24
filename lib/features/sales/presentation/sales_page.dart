@@ -14,6 +14,7 @@ import '../data/services/sale_service.dart';
 
 import 'create_sale_page.dart';
 import 'sale_detail_page.dart';
+import 'sale_readonly_page.dart';
 
 class SalesPage extends StatefulWidget {
   const SalesPage({super.key});
@@ -67,6 +68,20 @@ class _SalesPageState extends State<SalesPage> {
       );
     }
   }
+  Future<void> abrirDetalle(Sale sale) async {
+  await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => SaleReadonlyPage(
+        saleId: sale.id,
+      ),
+    ),
+  );
+
+  if (!mounted) return;
+
+  await cargarVentas();
+}
 
   Future<void> abrirBorrador(Sale sale) async {
     await Navigator.push(
@@ -531,6 +546,27 @@ class _SalesPageState extends State<SalesPage> {
                       generarFactura(sale);
                     },
             ),
+          if (sale.estado != "draft") ...[
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: processing
+                    ? null
+                    : () {
+                        abrirDetalle(sale);
+                      },
+                icon: const Icon(
+                  Icons.visibility_outlined,
+                ),
+                label: const Text(
+                  "Ver detalle",
+                ),
+              ),
+            ),
+            const SizedBox(
+              height: AppSpacing.sm,
+            ),
+          ],
           if (sale.estado == "cancelled")
             const Text(
               "Esta venta fue cancelada.",
