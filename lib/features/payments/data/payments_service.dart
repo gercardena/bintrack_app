@@ -1,36 +1,34 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 
-import '../../auth/data/token_storage.dart';
+import '../../../core/services/api_service.dart';
 import '../models/payment_model.dart';
 
 class PaymentsService {
-
-  final String baseUrl = 'http://192.168.11.215:8000/api';
-
   Future<List<Payment>> getPayments() async {
-
-    final token = await TokenStorage.getAccessToken();
-
-    final response = await http.get(
-      Uri.parse('$baseUrl/pagos/'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
+    final response = await ApiService.get(
+      "/pagos/",
     );
 
-    print("PAYMENTS STATUS: ${response.statusCode}");
-    print("PAYMENTS BODY: ${response.body}");
-
-    if (response.statusCode == 200) {
-
-      final List data = jsonDecode(response.body);
-
-      return data.map((e) => Payment.fromJson(e)).toList();
-
+    if (response.statusCode != 200) {
+      throw Exception(
+        "Error cargando pagos: ${response.body}",
+      );
     }
 
-    throw Exception('Error cargando pagos');
+    final decoded = jsonDecode(response.body);
+
+    if (decoded is! List) {
+      throw Exception(
+        "Respuesta inválida al cargar pagos",
+      );
+    }
+
+    return decoded
+        .map(
+          (item) => Payment.fromJson(
+            item as Map<String, dynamic>,
+          ),
+        )
+        .toList();
   }
 }

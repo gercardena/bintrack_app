@@ -253,38 +253,162 @@ class _SalesPageState extends State<SalesPage> {
 }
 
   Future<void> registrarPago(Sale sale) async {
-    setState(() {
-      processingSaleId = sale.id;
-    });
+  String metodoSeleccionado = "transferencia";
+  String referencia = "";
 
-    try {
-      await _service.paySale(sale.id);
+  final datos = await showDialog<
+      Map<String, String>>(
+    context: context,
+    builder: (dialogContext) {
+      return StatefulBuilder(
+        builder: (
+          context,
+          setDialogState,
+        ) {
+          return AlertDialog(
+            title: const Text(
+              "Registrar pago",
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Venta #${sale.numero}",
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Monto total: "
+                    "\$${precioFormateado(sale.total)}",
+                    style: const TextStyle(
+                      fontWeight:
+                          FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: metodoSeleccionado,
+                    isExpanded: true,
+                    decoration:
+                        const InputDecoration(
+                      labelText:
+                          "Método de pago",
+                      border:
+                          OutlineInputBorder(),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: "efectivo",
+                        child: Text("Efectivo"),
+                      ),
+                      DropdownMenuItem(
+                        value: "transferencia",
+                        child: Text(
+                          "Transferencia",
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: "tarjeta",
+                        child: Text("Tarjeta"),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      if (value == null) return;
 
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Venta pagada"),
-        ),
+                      setDialogState(() {
+                        metodoSeleccionado =
+                            value;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    onChanged: (value) {
+                      referencia = value;
+                    },
+                    decoration:
+                        const InputDecoration(
+                      labelText:
+                          "Referencia (opcional)",
+                      border:
+                          OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                },
+                child: const Text("Volver"),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(
+                    dialogContext,
+                    {
+                      "metodo":
+                          metodoSeleccionado,
+                      "referencia":
+                          referencia,
+                    },
+                  );
+                },
+                child: const Text(
+                  "Registrar pago",
+                ),
+              ),
+            ],
+          );
+        },
       );
+    },
+  );
 
-      await cargarVentas();
-    } catch (e) {
-      if (!mounted) return;
+  if (datos == null || !mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString()),
+  setState(() {
+    processingSaleId = sale.id;
+  });
+
+  try {
+    await _service.registerPayment(
+      saleId: sale.id,
+      metodo: datos["metodo"]!,
+      referencia: datos["referencia"],
+    );
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          "Pago registrado correctamente",
         ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          processingSaleId = null;
-        });
-      }
+      ),
+    );
+
+    await cargarVentas();
+  } catch (e) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(e.toString()),
+      ),
+    );
+  } finally {
+    if (mounted) {
+      setState(() {
+        processingSaleId = null;
+      });
     }
   }
+}
 
   Future<void> generarFactura(Sale sale) async {
     setState(() {

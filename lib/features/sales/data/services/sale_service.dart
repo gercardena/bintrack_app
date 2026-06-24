@@ -159,18 +159,34 @@ class SalesService {
     );
   }
 }
+  Future<void> registerPayment({
+  required int saleId,
+  required String metodo,
+  String? referencia,
+}) async {
+  final body = {
+    "sale": saleId,
+    "metodo": metodo,
+  };
 
-  Future<void> paySale(int id) async {
-    final response = await ApiService.post(
-      "/ventas/sales/$id/pay/",
-    );
+  final cleanReference = referencia?.trim();
 
-    if (response.statusCode != 200) {
-      throw Exception(
-        "Error pagando venta: ${response.body}",
-      );
-    }
+  if (cleanReference != null &&
+      cleanReference.isNotEmpty) {
+    body["referencia"] = cleanReference;
   }
+
+  final response = await ApiService.post(
+    "/pagos/",
+    body: body,
+  );
+
+  if (response.statusCode != 201) {
+    throw Exception(
+      "Error registrando pago: ${response.body}",
+    );
+  }
+}
 
   Future<void> generateInvoice(int saleId) async {
     final response = await ApiService.post(

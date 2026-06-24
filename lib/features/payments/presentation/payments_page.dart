@@ -7,159 +7,237 @@ class PaymentsPage extends StatefulWidget {
   const PaymentsPage({super.key});
 
   @override
-  State<PaymentsPage> createState() => _PaymentsPageState();
+  State<PaymentsPage> createState() =>
+      _PaymentsPageState();
 }
 
-class _PaymentsPageState extends State<PaymentsPage> {
-  late Future<List<Payment>> _futurePayments;
+class _PaymentsPageState
+    extends State<PaymentsPage> {
+  final PaymentsService service =
+      PaymentsService();
+
+  late Future<List<Payment>> futurePayments;
 
   @override
   void initState() {
     super.initState();
-    _futurePayments = PaymentsService().getPayments();
+    futurePayments = service.getPayments();
+  }
+
+  Future<void> recargar() async {
+    setState(() {
+      futurePayments = service.getPayments();
+    });
+
+    await futurePayments;
+  }
+
+  String etiquetaMetodo(String metodo) {
+    switch (metodo) {
+      case "efectivo":
+        return "Efectivo";
+      case "transferencia":
+        return "Transferencia";
+      case "tarjeta":
+        return "Tarjeta";
+      default:
+        return metodo;
+    }
+  }
+
+  String formatearFecha(String value) {
+    final date = DateTime.tryParse(value);
+
+    if (date == null) return value;
+
+    final local = date.toLocal();
+
+    final day =
+        local.day.toString().padLeft(2, "0");
+    final month =
+        local.month.toString().padLeft(2, "0");
+    final hour =
+        local.hour.toString().padLeft(2, "0");
+    final minute =
+        local.minute.toString().padLeft(2, "0");
+
+    return "$day/$month/${local.year} "
+        "$hour:$minute";
+  }
+
+  String formatearMonto(double monto) {
+    return monto.toStringAsFixed(0);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-
       appBar: AppBar(
         title: const Text("Pagos"),
-        elevation: 0,
       ),
-
       body: FutureBuilder<List<Payment>>(
-        future: _futurePayments,
-
+        future: futurePayments,
         builder: (context, snapshot) {
-
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (snapshot.connectionState ==
+              ConnectionState.waiting) {
             return const Center(
               child: CircularProgressIndicator(),
             );
           }
 
           if (snapshot.hasError) {
-            return const Center(
-              child: Text("Error cargando pagos"),
+            return Center(
+              child: Padding(
+                padding:
+                    const EdgeInsets.all(24),
+                child: Text(
+                  snapshot.error.toString(),
+                  textAlign: TextAlign.center,
+                ),
+              ),
             );
           }
 
-          final payments = snapshot.data ?? [];
+          final payments =
+              snapshot.data ?? [];
 
           if (payments.isEmpty) {
-            return const Center(
-              child: Text("No hay pagos registrados"),
+            return RefreshIndicator(
+              onRefresh: recargar,
+              child: ListView(
+                physics:
+                    const AlwaysScrollableScrollPhysics(),
+                children: const [
+                  SizedBox(height: 180),
+                  Center(
+                    child: Text(
+                      "No hay pagos registrados",
+                    ),
+                  ),
+                ],
+              ),
             );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(12),
-            itemCount: payments.length,
+          return RefreshIndicator(
+            onRefresh: recargar,
+            child: ListView.builder(
+              physics:
+                  const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(12),
+              itemCount: payments.length,
+              itemBuilder: (context, index) {
+                final payment =
+                    payments[index];
 
-            itemBuilder: (context, index) {
-
-              final payment = payments[index];
-
-              return Card(
-                elevation: 3,
-                margin: const EdgeInsets.only(bottom: 12),
-
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-
-                  child: Row(
-                    children: [
-
-                      // ICONO
-                      Container(
-                        padding: const EdgeInsets.all(12),
-
-                        decoration: BoxDecoration(
-                          color: Colors.green.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-
-                        child: const Icon(
-                          Icons.payments,
-                          color: Colors.green,
-                        ),
-                      ),
-
-                      const SizedBox(width: 12),
-
-                      // INFO
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-
-                            Text(
-                              "Pago #${payment.id}",
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-
-                            const SizedBox(height: 6),
-
-                            Text(
-                              "Factura: ${payment.factura}",
-                              style: TextStyle(
-                                color: Colors.grey[700],
-                              ),
-                            ),
-
-                            const SizedBox(height: 4),
-
-                            Text(
-                              "Fecha: ${payment.fecha}",
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 12,
-                              ),
-                            ),
-
-                          ],
-                        ),
-                      ),
-
-                      // MONTO
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-
-                          Text(
-                            "\$${payment.monto}",
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green,
-                            ),
-                          ),
-
-                          const SizedBox(height: 6),
-
-                          Icon(
-                            Icons.arrow_forward_ios,
-                            size: 14,
-                            color: Colors.grey[500],
-                          ),
-
-                        ],
-                      ),
-
-                    ],
+                return Card(
+                  margin: const EdgeInsets.only(
+                    bottom: 12,
                   ),
-                ),
-              );
-            },
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.all(16),
+                    child: Row(
+                      crossAxisAlignment:
+                          CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding:
+                              const EdgeInsets.all(
+                            12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.green
+                                .withValues(
+                              alpha: 0.1,
+                            ),
+                            borderRadius:
+                                BorderRadius.circular(
+                              10,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.payments,
+                            color: Colors.green,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment:
+                                CrossAxisAlignment
+                                    .start,
+                            children: [
+                              Text(
+                                "Venta "
+                                "#${payment.saleNumero}",
+                                style:
+                                    const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight:
+                                      FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(
+                                height: 6,
+                              ),
+                              Text(
+                                payment
+                                    .clienteNombre,
+                              ),
+                              const SizedBox(
+                                height: 4,
+                              ),
+                              Text(
+                                etiquetaMetodo(
+                                  payment.metodo,
+                                ),
+                              ),
+                              if (payment
+                                      .referencia
+                                      ?.isNotEmpty ==
+                                  true) ...[
+                                const SizedBox(
+                                  height: 4,
+                                ),
+                                Text(
+                                  "Referencia: "
+                                  "${payment.referencia}",
+                                ),
+                              ],
+                              const SizedBox(
+                                height: 4,
+                              ),
+                              Text(
+                                formatearFecha(
+                                  payment.fecha,
+                                ),
+                                style: TextStyle(
+                                  color:
+                                      Colors.grey[600],
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          "\$${formatearMonto(payment.monto)}",
+                          style:
+                              const TextStyle(
+                            fontSize: 16,
+                            fontWeight:
+                                FontWeight.bold,
+                            color: Colors.green,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
           );
         },
       ),
