@@ -113,6 +113,18 @@ class SalesService {
     }
   }
 
+  Future<void> deleteSaleItem(int itemId) async {
+    final response = await ApiService.delete(
+      "/ventas/items/$itemId/",
+    );
+
+    if (response.statusCode != 204) {
+      throw Exception(
+        "Error eliminando producto: ${response.body}",
+      );
+    }
+  }
+
   Future<void> confirmSale(int id) async {
     final response = await ApiService.post(
       "/ventas/sales/$id/confirm/",
