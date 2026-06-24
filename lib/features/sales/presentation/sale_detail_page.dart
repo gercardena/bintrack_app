@@ -191,81 +191,6 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
       }
     }
   }
-  Future<void> eliminarItem(SaleItem item) async {
-  final confirmar = await showDialog<bool>(
-    context: context,
-    builder: (dialogContext) {
-      return AlertDialog(
-        title: const Text(
-          "Eliminar producto",
-        ),
-        content: Text(
-          "¿Quieres eliminar "
-          "${item.productNombre} + ${item.binNombre} "
-          "de esta venta?",
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(
-                dialogContext,
-                false,
-              );
-            },
-            child: const Text("Volver"),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(
-                dialogContext,
-                true,
-              );
-            },
-            child: const Text("Eliminar"),
-          ),
-        ],
-      );
-    },
-  );
-
-  if (confirmar != true || !mounted) return;
-
-  setState(() {
-    saving = true;
-  });
-
-  try {
-    await _salesService.deleteSaleItem(
-      item.id,
-    );
-
-    await recargarVenta();
-
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          "Producto eliminado correctamente",
-        ),
-      ),
-    );
-  } catch (e) {
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(e.toString()),
-      ),
-    );
-  } finally {
-    if (mounted) {
-      setState(() {
-        saving = false;
-      });
-    }
-  }
-}
 
   Future<void> confirmarVenta() async {
     final currentSale = venta;
@@ -378,32 +303,13 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
               crossAxisAlignment:
                   CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        "${item.productNombre} + "
-                        "${item.binNombre}",
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    if (venta?.estado == "draft")
-                      IconButton(
-                        tooltip: "Eliminar producto",
-                        icon: const Icon(
-                          Icons.delete_outline,
-                          color: Colors.red,
-                        ),
-                        onPressed: saving
-                            ? null
-                            : () {
-                                eliminarItem(item);
-                              },
-                        ),
-                      ],
-                    ),
+                Text(
+                  "${item.productNombre} + "
+                  "${item.binNombre}",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(
                   height: AppSpacing.sm,
                 ),

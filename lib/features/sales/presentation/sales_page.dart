@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/spacing.dart';
-
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/app_empty_state.dart';
 import '../../../core/widgets/app_loader.dart';
@@ -10,16 +9,18 @@ import '../../../core/widgets/primary_button.dart';
 
 import '../../auth/presentation/protected_page.dart';
 
-import '../data/services/sale_service.dart';
 import '../data/models/sale_model.dart';
+import '../data/services/sale_service.dart';
 
 import 'create_sale_page.dart';
+import 'sale_detail_page.dart';
 
 class SalesPage extends StatefulWidget {
   const SalesPage({super.key});
 
   @override
-  State<SalesPage> createState() => _SalesPageState();
+  State<SalesPage> createState() =>
+      _SalesPageState();
 }
 
 class _SalesPageState extends State<SalesPage> {
@@ -28,6 +29,7 @@ class _SalesPageState extends State<SalesPage> {
   List<Sale> sales = [];
 
   bool loading = true;
+  int? processingSaleId;
 
   @override
   void initState() {
@@ -52,8 +54,6 @@ class _SalesPageState extends State<SalesPage> {
         loading = false;
       });
     } catch (e) {
-      print("ERROR SALES: $e");
-
       if (!mounted) return;
 
       setState(() {
@@ -68,19 +68,78 @@ class _SalesPageState extends State<SalesPage> {
     }
   }
 
-  // =========================================
-  // 🔥 CONFIRMAR
-  // =========================================
+  Future<void> abrirBorrador(Sale sale) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SaleDetailPage(
+          saleId: sale.id,
+        ),
+      ),
+    );
 
-  Future<void> _confirm(int id) async {
+    if (!mounted) return;
+
+    await cargarVentas();
+  }
+
+  Future<void> eliminarBorrador(
+    Sale sale,
+  ) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text(
+            "Eliminar venta borrador",
+          ),
+          content: Text(
+            "¿Quieres eliminar la venta "
+            "#${sale.numero}?\n\n"
+            "También se eliminarán sus artículos.",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(
+                  dialogContext,
+                  false,
+                );
+              },
+              child: const Text("Volver"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(
+                  dialogContext,
+                  true,
+                );
+              },
+              child: const Text("Eliminar"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmar != true || !mounted) return;
+
+    setState(() {
+      processingSaleId = sale.id;
+    });
+
     try {
-      await _service.confirmSale(id);
+      await _service.deleteDraftSale(
+        sale.id,
+      );
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Venta confirmada"),
+          content: Text(
+            "Venta borrador eliminada",
+          ),
         ),
       );
 
@@ -93,16 +152,22 @@ class _SalesPageState extends State<SalesPage> {
           content: Text(e.toString()),
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() {
+          processingSaleId = null;
+        });
+      }
     }
   }
 
-  // =========================================
-  // 🔥 PAGAR
-  // =========================================
+  Future<void> registrarPago(Sale sale) async {
+    setState(() {
+      processingSaleId = sale.id;
+    });
 
-  Future<void> _pay(int id) async {
     try {
-      await _service.paySale(id);
+      await _service.paySale(sale.id);
 
       if (!mounted) return;
 
@@ -121,16 +186,24 @@ class _SalesPageState extends State<SalesPage> {
           content: Text(e.toString()),
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() {
+          processingSaleId = null;
+        });
+      }
     }
   }
 
-  // =========================================
-  // 🔥 FACTURAR
-  // =========================================
+  Future<void> generarFactura(Sale sale) async {
+    setState(() {
+      processingSaleId = sale.id;
+    });
 
-  Future<void> _invoice(int id) async {
     try {
-      await _service.generateInvoice(id);
+      await _service.generateInvoice(
+        sale.id,
+      );
 
       if (!mounted) return;
 
@@ -149,12 +222,33 @@ class _SalesPageState extends State<SalesPage> {
           content: Text(e.toString()),
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() {
+          processingSaleId = null;
+        });
+      }
     }
   }
 
-  // =========================================
-  // 🔥 UI
-  // =========================================
+  String etiquetaEstado(String estado) {
+    switch (estado) {
+      case "draft":
+        return "Borrador";
+      case "confirmed":
+        return "Confirmada";
+      case "paid":
+        return "Pagada";
+      case "cancelled":
+        return "Cancelada";
+      default:
+        return estado;
+    }
+  }
+
+  String precioFormateado(double precio) {
+    return precio.toStringAsFixed(0);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -163,37 +257,30 @@ class _SalesPageState extends State<SalesPage> {
         appBar: AppBar(
           title: const Text("Ventas"),
         ),
-
-        // =====================================
-        // FAB
-        // =====================================
-
-        floatingActionButton: FloatingActionButton(
+        floatingActionButton:
+            FloatingActionButton(
           onPressed: () async {
-            final result = await Navigator.push(
+            await Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => const CreateSalePage(),
+                builder: (_) =>
+                    const CreateSalePage(),
               ),
             );
 
-            if (result == true) {
-              cargarVentas();
-            }
+            if (!mounted) return;
+
+            await cargarVentas();
           },
           child: const Icon(Icons.add),
         ),
-
-        // =====================================
-        // BODY
-        // =====================================
-
         body: loading
             ? const AppLoader()
             : RefreshIndicator(
                 onRefresh: cargarVentas,
                 child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
+                  physics:
+                      const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.all(
                     AppSpacing.screenPadding,
                   ),
@@ -201,46 +288,36 @@ class _SalesPageState extends State<SalesPage> {
                     crossAxisAlignment:
                         CrossAxisAlignment.start,
                     children: [
-                      // =================================
-                      // HEADER
-                      // =================================
-
                       const AppSectionTitle(
                         title: "Ventas",
                         subtitle:
                             "Gestiona ventas, pagos y facturación.",
                       ),
-
                       const SizedBox(
                         height: AppSpacing.lg,
                       ),
-
-                      // =================================
-                      // EMPTY STATE
-                      // =================================
-
                       if (sales.isEmpty)
                         const AppEmptyState(
                           title:
                               "No hay ventas registradas",
                           message:
                               "Las ventas aparecerán aquí.",
-                          icon: Icons.point_of_sale,
+                          icon:
+                              Icons.point_of_sale,
                         )
-
-                      // =================================
-                      // LISTADO
-                      // =================================
-
                       else
                         Column(
                           children: sales.map((sale) {
                             return Padding(
                               padding:
                                   const EdgeInsets.only(
-                                bottom: AppSpacing.md,
+                                bottom:
+                                    AppSpacing.md,
                               ),
-                              child: _saleCard(sale),
+                              child:
+                                  construirTarjeta(
+                                sale,
+                              ),
                             );
                           }).toList(),
                         ),
@@ -252,82 +329,118 @@ class _SalesPageState extends State<SalesPage> {
     );
   }
 
-  // =========================================
-  // 🔥 CARD VENTA
-  // =========================================
+  Widget construirTarjeta(Sale sale) {
+    final processing =
+        processingSaleId == sale.id;
 
-  Widget _saleCard(Sale sale) {
     return AppCard(
       child: Column(
         crossAxisAlignment:
             CrossAxisAlignment.start,
         children: [
-          // ===================================
-          // NUMERO
-          // ===================================
-
-          Text(
-            "Venta #${sale.numero}",
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge
-                ?.copyWith(
-                  fontWeight: FontWeight.bold,
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  "Venta #${sale.numero}",
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleLarge
+                      ?.copyWith(
+                        fontWeight:
+                            FontWeight.bold,
+                      ),
                 ),
+              ),
+              Chip(
+                label: Text(
+                  etiquetaEstado(sale.estado),
+                ),
+              ),
+            ],
           ),
-
           const SizedBox(
             height: AppSpacing.md,
           ),
-
-          // ===================================
-          // INFO
-          // ===================================
-
           Text(
-            "Cliente: ${sale.clienteNombre ?? ''}",
+            "Cliente: "
+            "${sale.clienteNombre ?? "Sin cliente"}",
           ),
-
           const SizedBox(
             height: AppSpacing.sm,
           ),
-
           Text(
-            "Estado: ${sale.estado}",
+            "Artículos: ${sale.items.length}",
           ),
-
           const SizedBox(
             height: AppSpacing.sm,
           ),
-
           Text(
-            "Total: \$${sale.total}",
+            "Total: "
+            "\$${precioFormateado(sale.total)}",
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
           ),
-
           const SizedBox(
             height: AppSpacing.lg,
           ),
-
-          // ===================================
-          // ACTIONS
-          // ===================================
-
-          if (sale.estado == "draft")
+          if (sale.estado == "draft") ...[
             PrimaryButton(
-              text: "Confirmar Venta",
-              onPressed: () => _confirm(sale.id),
+              text: "Continuar borrador",
+              loading: processing,
+              onPressed: processing
+                  ? null
+                  : () {
+                      abrirBorrador(sale);
+                    },
             ),
-
+            const SizedBox(
+              height: AppSpacing.sm,
+            ),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: processing
+                    ? null
+                    : () {
+                        eliminarBorrador(sale);
+                      },
+                icon: const Icon(
+                  Icons.delete_outline,
+                ),
+                label: const Text(
+                  "Eliminar borrador",
+                ),
+              ),
+            ),
+          ],
           if (sale.estado == "confirmed")
             PrimaryButton(
-              text: "Registrar Pago",
-              onPressed: () => _pay(sale.id),
+              text: "Registrar pago",
+              loading: processing,
+              onPressed: processing
+                  ? null
+                  : () {
+                      registrarPago(sale);
+                    },
             ),
-
           if (sale.estado == "paid")
             PrimaryButton(
-              text: "Generar Factura",
-              onPressed: () => _invoice(sale.id),
+              text: "Generar factura",
+              loading: processing,
+              onPressed: processing
+                  ? null
+                  : () {
+                      generarFactura(sale);
+                    },
+            ),
+          if (sale.estado == "cancelled")
+            const Text(
+              "Esta venta fue cancelada.",
+              style: TextStyle(
+                color: Colors.red,
+              ),
             ),
         ],
       ),

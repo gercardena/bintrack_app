@@ -124,6 +124,18 @@ class SalesService {
       );
     }
   }
+  Future<void> deleteDraftSale(int saleId) async {
+  final response = await ApiService.delete(
+    "/ventas/sales/$saleId/",
+  );
+
+  if (response.statusCode != 204) {
+    throw Exception(
+      "Error eliminando venta borrador: "
+      "${response.body}",
+    );
+  }
+}
 
   Future<void> confirmSale(int id) async {
     final response = await ApiService.post(

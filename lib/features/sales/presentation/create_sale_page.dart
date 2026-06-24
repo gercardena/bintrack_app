@@ -11,19 +11,24 @@ class CreateSalePage extends StatefulWidget {
   const CreateSalePage({super.key});
 
   @override
-  State<CreateSalePage> createState() => _CreateSalePageState();
+  State<CreateSalePage> createState() =>
+      _CreateSalePageState();
 }
 
-class _CreateSalePageState extends State<CreateSalePage> {
+class _CreateSalePageState
+    extends State<CreateSalePage> {
+  final SalesService _salesService =
+      SalesService();
 
-  final SalesService _salesService = SalesService();
-  final ClientsService _clientsService = ClientsService();
+  final ClientsService _clientsService =
+      ClientsService();
 
   List<Cliente> clientes = [];
 
   Cliente? clienteSeleccionado;
 
   bool loading = true;
+  bool saving = false;
 
   @override
   void initState() {
@@ -31,15 +36,10 @@ class _CreateSalePageState extends State<CreateSalePage> {
     cargarClientes();
   }
 
-  // =========================================
-  // 🔥 CARGAR CLIENTES
-  // =========================================
-
   Future<void> cargarClientes() async {
-
     try {
-
-      final data = await _clientsService.getClients();
+      final data =
+          await _clientsService.getClients();
 
       if (!mounted) return;
 
@@ -47,9 +47,7 @@ class _CreateSalePageState extends State<CreateSalePage> {
         clientes = data;
         loading = false;
       });
-
     } catch (e) {
-
       if (!mounted) return;
 
       setState(() {
@@ -64,52 +62,59 @@ class _CreateSalePageState extends State<CreateSalePage> {
     }
   }
 
-  // =========================================
-  // 🔥 CREAR VENTA
-  // =========================================
-
   Future<void> crearVenta() async {
+    final cliente = clienteSeleccionado;
 
-    if (clienteSeleccionado == null) {
-
+    if (cliente == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Selecciona un cliente"),
+          content: Text(
+            "Selecciona un cliente",
+          ),
         ),
       );
 
       return;
     }
 
-    try {
+    setState(() {
+      saving = true;
+    });
 
-      final saleId = await _salesService.createSale(
-        clienteId: clienteSeleccionado!.id,
+    try {
+      final saleId =
+          await _salesService.createSale(
+        clienteId: cliente.id,
       );
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Venta #$saleId creada"),
+          content: Text(
+            "Venta #$saleId creada",
+          ),
         ),
       );
 
-      Navigator.push(
-
+      await Navigator.push(
         context,
-
         MaterialPageRoute(
-
           builder: (_) => SaleDetailPage(
             saleId: saleId,
           ),
         ),
       );
 
-    } catch (e) {
-
       if (!mounted) return;
+
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        saving = false;
+      });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -119,82 +124,75 @@ class _CreateSalePageState extends State<CreateSalePage> {
     }
   }
 
-  // =========================================
-  // 🔥 UI
-  // =========================================
-
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-
       appBar: AppBar(
-        title: const Text("Nueva Venta"),
+        title: const Text("Nueva venta"),
       ),
-
       body: loading
-
           ? const Center(
               child: CircularProgressIndicator(),
             )
-
           : Padding(
-
               padding: const EdgeInsets.all(16),
-
               child: Column(
-
-                crossAxisAlignment: CrossAxisAlignment.start,
-
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
                 children: [
-
                   const Text(
                     "Cliente",
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-
                   const SizedBox(height: 10),
-
                   DropdownButtonFormField<Cliente>(
-
                     value: clienteSeleccionado,
-
+                    isExpanded: true,
                     items: clientes.map((cliente) {
-
-                      return DropdownMenuItem<Cliente>(
-
+                      return DropdownMenuItem<
+                          Cliente>(
                         value: cliente,
-
-                        child: Text(cliente.nombre),
+                        child: Text(
+                          cliente.nombre,
+                          overflow:
+                              TextOverflow.ellipsis,
+                        ),
                       );
-
                     }).toList(),
-
-                    onChanged: (value) {
-
-                      setState(() {
-                        clienteSeleccionado = value;
-                      });
-                    },
-
-                    decoration: const InputDecoration(
+                    onChanged: saving
+                        ? null
+                        : (value) {
+                            setState(() {
+                              clienteSeleccionado =
+                                  value;
+                            });
+                          },
+                    decoration:
+                        const InputDecoration(
                       border: OutlineInputBorder(),
+                      labelText: "Cliente",
                     ),
                   ),
-
                   const SizedBox(height: 30),
-
                   SizedBox(
-
                     width: double.infinity,
-
                     child: ElevatedButton(
-
-                      onPressed: crearVenta,
-
-                      child: const Text("Crear Venta"),
+                      onPressed:
+                          saving ? null : crearVenta,
+                      child: saving
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child:
+                                  CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              "Crear venta",
+                            ),
                     ),
                   ),
                 ],
