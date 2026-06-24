@@ -148,6 +148,17 @@ class SalesService {
       );
     }
   }
+  Future<void> cancelSale(int id) async {
+  final response = await ApiService.post(
+    "/ventas/sales/$id/cancel/",
+  );
+
+  if (response.statusCode != 200) {
+    throw Exception(
+      "Error cancelando venta: ${response.body}",
+    );
+  }
+}
 
   Future<void> paySale(int id) async {
     final response = await ApiService.post(

@@ -160,6 +160,82 @@ class _SalesPageState extends State<SalesPage> {
       }
     }
   }
+  Future<void> cancelarVenta(Sale sale) async {
+  final confirmar = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) {
+      return AlertDialog(
+        title: const Text(
+          "Cancelar venta",
+        ),
+        content: Text(
+          "¿Quieres cancelar la venta "
+          "#${sale.numero}?\n\n"
+          "Se restaurará el stock y se registrará "
+          "la devolución de los envases.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(
+                dialogContext,
+                false,
+              );
+            },
+            child: const Text("Volver"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(
+                dialogContext,
+                true,
+              );
+            },
+            child: const Text(
+              "Cancelar venta",
+            ),
+          ),
+        ],
+      );
+    },
+  );
+
+  if (confirmar != true || !mounted) return;
+
+  setState(() {
+    processingSaleId = sale.id;
+  });
+
+  try {
+    await _service.cancelSale(sale.id);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          "Venta cancelada correctamente",
+        ),
+      ),
+    );
+
+    await cargarVentas();
+  } catch (e) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(e.toString()),
+      ),
+    );
+  } finally {
+    if (mounted) {
+      setState(() {
+        processingSaleId = null;
+      });
+    }
+  }
+}
 
   Future<void> registrarPago(Sale sale) async {
     setState(() {
@@ -415,7 +491,7 @@ class _SalesPageState extends State<SalesPage> {
               ),
             ),
           ],
-          if (sale.estado == "confirmed")
+          if (sale.estado == "confirmed") ...[
             PrimaryButton(
               text: "Registrar pago",
               loading: processing,
@@ -425,6 +501,26 @@ class _SalesPageState extends State<SalesPage> {
                       registrarPago(sale);
                     },
             ),
+            const SizedBox(
+              height: AppSpacing.sm,
+            ),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: processing
+                    ? null
+                    : () {
+                        cancelarVenta(sale);
+                      },
+                icon: const Icon(
+                  Icons.cancel_outlined,
+                ),
+                label: const Text(
+                  "Cancelar venta",
+                ),
+              ),
+            ),
+          ],
           if (sale.estado == "paid")
             PrimaryButton(
               text: "Generar factura",
