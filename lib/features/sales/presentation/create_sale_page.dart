@@ -44,8 +44,12 @@ class _CreateSalePageState
       if (!mounted) return;
 
       setState(() {
-        clientes = data;
-        loading = false;
+          clientes = data
+            .where(
+              (cliente) => cliente.activo,
+            )
+            .toList();
+          loading = false;
       });
     } catch (e) {
       if (!mounted) return;
@@ -125,79 +129,88 @@ class _CreateSalePageState
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Nueva venta"),
-      ),
-      body: loading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
-          : Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Cliente",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      title: const Text("Nueva venta"),
+    ),
+    body: loading
+        ? const Center(
+            child: CircularProgressIndicator(),
+          )
+        : clientes.isEmpty
+            ? const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Text(
+                    "No hay clientes activos para crear una venta.",
+                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 10),
-                  DropdownButtonFormField<Cliente>(
-                    value: clienteSeleccionado,
-                    isExpanded: true,
-                    items: clientes.map((cliente) {
-                      return DropdownMenuItem<
-                          Cliente>(
-                        value: cliente,
-                        child: Text(
-                          cliente.nombre,
-                          overflow:
-                              TextOverflow.ellipsis,
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: saving
-                        ? null
-                        : (value) {
-                            setState(() {
-                              clienteSeleccionado =
-                                  value;
-                            });
-                          },
-                    decoration:
-                        const InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: "Cliente",
+                ),
+              )
+            : Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Cliente",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 30),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed:
-                          saving ? null : crearVenta,
-                      child: saving
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child:
-                                  CircularProgressIndicator(
-                                strokeWidth: 2,
+                    const SizedBox(height: 10),
+                    DropdownButtonFormField<Cliente>(
+                      value: clienteSeleccionado,
+                      isExpanded: true,
+                      items: clientes.map((cliente) {
+                        return DropdownMenuItem<Cliente>(
+                          value: cliente,
+                          child: Text(
+                            cliente.nombre,
+                            overflow:
+                                TextOverflow.ellipsis,
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: saving
+                          ? null
+                          : (value) {
+                              setState(() {
+                                clienteSeleccionado =
+                                    value;
+                              });
+                            },
+                      decoration:
+                          const InputDecoration(
+                        border: OutlineInputBorder(),
+                        labelText: "Cliente",
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed:
+                            saving ? null : crearVenta,
+                        child: saving
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child:
+                                    CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text(
+                                "Crear venta",
                               ),
-                            )
-                          : const Text(
-                              "Crear venta",
-                            ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-    );
-  }
+  );
+}
 }
