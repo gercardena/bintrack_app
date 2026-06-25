@@ -1,41 +1,37 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 
-import '../../auth/data/token_storage.dart';
+import '../../../core/services/api_service.dart';
 import '../models/cliente.dart';
 
 class ClientesApi {
-
-  static const String _baseUrl = 'http://192.168.11.215:8000';
-
-  // 🔥 GET CLIENTES
   static Future<List<Cliente>> getClientes() async {
-
-    final token = await TokenStorage.getAccessToken();
-
-    final response = await http.get(
-      Uri.parse('$_baseUrl/api/clientes/'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
+    final response = await ApiService.get(
+      "/clientes/",
     );
 
-    print("CLIENTES STATUS: ${response.statusCode}");
-    print("CLIENTES BODY: ${response.body}");
-
-    if (response.statusCode == 200) {
-
-      final List data = jsonDecode(response.body);
-
-      return data.map((e) => Cliente.fromJson(e)).toList();
-
-    } else {
-      throw Exception('Error cargando clientes');
+    if (response.statusCode != 200) {
+      throw Exception(
+        "Error cargando clientes: ${response.body}",
+      );
     }
+
+    final decoded = jsonDecode(response.body);
+
+    if (decoded is! List) {
+      throw Exception(
+        "Respuesta inválida al cargar clientes",
+      );
+    }
+
+    return decoded
+        .map(
+          (item) => Cliente.fromJson(
+            item as Map<String, dynamic>,
+          ),
+        )
+        .toList();
   }
 
-  // 🔥 CREAR CLIENTE
   static Future<bool> crearCliente({
     required String nombre,
     required String rut,
@@ -43,35 +39,28 @@ class ClientesApi {
     String? telefono,
     String? direccion,
   }) async {
-
-    final token = await TokenStorage.getAccessToken();
-
-    final response = await http.post(
-      Uri.parse('$_baseUrl/api/clientes/'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
+    final response = await ApiService.post(
+      "/clientes/",
+      body: {
         "nombre": nombre,
         "rut": rut,
         "email": email,
         "telefono": telefono,
         "direccion": direccion,
-      }),
+        "activo": true,
+      },
     );
 
-    print("CREATE CLIENT STATUS: ${response.statusCode}");
-    print("CREATE CLIENT BODY: ${response.body}");
-
-    if (response.statusCode == 201 || response.statusCode == 200) {
+    if (response.statusCode == 200 ||
+        response.statusCode == 201) {
       return true;
     }
 
-    throw Exception('Error al crear cliente');
+    throw Exception(
+      "Error al crear cliente: ${response.body}",
+    );
   }
 
-  // 🔥 ACTUALIZAR CLIENTE
   static Future<bool> actualizarCliente(
     int id, {
     required String nombre,
@@ -79,51 +68,41 @@ class ClientesApi {
     String? email,
     String? telefono,
     String? direccion,
+    bool activo = true,
   }) async {
-
-    final token = await TokenStorage.getAccessToken();
-
-    final response = await http.put(
-      Uri.parse('$_baseUrl/api/clientes/$id/'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
+    final response = await ApiService.put(
+      "/clientes/$id/",
+      body: {
         "nombre": nombre,
         "rut": rut,
         "email": email,
         "telefono": telefono,
         "direccion": direccion,
-      }),
-    );
-
-    print("UPDATE CLIENT STATUS: ${response.statusCode}");
-    print("UPDATE CLIENT BODY: ${response.body}");
-
-    if (response.statusCode == 200) return true;
-
-    throw Exception('Error al actualizar cliente');
-  }
-
-  // 🔥 ELIMINAR CLIENTE
-  static Future<bool> eliminarCliente(int id) async {
-
-    final token = await TokenStorage.getAccessToken();
-
-    final response = await http.delete(
-      Uri.parse('$_baseUrl/api/clientes/$id/'),
-      headers: {
-        'Authorization': 'Bearer $token',
+        "activo": activo,
       },
     );
 
-    print("DELETE CLIENT STATUS: ${response.statusCode}");
-
-    if (response.statusCode == 204 || response.statusCode == 200) {
+    if (response.statusCode == 200) {
       return true;
     }
 
-    throw Exception('Error al eliminar cliente');
+    throw Exception(
+      "Error al actualizar cliente: ${response.body}",
+    );
+  }
+
+  static Future<bool> eliminarCliente(int id) async {
+    final response = await ApiService.delete(
+      "/clientes/$id/",
+    );
+
+    if (response.statusCode == 200 ||
+        response.statusCode == 204) {
+      return true;
+    }
+
+    throw Exception(
+      "Error al eliminar cliente: ${response.body}",
+    );
   }
 }

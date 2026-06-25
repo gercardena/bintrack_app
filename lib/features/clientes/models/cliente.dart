@@ -1,5 +1,4 @@
 class Cliente {
-
   final int id;
   final String nombre;
   final String rut;
@@ -19,26 +18,19 @@ class Cliente {
   });
 
   factory Cliente.fromJson(Map<String, dynamic> json) {
-
     return Cliente(
-      id: json['id'] as int,
-
-      // 🔥 Protección total de strings
-      nombre: (json['nombre'] ?? '').toString(),
-      rut: (json['rut'] ?? '').toString(),
-
-      email: json['email']?.toString(),
-      telefono: json['telefono']?.toString(),
-      direccion: json['direccion']?.toString(),
-
-      activo: json['activo'] ?? true,
+      id: int.tryParse(json["id"].toString()) ?? 0,
+      nombre: (json["nombre"] ?? "").toString(),
+      rut: (json["rut"] ?? "").toString(),
+      email: json["email"]?.toString(),
+      telefono: json["telefono"]?.toString(),
+      direccion: json["direccion"]?.toString(),
+      activo: json["activo"] ?? true,
     );
   }
 
-  // 🔥 IMPORTANTE para crear/editar clientes
   Map<String, dynamic> toJson() {
     return {
-      "id": id,
       "nombre": nombre,
       "rut": rut,
       "email": email,

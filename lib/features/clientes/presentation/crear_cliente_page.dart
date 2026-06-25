@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
+
 import '../data/clientes_api.dart';
 
 class CrearClientePage extends StatefulWidget {
   const CrearClientePage({super.key});
 
   @override
-  State<CrearClientePage> createState() => _CrearClientePageState();
+  State<CrearClientePage> createState() =>
+      _CrearClientePageState();
 }
 
-class _CrearClientePageState extends State<CrearClientePage> {
-
+class _CrearClientePageState
+    extends State<CrearClientePage> {
   final _formKey = GlobalKey<FormState>();
 
   final nombreCtrl = TextEditingController();
@@ -20,113 +22,156 @@ class _CrearClientePageState extends State<CrearClientePage> {
 
   bool loading = false;
 
-  Future<void> _guardarCliente() async {
+  @override
+  void dispose() {
+    nombreCtrl.dispose();
+    rutCtrl.dispose();
+    emailCtrl.dispose();
+    telefonoCtrl.dispose();
+    direccionCtrl.dispose();
+    super.dispose();
+  }
 
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() => loading = true);
-
-    try {
-
-      final ok = await ClientesApi.crearCliente(
-        nombre: nombreCtrl.text,
-        rut: rutCtrl.text,
-        email: emailCtrl.text,
-        telefono: telefonoCtrl.text,
-        direccion: direccionCtrl.text,
-      );
-
-      if (ok) {
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Cliente creado correctamente")),
-        );
-
-        Navigator.pop(context, true); // 🔥 vuelve y refresca
-
-      } else {
-
-        throw Exception("Error al crear cliente");
-
-      }
-
-    } catch (e) {
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
-
+  String? requerido(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return "Requerido";
     }
 
-    setState(() => loading = false);
+    return null;
+  }
+
+  Future<void> guardar() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      loading = true;
+    });
+
+    try {
+      await ClientesApi.crearCliente(
+        nombre: nombreCtrl.text.trim(),
+        rut: rutCtrl.text.trim(),
+        email: emailCtrl.text.trim().isEmpty
+            ? null
+            : emailCtrl.text.trim(),
+        telefono: telefonoCtrl.text.trim().isEmpty
+            ? null
+            : telefonoCtrl.text.trim(),
+        direccion: direccionCtrl.text.trim().isEmpty
+            ? null
+            : direccionCtrl.text.trim(),
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Cliente creado correctamente"),
+        ),
+      );
+
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        loading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-
       appBar: AppBar(
-        title: const Text("Nuevo Cliente"),
+        title: const Text("Crear cliente"),
       ),
-
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-
+        padding: const EdgeInsets.all(
+          16,
+        ),
         child: Form(
           key: _formKey,
-
           child: Column(
             children: [
-
-              _input(nombreCtrl, "Nombre", obligatorio: true),
-              _input(rutCtrl, "RUT", obligatorio: true),
-              _input(emailCtrl, "Email"),
-              _input(telefonoCtrl, "Teléfono"),
-              _input(direccionCtrl, "Dirección"),
-
-              const SizedBox(height: 20),
-
+              TextFormField(
+                controller: nombreCtrl,
+                decoration: const InputDecoration(
+                  labelText: "Nombre",
+                  border: OutlineInputBorder(),
+                ),
+                validator: requerido,
+              ),
+              const SizedBox(
+                height: 12,
+              ),
+              TextFormField(
+                controller: rutCtrl,
+                decoration: const InputDecoration(
+                  labelText: "RUT",
+                  border: OutlineInputBorder(),
+                ),
+                validator: requerido,
+              ),
+              const SizedBox(
+                height: 12,
+              ),
+              TextFormField(
+                controller: emailCtrl,
+                decoration: const InputDecoration(
+                  labelText: "Email",
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(
+                height: 12,
+              ),
+              TextFormField(
+                controller: telefonoCtrl,
+                decoration: const InputDecoration(
+                  labelText: "Teléfono",
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.phone,
+              ),
+              const SizedBox(
+                height: 12,
+              ),
+              TextFormField(
+                controller: direccionCtrl,
+                decoration: const InputDecoration(
+                  labelText: "Dirección",
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(
+                height: 24,
+              ),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: loading ? null : _guardarCliente,
+                  onPressed: loading ? null : guardar,
                   child: loading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text("Guardar"),
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text("Guardar cliente"),
                 ),
-              )
-
+              ),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  // 🔥 INPUT REUTILIZABLE
-  Widget _input(TextEditingController ctrl, String label,
-      {bool obligatorio = false}) {
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-
-      child: TextFormField(
-        controller: ctrl,
-
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-
-        validator: (value) {
-          if (obligatorio && (value == null || value.isEmpty)) {
-            return "Campo obligatorio";
-          }
-          return null;
-        },
       ),
     );
   }

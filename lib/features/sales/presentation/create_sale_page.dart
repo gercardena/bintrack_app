@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../clientes/data/clients_service.dart';
-import '../../clientes/models/client_model.dart';
+import '../../clientes/models/cliente.dart';
 
 import '../data/services/sale_service.dart';
 

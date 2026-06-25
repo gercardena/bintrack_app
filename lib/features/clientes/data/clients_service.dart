@@ -1,60 +1,29 @@
-import 'dart:convert';
-import '../../../core/services/api_service.dart';
-import '../models/client_model.dart';
+import '../models/cliente.dart';
+import 'clientes_api.dart';
 
 class ClientsService {
-
-  // =========================================
-  // 🔹 GET CLIENTES
-  // =========================================
-
   Future<List<Cliente>> getClients() async {
-
-    final response = await ApiService.get("/clientes/");
-
-    print("CLIENTES STATUS: ${response.statusCode}");
-    print("CLIENTES BODY: ${response.body}");
-
-    if (response.statusCode == 200) {
-
-      final decoded = jsonDecode(response.body);
-
-      // 🔥 PROTECCIÓN TOTAL
-      if (decoded is List) {
-        return decoded
-            .map((e) => Cliente.fromJson(e))
-            .toList();
-      } else {
-        return [];
-      }
-
-    } else {
-      throw Exception("Error cargando clientes (${response.statusCode})");
-    }
+    return ClientesApi.getClientes();
   }
 
-  // =========================================
-  // 🔹 CREAR CLIENTE (te va a servir después)
-  // =========================================
-
   Future<Cliente> createClient(Cliente cliente) async {
-
-    final response = await ApiService.post(
-      "/clientes/",
-      body: cliente.toJson(),
+    final ok = await ClientesApi.crearCliente(
+      nombre: cliente.nombre,
+      rut: cliente.rut,
+      email: cliente.email,
+      telefono: cliente.telefono,
+      direccion: cliente.direccion,
     );
 
-    print("CREATE CLIENT STATUS: ${response.statusCode}");
-    print("CREATE CLIENT BODY: ${response.body}");
-
-    if (response.statusCode == 201) {
-
-      final data = jsonDecode(response.body);
-
-      return Cliente.fromJson(data);
-
-    } else {
+    if (!ok) {
       throw Exception("Error creando cliente");
     }
+
+    final clientes = await ClientesApi.getClientes();
+
+    return clientes.firstWhere(
+      (item) => item.rut == cliente.rut,
+      orElse: () => cliente,
+    );
   }
 }
