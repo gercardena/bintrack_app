@@ -10,7 +10,8 @@ class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
 
   @override
-  State<AuthGate> createState() => _AuthGateState();
+  State<AuthGate> createState() =>
+      _AuthGateState();
 }
 
 class _AuthGateState extends State<AuthGate> {
@@ -37,8 +38,7 @@ class _AuthGateState extends State<AuthGate> {
       return;
     }
 
-    // 🔥 Intentar renovar token automáticamente
-
+    // Intentar renovar token automáticamente.
     final refreshedToken =
         await AuthApi.refreshToken();
 
@@ -64,8 +64,77 @@ class _AuthGateState extends State<AuthGate> {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      body: Center(
-        child: CircularProgressIndicator(),
+      backgroundColor: Color(0xFF101827),
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _AuthLogo(),
+                SizedBox(height: 24),
+                CircularProgressIndicator(),
+                SizedBox(height: 18),
+                Text(
+                  "Preparando BINTRACK",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  "Estamos verificando tu sesión...",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white60,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AuthLogo extends StatelessWidget {
+  const _AuthLogo();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 78,
+      height: 78,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF22D3EE),
+            Color(0xFF2563EB),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.cyanAccent.withValues(
+              alpha: 0.22,
+            ),
+            blurRadius: 28,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: const Icon(
+        Icons.inventory_2_outlined,
+        color: Colors.white,
+        size: 38,
       ),
     );
   }
