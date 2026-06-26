@@ -19,11 +19,13 @@ class _CreateBinMovementPageState
   final BinClientService clientService =
       BinClientService();
 
-  final BinTypeService typeService =
-      BinTypeService();
+  final BinTypeService typeService = BinTypeService();
 
   final BinMovementService movementService =
       BinMovementService();
+
+  static const Color background = Color(0xFF0F172A);
+  static const Color card = Color(0xFF1E293B);
 
   List<BinClient> clients = [];
   List<BinType> types = [];
@@ -59,8 +61,7 @@ class _CreateBinMovementPageState
       final loadedClients =
           await clientService.getClients();
 
-      final loadedTypes =
-          await typeService.getBinTypes();
+      final loadedTypes = await typeService.getBinTypes();
 
       if (!mounted) return;
 
@@ -110,11 +111,43 @@ class _CreateBinMovementPageState
     }
   }
 
+  String movementDescription(String value) {
+    switch (value) {
+      case "entrada":
+        return "Aumenta los envases físicos disponibles.";
+      case "prestamo":
+        return "Entrega envases a un cliente y aumenta su saldo pendiente.";
+      case "devolucion":
+        return "Registra envases que vuelven desde un cliente.";
+      case "baja":
+        return "Descuenta envases perdidos, rotos o no utilizables.";
+      default:
+        return "Movimiento de envases.";
+    }
+  }
+
+  Color movementColor(String value) {
+    switch (value) {
+      case "entrada":
+        return Colors.greenAccent;
+      case "prestamo":
+        return Colors.orangeAccent;
+      case "devolucion":
+        return Colors.cyanAccent;
+      case "baja":
+        return Colors.redAccent;
+      default:
+        return Colors.blueAccent;
+    }
+  }
+
   bool validarFormulario() {
     if (selectedType == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Selecciona un tipo de envase"),
+          content: Text(
+            "Selecciona un tipo de envase.",
+          ),
         ),
       );
       return false;
@@ -123,7 +156,9 @@ class _CreateBinMovementPageState
     if (selectedClient == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Selecciona un cliente"),
+          content: Text(
+            "Selecciona un cliente de referencia.",
+          ),
         ),
       );
       return false;
@@ -136,7 +171,7 @@ class _CreateBinMovementPageState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            "La cantidad debe ser mayor que cero",
+            "La cantidad debe ser mayor que cero.",
           ),
         ),
       );
@@ -151,6 +186,13 @@ class _CreateBinMovementPageState
 
     if (!validarFormulario()) return;
 
+    final deposito = double.tryParse(
+          depositoController.text
+              .trim()
+              .replaceAll(",", "."),
+        ) ??
+        0;
+
     setState(() {
       saving = true;
     });
@@ -163,11 +205,7 @@ class _CreateBinMovementPageState
         cantidad: int.parse(
           cantidadController.text.trim(),
         ),
-        depositoPagado:
-            double.tryParse(
-                  depositoController.text.trim(),
-                ) ??
-                0,
+        depositoPagado: deposito,
         referencia:
             referenciaController.text.trim().isEmpty
                 ? "Movimiento ${movementLabel(movementType)}"
@@ -180,7 +218,7 @@ class _CreateBinMovementPageState
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              "Movimiento creado correctamente",
+              "Movimiento creado correctamente.",
             ),
           ),
         );
@@ -194,7 +232,7 @@ class _CreateBinMovementPageState
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              "Error al crear movimiento",
+              "No fue posible crear el movimiento.",
             ),
           ),
         );
@@ -209,17 +247,163 @@ class _CreateBinMovementPageState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            "Error al crear movimiento: $e",
+            "No fue posible crear el movimiento: $e",
           ),
         ),
       );
     }
   }
 
+  @override
+  Widget build(BuildContext context) {
+    if (loading) {
+      return const Scaffold(
+        backgroundColor: background,
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    return Theme(
+      data: Theme.of(context).copyWith(
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.white.withValues(alpha: 0.06),
+          labelStyle: const TextStyle(
+            color: Colors.white70,
+          ),
+          hintStyle: const TextStyle(
+            color: Colors.white38,
+          ),
+          prefixStyle: const TextStyle(
+            color: Colors.white,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(
+              color: Colors.white.withValues(alpha: 0.14),
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(
+              color: Colors.orangeAccent,
+            ),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(
+              color: Colors.redAccent,
+            ),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(
+              color: Colors.redAccent,
+            ),
+          ),
+        ),
+      ),
+      child: Scaffold(
+        backgroundColor: background,
+        appBar: AppBar(
+          title: const Text("Nuevo movimiento"),
+          centerTitle: true,
+          backgroundColor: background,
+          foregroundColor: Colors.white,
+          elevation: 0,
+        ),
+        body: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            _introCard(),
+
+            const SizedBox(height: 16),
+
+            _sectionCard(
+              title: "Movimiento",
+              icon: Icons.swap_horiz,
+              color: movementColor(movementType),
+              children: [
+                selectorMovimiento(),
+
+                const SizedBox(height: 10),
+
+                _smallHelp(
+                  movementDescription(movementType),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+
+            _sectionCard(
+              title: "Envase y cliente",
+              icon: Icons.inventory_2,
+              color: Colors.cyanAccent,
+              children: [
+                selectorTipoEnvase(),
+
+                const SizedBox(height: 12),
+
+                selectorCliente(),
+
+                const SizedBox(height: 10),
+
+                _smallHelp(
+                  "El cliente funciona como referencia del movimiento. "
+                  "En préstamos y devoluciones representa quién recibe "
+                  "o devuelve los envases.",
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+
+            _sectionCard(
+              title: "Detalle",
+              icon: Icons.edit_note,
+              color: Colors.orangeAccent,
+              children: [
+                campoCantidad(),
+
+                const SizedBox(height: 12),
+
+                campoDeposito(),
+
+                const SizedBox(height: 10),
+
+                _smallHelp(
+                  "El depósito pagado es una garantía asociada "
+                  "a envases prestados. No es precio de venta.",
+                ),
+
+                const SizedBox(height: 12),
+
+                campoReferencia(),
+              ],
+            ),
+
+            const SizedBox(height: 28),
+
+            botonGuardar(),
+
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget selectorCliente() {
     return DropdownButtonFormField<BinClient>(
       value: selectedClient,
       isExpanded: true,
+      dropdownColor: card,
+      style: const TextStyle(
+        color: Colors.white,
+      ),
       items: clients.map((client) {
         return DropdownMenuItem<BinClient>(
           value: client,
@@ -237,8 +421,7 @@ class _CreateBinMovementPageState
               });
             },
       decoration: const InputDecoration(
-        labelText: "Cliente",
-        border: OutlineInputBorder(),
+        labelText: "Cliente de referencia",
       ),
     );
   }
@@ -247,6 +430,10 @@ class _CreateBinMovementPageState
     return DropdownButtonFormField<BinType>(
       value: selectedType,
       isExpanded: true,
+      dropdownColor: card,
+      style: const TextStyle(
+        color: Colors.white,
+      ),
       items: types.map((type) {
         return DropdownMenuItem<BinType>(
           value: type,
@@ -265,7 +452,6 @@ class _CreateBinMovementPageState
             },
       decoration: const InputDecoration(
         labelText: "Tipo de envase",
-        border: OutlineInputBorder(),
       ),
     );
   }
@@ -274,6 +460,10 @@ class _CreateBinMovementPageState
     return DropdownButtonFormField<String>(
       value: movementType,
       isExpanded: true,
+      dropdownColor: card,
+      style: const TextStyle(
+        color: Colors.white,
+      ),
       items: const [
         DropdownMenuItem(
           value: "entrada",
@@ -303,7 +493,6 @@ class _CreateBinMovementPageState
             },
       decoration: const InputDecoration(
         labelText: "Tipo de movimiento",
-        border: OutlineInputBorder(),
       ),
     );
   }
@@ -311,10 +500,12 @@ class _CreateBinMovementPageState
   Widget campoCantidad() {
     return TextField(
       controller: cantidadController,
+      style: const TextStyle(
+        color: Colors.white,
+      ),
       keyboardType: TextInputType.number,
       decoration: const InputDecoration(
-        labelText: "Cantidad",
-        border: OutlineInputBorder(),
+        labelText: "Cantidad de envases",
       ),
     );
   }
@@ -322,10 +513,16 @@ class _CreateBinMovementPageState
   Widget campoDeposito() {
     return TextField(
       controller: depositoController,
-      keyboardType: TextInputType.number,
+      style: const TextStyle(
+        color: Colors.white,
+      ),
+      keyboardType:
+          const TextInputType.numberWithOptions(
+        decimal: true,
+      ),
       decoration: const InputDecoration(
         labelText: "Depósito pagado",
-        border: OutlineInputBorder(),
+        prefixText: "\$",
       ),
     );
   }
@@ -333,9 +530,12 @@ class _CreateBinMovementPageState
   Widget campoReferencia() {
     return TextField(
       controller: referenciaController,
+      style: const TextStyle(
+        color: Colors.white,
+      ),
       decoration: const InputDecoration(
         labelText: "Referencia",
-        border: OutlineInputBorder(),
+        hintText: "Ej: Stock inicial, guía, nota interna",
       ),
     );
   }
@@ -343,55 +543,131 @@ class _CreateBinMovementPageState
   Widget botonGuardar() {
     return SizedBox(
       width: double.infinity,
-      child: ElevatedButton(
+      child: FilledButton.icon(
         onPressed: saving ? null : saveMovement,
-        child: saving
+        icon: saving
             ? const SizedBox(
-                width: 22,
-                height: 22,
+                width: 20,
+                height: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
                 ),
               )
-            : const Text("Guardar movimiento"),
+            : const Icon(Icons.save),
+        label: const Text("Guardar movimiento"),
       ),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    if (loading) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Nuevo movimiento"),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: ListView(
-          children: [
-            selectorCliente(),
-            const SizedBox(height: 16),
-            selectorTipoEnvase(),
-            const SizedBox(height: 16),
-            selectorMovimiento(),
-            const SizedBox(height: 16),
-            campoCantidad(),
-            const SizedBox(height: 16),
-            campoDeposito(),
-            const SizedBox(height: 16),
-            campoReferencia(),
-            const SizedBox(height: 24),
-            botonGuardar(),
+  Widget _introCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFFEA580C),
+            Color(0xFFEAB308),
           ],
         ),
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.orange.withValues(alpha: 0.22),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
+      child: const Row(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.add_box,
+            color: Colors.white,
+            size: 32,
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              "Registra un movimiento para actualizar el control "
+              "de envases físicos y saldos por cliente.",
+              style: TextStyle(
+                color: Colors.white,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionCard({
+    required String title,
+    required IconData icon,
+    required Color color,
+    required List<Widget> children,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: card,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.06),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                icon,
+                color: color,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _smallHelp(String text) {
+    return Row(
+      crossAxisAlignment:
+          CrossAxisAlignment.start,
+      children: [
+        const Icon(
+          Icons.info_outline,
+          size: 18,
+          color: Colors.white54,
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white60,
+              height: 1.3,
+              fontSize: 12.5,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
