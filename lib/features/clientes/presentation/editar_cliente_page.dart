@@ -168,7 +168,7 @@ class _EditarClientePageState
       child: SwitchListTile(
         contentPadding: EdgeInsets.zero,
         value: activo,
-        activeColor: Colors.greenAccent,
+        activeThumbColor: Colors.greenAccent,
         title: Text(
           activo ? "Cliente activo" : "Cliente inactivo",
           style: const TextStyle(
@@ -251,9 +251,7 @@ class _EditarClientePageState
             child: Column(
               children: [
                 _introCard(),
-
                 const SizedBox(height: 16),
-
                 _sectionCard(
                   title: "Datos principales",
                   icon: Icons.badge,
@@ -276,9 +274,7 @@ class _EditarClientePageState
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 16),
-
                 _sectionCard(
                   title: "Datos de contacto",
                   icon: Icons.contact_phone,
@@ -305,9 +301,7 @@ class _EditarClientePageState
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 16),
-
                 _sectionCard(
                   title: "Estado del cliente",
                   icon: Icons.toggle_on,
@@ -318,9 +312,7 @@ class _EditarClientePageState
                     estadoCliente(),
                   ],
                 ),
-
                 const SizedBox(height: 28),
-
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
@@ -339,7 +331,6 @@ class _EditarClientePageState
                     label: const Text("Guardar cambios"),
                   ),
                 ),
-
                 const SizedBox(height: 20),
               ],
             ),

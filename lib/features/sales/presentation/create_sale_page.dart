@@ -183,16 +183,14 @@ class _CreateSalePageState
                             const EdgeInsets.all(16),
                         children: [
                           _introCard(),
-
                           const SizedBox(height: 16),
-
                           _sectionCard(
                             title: "Cliente",
                             icon: Icons.person_outline,
                             color: Colors.blueAccent,
                             children: [
                               DropdownButtonFormField<Cliente>(
-                                value:
+                                initialValue:
                                     clienteSeleccionado,
                                 isExpanded: true,
                                 dropdownColor: card,
@@ -227,18 +225,14 @@ class _CreateSalePageState
                                       "Cliente activo",
                                 ),
                               ),
-
                               const SizedBox(height: 10),
-
                               _smallHelp(
                                 "Solo aparecen clientes activos. "
                                 "Si no encuentras uno, revisa el módulo Clientes.",
                               ),
                             ],
                           ),
-
                           const SizedBox(height: 16),
-
                           _sectionCard(
                             title: "Flujo de venta",
                             icon: Icons.route,
@@ -263,9 +257,7 @@ class _CreateSalePageState
                               ),
                             ],
                           ),
-
                           const SizedBox(height: 28),
-
                           SizedBox(
                             width: double.infinity,
                             child: FilledButton.icon(
@@ -286,7 +278,6 @@ class _CreateSalePageState
                               ),
                             ),
                           ),
-
                           const SizedBox(height: 20),
                         ],
                       ),
