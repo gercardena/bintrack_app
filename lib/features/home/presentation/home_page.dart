@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../auth/presentation/logout.dart';
 import '../../clientes/presentation/clientes_page.dart';
 import '../../products/presentation/products_page.dart';
 import '../../inventory/presentation/pages/inventory_page.dart';
@@ -28,6 +29,55 @@ class HomePage extends StatelessWidget {
     );
   }
 
+  Future<void> confirmarLogout(
+    BuildContext context,
+  ) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF172033),
+          title: const Text(
+            "Cerrar sesión",
+            style: TextStyle(
+              color: Colors.white,
+            ),
+          ),
+          content: const Text(
+            "¿Quieres cerrar tu sesión en este dispositivo?",
+            style: TextStyle(
+              color: Colors.white70,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(
+                  dialogContext,
+                  false,
+                );
+              },
+              child: const Text("Cancelar"),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(
+                  dialogContext,
+                  true,
+                );
+              },
+              child: const Text("Cerrar sesión"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm == true && context.mounted) {
+      await Logout.execute(context);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -38,13 +88,21 @@ class HomePage extends StatelessWidget {
         backgroundColor: background,
         foregroundColor: Colors.white,
         elevation: 0,
+        actions: [
+          IconButton(
+            tooltip: "Cerrar sesión",
+            icon: const Icon(Icons.logout),
+            onPressed: () => confirmarLogout(
+              context,
+            ),
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           _welcomeCard(),
           const SizedBox(height: 16),
-
           _primaryAction(
             context,
             title: "Nueva venta",
@@ -56,11 +114,8 @@ class HomePage extends StatelessWidget {
               const CreateSalePage(),
             ),
           ),
-
           const SizedBox(height: 20),
-
           _sectionTitle("Primeros pasos"),
-
           _menuGrid(
             children: [
               _menuButton(
@@ -106,11 +161,8 @@ class HomePage extends StatelessWidget {
               ),
             ],
           ),
-
           const SizedBox(height: 20),
-
           _sectionTitle("Operación diaria"),
-
           _menuGrid(
             children: [
               _menuButton(
@@ -139,9 +191,7 @@ class HomePage extends StatelessWidget {
               ),
             ],
           ),
-
           const SizedBox(height: 20),
-
           _helpCard(),
         ],
       ),
@@ -165,7 +215,7 @@ class HomePage extends StatelessWidget {
               alpha: 0.22,
             ),
             blurRadius: 18,
-            offset: const Offset(0, 8),
+            offset: Offset(0, 8),
           ),
         ],
       ),
@@ -230,7 +280,8 @@ class HomePage extends StatelessWidget {
             const SizedBox(width: 16),
             Expanded(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
@@ -330,7 +381,8 @@ class HomePage extends StatelessWidget {
           ],
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
           children: [
             Container(
               padding: const EdgeInsets.all(10),
