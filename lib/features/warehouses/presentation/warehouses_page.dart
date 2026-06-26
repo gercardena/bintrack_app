@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'pages/bin_types_page.dart';
 import 'pages/bin_clients_page.dart';
 import 'pages/bin_movements_page.dart';
@@ -7,106 +8,220 @@ import 'pages/bin_balance_page.dart';
 class WarehousesPage extends StatelessWidget {
   const WarehousesPage({super.key});
 
+  static const Color background = Color(0xFF0F172A);
+  static const Color card = Color(0xFF1E293B);
+
+  void abrir(
+    BuildContext context,
+    Widget page,
+  ) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => page,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-
-      backgroundColor: Colors.grey[100],
-
+      backgroundColor: background,
       appBar: AppBar(
-        title: const Text('Bins / Warehouses'),
+        title: const Text("Envases"),
+        centerTitle: true,
+        backgroundColor: background,
+        foregroundColor: Colors.white,
         elevation: 0,
       ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _introCard(),
 
-      body: Padding(
-        padding: const EdgeInsets.all(12),
+          const SizedBox(height: 18),
 
-        child: GridView.count(
-          crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          children: [
+          _sectionTitle("Configuración"),
 
-            _buildCard(
-              context,
-              title: "Tipos de envase",
-              icon: Icons.inventory_2,
-              color: Colors.blue,
-              page: const BinTypesPage(),
-            ),
+          _menuGrid(
+            children: [
+              _menuButton(
+                context,
+                title: "Tipos de envase",
+                subtitle: "Bins, pallets y valores",
+                icon: Icons.inventory_2,
+                color: Colors.blueAccent,
+                page: const BinTypesPage(),
+              ),
+              _menuButton(
+                context,
+                title: "Clientes con envases",
+                subtitle: "Envases por cliente",
+                icon: Icons.people,
+                color: Colors.greenAccent,
+                page: const BinClientsPage(),
+              ),
+            ],
+          ),
 
-            _buildCard(
-              context,
-              title: "Clientes",
-              icon: Icons.people,
-              color: Colors.green,
-              page: const BinClientsPage(),
-            ),
+          const SizedBox(height: 20),
 
-            _buildCard(
-              context,
-              title: "Movimientos",
-              icon: Icons.swap_horiz,
-              color: Colors.orange,
-              page: const BinMovementsPage(),
-            ),
+          _sectionTitle("Operación"),
 
-            _buildCard(
-              context,
-              title: "Balance",
-              icon: Icons.assessment,
-              color: Colors.deepPurple,
-              page: const BinBalancePage(),
-            ),
+          _menuGrid(
+            children: [
+              _menuButton(
+                context,
+                title: "Movimientos",
+                subtitle: "Entrada, préstamo, devolución o baja",
+                icon: Icons.swap_horiz,
+                color: Colors.orangeAccent,
+                page: const BinMovementsPage(),
+                highlighted: true,
+              ),
+              _menuButton(
+                context,
+                title: "Balance",
+                subtitle: "Saldos y depósitos pendientes",
+                icon: Icons.assessment,
+                color: Colors.deepPurpleAccent,
+                page: const BinBalancePage(),
+              ),
+            ],
+          ),
 
+          const SizedBox(height: 20),
+
+          _helpCard(),
+        ],
+      ),
+    );
+  }
+
+  Widget _introCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF92400E),
+            Color(0xFFEA580C),
           ],
+        ),
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.orange.withValues(alpha: 0.22),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.warehouse,
+            color: Colors.white,
+            size: 34,
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              "Controla los envases físicos: entradas al stock, "
+              "préstamos a clientes, devoluciones, bajas y depósitos.",
+              style: TextStyle(
+                color: Colors.white,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(
+        bottom: 10,
+      ),
+      child: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 17,
+          fontWeight: FontWeight.bold,
         ),
       ),
     );
   }
 
-  // 🔥 CARD REUTILIZABLE
-  Widget _buildCard(
+  Widget _menuGrid({
+    required List<Widget> children,
+  }) {
+    return GridView.count(
+      crossAxisCount: 2,
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+
+      // Más alto para evitar overflow en teléfonos angostos.
+      childAspectRatio: 0.88,
+
+      children: children,
+    );
+  }
+
+  Widget _menuButton(
     BuildContext context, {
     required String title,
+    required String subtitle,
     required IconData icon,
     required Color color,
     required Widget page,
+    bool highlighted = false,
   }) {
+    final cardColor = highlighted
+        ? color.withValues(alpha: 0.16)
+        : card;
+
+    final borderColor = highlighted
+        ? color.withValues(alpha: 0.42)
+        : Colors.white.withValues(alpha: 0.06);
+
     return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => page),
-        );
-      },
-
-      borderRadius: BorderRadius.circular(16),
-
+      borderRadius: BorderRadius.circular(18),
+      onTap: () => abrir(
+        context,
+        page,
+      ),
       child: Container(
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
+          color: cardColor,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: borderColor,
+          ),
+          boxShadow: const [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black26,
               blurRadius: 8,
-              offset: const Offset(0, 4),
-            )
+              offset: Offset(0, 3),
+            ),
           ],
         ),
-
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
           children: [
-
-            // 🔵 ICONO
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                shape: BoxShape.circle,
+                color: color.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 icon,
@@ -115,19 +230,77 @@ class WarehousesPage extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
 
-            // 📄 TEXTO
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
+            Expanded(
+              child: Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15.5,
+                      fontWeight: FontWeight.bold,
+                      height: 1.15,
+                    ),
+                  ),
+
+                  const SizedBox(height: 6),
+
+                  Text(
+                    subtitle,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white60,
+                      fontSize: 12,
+                      height: 1.25,
+                    ),
+                  ),
+                ],
               ),
             ),
-
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _helpCard() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.amber.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.amber.withValues(alpha: 0.35),
+        ),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.lightbulb_outline,
+            color: Colors.amber,
+          ),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              "Consejo: para cargar envases disponibles, registra "
+              "un movimiento de tipo Entrada. Los préstamos y ventas "
+              "reducen la disponibilidad física.",
+              style: TextStyle(
+                color: Colors.white,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

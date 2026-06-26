@@ -12,8 +12,10 @@ class CreateBinTypePage extends StatefulWidget {
 
 class _CreateBinTypePageState
     extends State<CreateBinTypePage> {
-
   final _formKey = GlobalKey<FormState>();
+
+  static const Color background = Color(0xFF0F172A);
+  static const Color card = Color(0xFF1E293B);
 
   final nombreController = TextEditingController();
   final materialController = TextEditingController();
@@ -26,8 +28,22 @@ class _CreateBinTypePageState
   final service = BinTypeService();
 
   Future<void> guardar() async {
-
     if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    final deposito = double.tryParse(
+      depositoController.text.trim().replaceAll(",", "."),
+    );
+
+    if (deposito == null || deposito < 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Ingresa un valor de depósito válido.",
+          ),
+        ),
+      );
       return;
     }
 
@@ -36,43 +52,45 @@ class _CreateBinTypePageState
     });
 
     try {
-
       await service.createBinType(
         nombre: nombreController.text.trim(),
         tipo: tipo,
         material: materialController.text.trim(),
-        valorDeposito:
-            double.parse(depositoController.text),
+        valorDeposito: deposito,
       );
-
-      if (!mounted) return;
-
-      Navigator.pop(context, true);
-
-    } catch (e) {
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Error: $e"),
+        const SnackBar(
+          content: Text(
+            "Tipo de envase creado correctamente.",
+          ),
         ),
       );
 
-    } finally {
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
 
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "No fue posible crear el tipo de envase: $e",
+          ),
+        ),
+      );
+    } finally {
       if (mounted) {
         setState(() {
           saving = false;
         });
       }
-
     }
   }
 
   @override
   void dispose() {
-
     nombreController.dispose();
     materialController.dispose();
     depositoController.dispose();
@@ -80,137 +98,313 @@ class _CreateBinTypePageState
     super.dispose();
   }
 
+  String? requerido(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return "Campo obligatorio";
+    }
+
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
-
-    return Scaffold(
-
-      appBar: AppBar(
-        title: const Text(
-          "Nuevo Tipo de Envase",
+    return Theme(
+      data: Theme.of(context).copyWith(
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.white.withValues(alpha: 0.06),
+          labelStyle: const TextStyle(
+            color: Colors.white70,
+          ),
+          hintStyle: const TextStyle(
+            color: Colors.white38,
+          ),
+          prefixStyle: const TextStyle(
+            color: Colors.white,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(
+              color: Colors.white.withValues(alpha: 0.14),
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(
+              color: Colors.blueAccent,
+            ),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(
+              color: Colors.redAccent,
+            ),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(
+              color: Colors.redAccent,
+            ),
+          ),
         ),
       ),
-
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-
-        child: Form(
+      child: Scaffold(
+        backgroundColor: background,
+        appBar: AppBar(
+          title: const Text("Nuevo tipo de envase"),
+          centerTitle: true,
+          backgroundColor: background,
+          foregroundColor: Colors.white,
+          elevation: 0,
+        ),
+        body: Form(
           key: _formKey,
-
           child: ListView(
+            padding: const EdgeInsets.all(16),
             children: [
-
-              TextFormField(
-                controller: nombreController,
-                decoration: const InputDecoration(
-                  labelText: "Nombre",
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-
-                  if (value == null ||
-                      value.trim().isEmpty) {
-                    return "Ingrese un nombre";
-                  }
-
-                  return null;
-                },
-              ),
+              _introCard(),
 
               const SizedBox(height: 16),
 
-              DropdownButtonFormField<String>(
-                value: tipo,
-
-                decoration: const InputDecoration(
-                  labelText: "Tipo",
-                  border: OutlineInputBorder(),
-                ),
-
-                items: const [
-
-                  DropdownMenuItem(
-                    value: "BIN",
-                    child: Text("Bin"),
+              _sectionCard(
+                title: "Identificación",
+                icon: Icons.inventory_2,
+                color: Colors.blueAccent,
+                children: [
+                  TextFormField(
+                    controller: nombreController,
+                    style: const TextStyle(
+                      color: Colors.white,
+                    ),
+                    decoration: const InputDecoration(
+                      labelText: "Nombre del envase",
+                      hintText: "Ej: Bin Azul",
+                    ),
+                    validator: requerido,
                   ),
 
-                  DropdownMenuItem(
-                    value: "PALLET",
-                    child: Text("Pallet"),
+                  const SizedBox(height: 12),
+
+                  DropdownButtonFormField<String>(
+                    value: tipo,
+                    dropdownColor: card,
+                    style: const TextStyle(
+                      color: Colors.white,
+                    ),
+                    decoration: const InputDecoration(
+                      labelText: "Tipo",
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: "BIN",
+                        child: Text("Bin"),
+                      ),
+                      DropdownMenuItem(
+                        value: "PALLET",
+                        child: Text("Pallet"),
+                      ),
+                      DropdownMenuItem(
+                        value: "CAJA",
+                        child: Text("Caja"),
+                      ),
+                    ],
+                    onChanged: saving
+                        ? null
+                        : (value) {
+                            if (value == null) return;
+
+                            setState(() {
+                              tipo = value;
+                            });
+                          },
                   ),
 
-                  DropdownMenuItem(
-                    value: "CAJA",
-                    child: Text("Caja"),
+                  const SizedBox(height: 12),
+
+                  TextFormField(
+                    controller: materialController,
+                    style: const TextStyle(
+                      color: Colors.white,
+                    ),
+                    decoration: const InputDecoration(
+                      labelText: "Material",
+                      hintText: "Ej: Plástico, madera",
+                    ),
                   ),
                 ],
-
-                onChanged: (value) {
-
-                  if (value == null) return;
-
-                  setState(() {
-                    tipo = value;
-                  });
-                },
               ),
 
               const SizedBox(height: 16),
 
-              TextFormField(
-                controller: materialController,
-                decoration: const InputDecoration(
-                  labelText: "Material",
-                  border: OutlineInputBorder(),
-                ),
+              _sectionCard(
+                title: "Depósito",
+                icon: Icons.savings_outlined,
+                color: Colors.greenAccent,
+                children: [
+                  TextFormField(
+                    controller: depositoController,
+                    style: const TextStyle(
+                      color: Colors.white,
+                    ),
+                    keyboardType:
+                        const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: const InputDecoration(
+                      labelText: "Valor depósito",
+                      prefixText: "\$",
+                    ),
+                    validator: requerido,
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  _smallHelp(
+                    "Este valor representa la garantía por cada envase "
+                    "prestado a un cliente. Puede ser 0 si no aplica.",
+                  ),
+                ],
               ),
 
-              const SizedBox(height: 16),
-
-              TextFormField(
-                controller: depositoController,
-                keyboardType: TextInputType.number,
-
-                decoration: const InputDecoration(
-                  labelText: "Valor depósito",
-                  border: OutlineInputBorder(),
-                ),
-
-                validator: (value) {
-
-                  if (value == null ||
-                      value.trim().isEmpty) {
-                    return "Ingrese un valor";
-                  }
-
-                  if (double.tryParse(value) == null) {
-                    return "Ingrese un número válido";
-                  }
-
-                  return null;
-                },
-              ),
-
-              const SizedBox(height: 24),
+              const SizedBox(height: 28),
 
               SizedBox(
-                height: 50,
-
-                child: ElevatedButton(
-                  onPressed:
-                      saving ? null : guardar,
-
-                  child: Text(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: saving ? null : guardar,
+                  icon: saving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Icon(Icons.save),
+                  label: Text(
                     saving
                         ? "Guardando..."
-                        : "Guardar",
+                        : "Guardar tipo de envase",
                   ),
                 ),
               ),
+
+              const SizedBox(height: 20),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _introCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF1D4ED8),
+            Color(0xFF0EA5E9),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.blue.withValues(alpha: 0.22),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.add_box,
+            color: Colors.white,
+            size: 32,
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              "Crea un tipo de envase para controlar entradas, "
+              "préstamos, devoluciones y depósitos.",
+              style: TextStyle(
+                color: Colors.white,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionCard({
+    required String title,
+    required IconData icon,
+    required Color color,
+    required List<Widget> children,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: card,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.06),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                icon,
+                color: color,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _smallHelp(String text) {
+    return Row(
+      crossAxisAlignment:
+          CrossAxisAlignment.start,
+      children: [
+        const Icon(
+          Icons.info_outline,
+          size: 18,
+          color: Colors.white54,
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white60,
+              height: 1.3,
+              fontSize: 12.5,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
