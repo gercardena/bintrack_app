@@ -245,9 +245,7 @@ class _BinMovementsPageState
               color: color,
             ),
           ),
-
           const SizedBox(width: 12),
-
           Expanded(
             child: Column(
               crossAxisAlignment:
@@ -263,9 +261,7 @@ class _BinMovementsPageState
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-
                 const SizedBox(height: 4),
-
                 Text(
                   movementHelp(
                     movement.tipoMovimiento,
@@ -276,24 +272,28 @@ class _BinMovementsPageState
                     fontSize: 12.5,
                   ),
                 ),
-
                 const SizedBox(height: 10),
-
                 _infoLine(
                   Icons.numbers,
                   "Cantidad: ${movement.cantidad}",
                 ),
-
                 _infoLine(
                   Icons.person_outline,
-                  "Cliente ID: ${movement.cliente}",
+                  "Cliente: ${movement.clienteNombre}",
                 ),
-
+                _infoLine(
+                  Icons.inventory_2_outlined,
+                  "Envase: ${movement.binNombre}",
+                ),
                 _infoLine(
                   Icons.savings_outlined,
                   "Depósito pagado: \$${movement.depositoPagado}",
                 ),
-
+                if (movement.referencia.isNotEmpty)
+                  _infoLine(
+                    Icons.notes_outlined,
+                    "Referencia: ${movement.referencia}",
+                  ),
                 _infoLine(
                   Icons.calendar_today,
                   "Fecha: ${movement.fecha}",
