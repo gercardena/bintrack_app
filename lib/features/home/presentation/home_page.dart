@@ -183,8 +183,8 @@ class HomePage extends StatelessWidget {
               ),
               _menuButton(
                 context,
-                title: "Facturas",
-                subtitle: "Documentos emitidos",
+                title: "Comprobantes",
+                subtitle: "Respaldos internos",
                 icon: Icons.receipt_long,
                 color: Colors.deepPurple,
                 page: const InvoicesPage(),

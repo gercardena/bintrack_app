@@ -108,7 +108,7 @@ class _SaleReadonlyPageState
       case "confirmed":
         return "Venta confirmada. El stock ya fue descontado.";
       case "paid":
-        return "Venta pagada. Puede tener factura asociada.";
+        return "Venta pagada. Puede tener comprobante asociado.";
       case "cancelled":
         return "Venta cancelada. No se puede modificar.";
       default:

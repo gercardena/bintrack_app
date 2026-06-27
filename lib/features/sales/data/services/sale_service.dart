@@ -196,7 +196,7 @@ class SalesService {
     if (response.statusCode != 200 &&
         response.statusCode != 201) {
       throw Exception(
-        "Error generando factura: ${response.body}",
+        "Error generando comprobante: ${response.body}",
       );
     }
   }

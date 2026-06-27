@@ -431,7 +431,7 @@ class _SalesPageState extends State<SalesPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            "Factura generada correctamente.",
+            "Comprobante generado correctamente.",
           ),
         ),
       );
@@ -476,7 +476,7 @@ class _SalesPageState extends State<SalesPage> {
       case "confirmed":
         return "Stock descontado. Lista para registrar pago.";
       case "paid":
-        return "Pago registrado. Puedes emitir factura.";
+        return "Pago registrado. Puedes generar comprobante.";
       case "cancelled":
         return "Venta anulada. Stock/envases fueron restaurados.";
       default:
@@ -629,7 +629,7 @@ class _SalesPageState extends State<SalesPage> {
           Expanded(
             child: Text(
               "Gestiona el flujo de venta: borrador, confirmación, "
-              "pago y factura. Confirmar una venta descuenta stock "
+              "pago y comprobante. Confirmar una venta descuenta stock "
               "y registra movimiento de envases.",
               style: TextStyle(
                 color: Colors.white,
@@ -987,7 +987,7 @@ class _SalesPageState extends State<SalesPage> {
                       ),
                     )
                   : const Icon(Icons.receipt_long),
-              label: const Text("Generar factura"),
+              label: const Text("Generar comprobante"),
             ),
           ),
           const SizedBox(height: 8),

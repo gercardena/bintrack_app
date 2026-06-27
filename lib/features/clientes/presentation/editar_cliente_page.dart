@@ -296,7 +296,7 @@ class _EditarClientePageState
                       "Dirección",
                     ),
                     _smallHelp(
-                      "Estos datos ayudan para ventas, facturas "
+                      "Estos datos ayudan para ventas,comprobantes  "
                       "y seguimiento comercial.",
                     ),
                   ],

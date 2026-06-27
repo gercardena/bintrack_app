@@ -318,7 +318,7 @@ class _CreateSalePageState
             child: Text(
               "Crea una venta seleccionando primero el cliente. "
               "Después podrás agregar productos, confirmar, registrar "
-              "pago y facturar.",
+              "pago y generar comprobante.",
               style: TextStyle(
                 color: Colors.white,
                 height: 1.35,

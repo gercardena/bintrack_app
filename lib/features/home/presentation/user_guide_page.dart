@@ -77,9 +77,9 @@ class UserGuidePage extends StatelessWidget {
           ),
           _stepCard(
             number: "8",
-            title: "Emite factura si corresponde",
+            title: "Genera comprobante si corresponde",
             description:
-                "La factura es opcional y queda asociada a la venta pagada.",
+                "El comprobante es opcional y queda asociado a la venta pagada. No es boleta ni factura tributaria.",
             icon: Icons.receipt_long,
             color: Colors.deepPurple,
           ),

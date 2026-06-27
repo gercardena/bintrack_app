@@ -237,7 +237,7 @@ class _CrearClientePageState
                     const SizedBox(height: 10),
 
                     _smallHelp(
-                      "Estos datos ayudan para ventas, facturas "
+                      "Estos datos ayudan para ventas, comprobantes"
                       "y seguimiento comercial.",
                     ),
                   ],
@@ -303,7 +303,7 @@ class _CrearClientePageState
           Expanded(
             child: Text(
               "Crea un cliente para poder registrar ventas, "
-              "movimientos de envases, pagos y facturas.",
+              "movimientos de envases, pagos y comprobantes.",
               style: TextStyle(
                 color: Colors.white,
                 height: 1.35,

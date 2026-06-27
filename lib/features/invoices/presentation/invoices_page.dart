@@ -86,7 +86,7 @@ class _InvoicesPageState
         "$hour:$minute";
   }
 
-  double totalFacturado(List<Invoice> invoices) {
+  double totalComprobantes(List<Invoice> invoices) {
     return invoices.fold<double>(
       0,
       (total, invoice) => total + invoice.total,
@@ -101,7 +101,7 @@ class _InvoicesPageState
         backgroundColor: const Color(0xFF101827),
         foregroundColor: Colors.white,
         elevation: 0,
-        title: const Text("Facturas"),
+        title: const Text("Comprobantes"),
       ),
       body: FutureBuilder<List<Invoice>>(
         future: futureInvoices,
@@ -134,6 +134,8 @@ class _InvoicesPageState
               padding: const EdgeInsets.all(16),
               children: [
                 _summaryCard(invoices),
+                const SizedBox(height: 14),
+                _taxWarningCard(),
                 const SizedBox(height: 18),
                 _sectionTitle(),
                 const SizedBox(height: 12),
@@ -193,7 +195,7 @@ class _InvoicesPageState
                   CrossAxisAlignment.start,
               children: [
                 const Text(
-                  "Facturas emitidas",
+                  "Comprobantes generados",
                   style: TextStyle(
                     color: Colors.white70,
                   ),
@@ -209,14 +211,48 @@ class _InvoicesPageState
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  "Total facturado: "
-                  "\$${formatearMonto(totalFacturado(invoices))}",
+                  "Total respaldado: "
+                  "\$${formatearMonto(totalComprobantes(invoices))}",
                   style: const TextStyle(
                     color: Colors.greenAccent,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _taxWarningCard() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.amber.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.amber.withValues(alpha: 0.35),
+        ),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.info_outline,
+            color: Colors.amber,
+            size: 22,
+          ),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              "Documento interno no tributario. "
+              "No es boleta ni factura válida ante el SII.",
+              style: TextStyle(
+                color: Colors.white,
+                height: 1.35,
+              ),
             ),
           ),
         ],
@@ -240,7 +276,7 @@ class _InvoicesPageState
                 CrossAxisAlignment.start,
             children: [
               Text(
-                "Historial de facturación",
+                "Historial de comprobantes",
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 17,
@@ -249,7 +285,7 @@ class _InvoicesPageState
               ),
               SizedBox(height: 3),
               Text(
-                "Facturas generadas desde ventas pagadas.",
+                "Comprobantes internos generados desde ventas pagadas.",
                 style: TextStyle(
                   color: Colors.white54,
                   fontSize: 13,
@@ -303,7 +339,7 @@ class _InvoicesPageState
                       CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Factura #${invoice.numero}",
+                      "Comprobante #${invoice.numero}",
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: Colors.white,
@@ -383,7 +419,7 @@ class _InvoicesPageState
             invoice.subtotal,
           ),
           _amountLine(
-            "IVA",
+            "IVA informativo",
             invoice.iva,
           ),
           const Divider(
@@ -398,7 +434,7 @@ class _InvoicesPageState
           const SizedBox(height: 10),
           _infoLine(
             Icons.calendar_month_outlined,
-            "Emitida",
+            "Generado",
             formatearFecha(invoice.fechaEmision),
           ),
         ],
@@ -424,7 +460,7 @@ class _InvoicesPageState
           ),
           const SizedBox(width: 8),
           SizedBox(
-            width: 76,
+            width: 86,
             child: Text(
               label,
               style: const TextStyle(
@@ -513,7 +549,7 @@ class _InvoicesPageState
                 ),
                 SizedBox(height: 14),
                 Text(
-                  "No hay facturas emitidas",
+                  "No hay comprobantes generados",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white,
@@ -523,11 +559,21 @@ class _InvoicesPageState
                 ),
                 SizedBox(height: 8),
                 Text(
-                  "Cuando una venta pagada sea facturada, aparecerá en este historial.",
+                  "Cuando una venta pagada tenga comprobante, aparecerá en este historial.",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white60,
                     height: 1.35,
+                  ),
+                ),
+                SizedBox(height: 12),
+                Text(
+                  "Recuerda: este documento interno no reemplaza boleta ni factura tributaria.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.amber,
+                    height: 1.35,
+                    fontSize: 12.5,
                   ),
                 ),
               ],
@@ -552,7 +598,7 @@ class _InvoicesPageState
             ),
             const SizedBox(height: 12),
             const Text(
-              "No se pudieron cargar las facturas",
+              "No se pudieron cargar los comprobantes",
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white,

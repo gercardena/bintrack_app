@@ -11,7 +11,7 @@ class InvoicesService {
 
     if (response.statusCode != 200) {
       throw Exception(
-        "Error cargando facturas: ${response.body}",
+        "Error cargando comprobantes: ${response.body}",
       );
     }
 
@@ -19,7 +19,7 @@ class InvoicesService {
 
     if (decoded is! List) {
       throw Exception(
-        "Respuesta inválida al cargar facturas",
+        "Respuesta inválida al cargar comprobantes",
       );
     }
 
