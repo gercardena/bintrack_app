@@ -114,7 +114,7 @@ class _CreateBinMovementPageState
   String movementDescription(String value) {
     switch (value) {
       case "entrada":
-        return "Aumenta los envases físicos disponibles.";
+        return "Aumenta los envases físicos disponibles. No representa envases entregados a un cliente.";
       case "prestamo":
         return "Entrega envases a un cliente y aumenta su saldo pendiente.";
       case "devolucion":
@@ -124,6 +124,30 @@ class _CreateBinMovementPageState
       default:
         return "Movimiento de envases.";
     }
+  }
+
+  String clienteLabel() {
+    if (movementType == "entrada") {
+      return "Cliente de referencia / responsable";
+    }
+
+    return "Cliente";
+  }
+
+  String clienteHelp() {
+    if (movementType == "entrada") {
+      return "Las entradas aumentan stock físico; el cliente solo queda como referencia o responsable.";
+    }
+
+    if (movementType == "prestamo") {
+      return "Selecciona el cliente que recibe los envases.";
+    }
+
+    if (movementType == "devolucion") {
+      return "Selecciona el cliente que devuelve los envases.";
+    }
+
+    return "Selecciona el cliente asociado como referencia del movimiento.";
   }
 
   Color movementColor(String value) {
@@ -318,77 +342,54 @@ class _CreateBinMovementPageState
           padding: const EdgeInsets.all(16),
           children: [
             _introCard(),
-
             const SizedBox(height: 16),
-
             _sectionCard(
               title: "Movimiento",
               icon: Icons.swap_horiz,
               color: movementColor(movementType),
               children: [
                 selectorMovimiento(),
-
                 const SizedBox(height: 10),
-
                 _smallHelp(
                   movementDescription(movementType),
                 ),
               ],
             ),
-
             const SizedBox(height: 16),
-
             _sectionCard(
               title: "Envase y cliente",
               icon: Icons.inventory_2,
               color: Colors.cyanAccent,
               children: [
                 selectorTipoEnvase(),
-
                 const SizedBox(height: 12),
-
                 selectorCliente(),
-
                 const SizedBox(height: 10),
-
                 _smallHelp(
-                  "El cliente funciona como referencia del movimiento. "
-                  "En préstamos y devoluciones representa quién recibe "
-                  "o devuelve los envases.",
+                  clienteHelp(),
                 ),
               ],
             ),
-
             const SizedBox(height: 16),
-
             _sectionCard(
               title: "Detalle",
               icon: Icons.edit_note,
               color: Colors.orangeAccent,
               children: [
                 campoCantidad(),
-
                 const SizedBox(height: 12),
-
                 campoDeposito(),
-
                 const SizedBox(height: 10),
-
                 _smallHelp(
                   "El depósito pagado es una garantía asociada "
                   "a envases prestados. No es precio de venta.",
                 ),
-
                 const SizedBox(height: 12),
-
                 campoReferencia(),
               ],
             ),
-
             const SizedBox(height: 28),
-
             botonGuardar(),
-
             const SizedBox(height: 20),
           ],
         ),
@@ -398,7 +399,7 @@ class _CreateBinMovementPageState
 
   Widget selectorCliente() {
     return DropdownButtonFormField<BinClient>(
-      value: selectedClient,
+      initialValue: selectedClient,
       isExpanded: true,
       dropdownColor: card,
       style: const TextStyle(
@@ -420,15 +421,15 @@ class _CreateBinMovementPageState
                 selectedClient = value;
               });
             },
-      decoration: const InputDecoration(
-        labelText: "Cliente de referencia",
+      decoration: InputDecoration(
+        labelText: clienteLabel(),
       ),
     );
   }
 
   Widget selectorTipoEnvase() {
     return DropdownButtonFormField<BinType>(
-      value: selectedType,
+      initialValue: selectedType,
       isExpanded: true,
       dropdownColor: card,
       style: const TextStyle(
@@ -458,7 +459,7 @@ class _CreateBinMovementPageState
 
   Widget selectorMovimiento() {
     return DropdownButtonFormField<String>(
-      value: movementType,
+      initialValue: movementType,
       isExpanded: true,
       dropdownColor: card,
       style: const TextStyle(
