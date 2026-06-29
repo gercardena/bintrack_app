@@ -1,8 +1,11 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 
+import '../config/api_config.dart';
+
 class ApiClient {
-  static const String baseUrl = 'http://192.168.11.215:8000/api';
+  static const String baseUrl = ApiConfig.apiBaseUrl;
 
   Future<http.Response> post(
     String endpoint, {

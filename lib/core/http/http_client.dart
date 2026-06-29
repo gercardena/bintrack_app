@@ -1,14 +1,13 @@
 import 'package:http/http.dart' as http;
+
 import '../../features/auth/data/token_storage.dart';
 import '../auth/auth_controller.dart';
+import '../config/api_config.dart';
 
 class HttpClient {
+  static const String _baseUrl = ApiConfig.host;
 
-  static const String _baseUrl = "http://192.168.11.215:8000";
-
-  /// 🔥 GET protegido
   static Future<http.Response> get(String endpoint) async {
-
     final token = await TokenStorage.getAccessToken();
 
     final response = await http.get(
@@ -24,13 +23,11 @@ class HttpClient {
     return response;
   }
 
-  /// 🔥 POST protegido
   static Future<http.Response> post(
     String endpoint, {
-    Map<String,String>? headers,
+    Map<String, String>? headers,
     Object? body,
   }) async {
-
     final token = await TokenStorage.getAccessToken();
 
     final response = await http.post(
@@ -48,11 +45,8 @@ class HttpClient {
     return response;
   }
 
-  /// 🔥 Interceptor 401
   static void _handleAuth(http.Response response) {
-
     if (response.statusCode == 401) {
-
       TokenStorage.clearTokens();
 
       AuthController().forceLogout();
