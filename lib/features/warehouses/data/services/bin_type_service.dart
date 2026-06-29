@@ -1,15 +1,15 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 
-import '../models/bin_type_model.dart';
+import '../../../../core/config/api_config.dart';
 import '../../../auth/data/token_storage.dart';
+import '../models/bin_type_model.dart';
 
 class BinTypeService {
-
-  final String baseUrl = "http://192.168.11.215:8000/api";
+  final String baseUrl = ApiConfig.apiBaseUrl;
 
   Future<List<BinType>> getBinTypes() async {
-
     final token = await TokenStorage.getAccessToken();
 
     print("TOKEN TYPES: $token");
@@ -26,17 +26,12 @@ class BinTypeService {
     print("BODY TYPES: ${response.body}");
 
     if (response.statusCode == 200) {
-
-      List data = jsonDecode(response.body);
+      final List data = jsonDecode(response.body);
 
       return data.map((e) => BinType.fromJson(e)).toList();
-
-    } else {
-
-      throw Exception("Error loading bin types");
-
     }
 
+    throw Exception("Error loading bin types");
   }
 
   Future<void> createBinType({
@@ -45,7 +40,6 @@ class BinTypeService {
     required String material,
     required double valorDeposito,
   }) async {
-
     final token = await TokenStorage.getAccessToken();
 
     final response = await http.post(
