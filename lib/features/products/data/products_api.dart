@@ -1,16 +1,15 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 
+import '../../../core/config/api_config.dart';
 import '../../auth/data/token_storage.dart';
 import 'models/product_model.dart';
 
 class ProductsApi {
+  static const String _baseUrl = ApiConfig.host;
 
-  static const String _baseUrl = 'http://192.168.11.215:8000';
-
-  // 🔹 OBTENER PRODUCTOS
   static Future<List<Product>> getProducts() async {
-
     final token = await TokenStorage.getAccessToken();
 
     final response = await http.get(
@@ -25,7 +24,6 @@ class ProductsApi {
     print("PRODUCTS BODY: ${response.body}");
 
     if (response.statusCode == 200) {
-
       final List data = jsonDecode(response.body);
 
       return data.map((e) => Product.fromJson(e)).toList();
@@ -34,13 +32,11 @@ class ProductsApi {
     throw Exception('Error cargando productos');
   }
 
-  // 🔥 CREAR PRODUCTO
   static Future<Map<String, dynamic>?> crearProducto({
     required String nombre,
     required String precio,
     String? descripcion,
   }) async {
-
     final token = await TokenStorage.getAccessToken();
 
     final response = await http.post(
@@ -49,13 +45,10 @@ class ProductsApi {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
-
       body: jsonEncode({
-
         "nombre": nombre,
         "precio": precio,
         "descripcion": descripcion ?? "",
-
       }),
     );
 
@@ -63,16 +56,13 @@ class ProductsApi {
     print("CREATE PRODUCT BODY: ${response.body}");
 
     if (response.statusCode == 201) {
-
       return jsonDecode(response.body);
     }
 
     return null;
   }
 
-  // 🔥 ELIMINAR PRODUCTO
   static Future<bool> eliminarProducto(int id) async {
-
     final token = await TokenStorage.getAccessToken();
 
     final response = await http.delete(
@@ -87,14 +77,12 @@ class ProductsApi {
     return response.statusCode == 204;
   }
 
-  // 🔥 ACTUALIZAR PRODUCTO
   static Future<bool> actualizarProducto({
     required int id,
     required String nombre,
     required String precio,
     String? descripcion,
   }) async {
-
     final token = await TokenStorage.getAccessToken();
 
     final response = await http.put(
@@ -103,13 +91,10 @@ class ProductsApi {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
-
       body: jsonEncode({
-
         "nombre": nombre,
         "precio": precio,
         "descripcion": descripcion ?? "",
-
       }),
     );
 
