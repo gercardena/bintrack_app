@@ -1,15 +1,15 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 
-import '../models/bin_movement_model.dart';
+import '../../../../core/config/api_config.dart';
 import '../../../auth/data/token_storage.dart';
+import '../models/bin_movement_model.dart';
 
 class BinMovementService {
-
-  final String baseUrl = "http://192.168.11.215:8000/api";
+  final String baseUrl = ApiConfig.apiBaseUrl;
 
   Future<List<BinMovement>> getMovements() async {
-
     final token = await TokenStorage.getAccessToken();
 
     print("TOKEN MOVEMENTS: $token");
@@ -26,17 +26,12 @@ class BinMovementService {
     print("BODY MOVEMENTS: ${response.body}");
 
     if (response.statusCode == 200) {
-
-      List data = jsonDecode(response.body);
+      final List data = jsonDecode(response.body);
 
       return data.map((e) => BinMovement.fromJson(e)).toList();
-
-    } else {
-
-      throw Exception("Error loading movements");
-
     }
 
+    throw Exception("Error loading movements");
   }
 
   Future<bool> createMovement({
@@ -47,7 +42,6 @@ class BinMovementService {
     required double depositoPagado,
     String? referencia,
   }) async {
-
     final token = await TokenStorage.getAccessToken();
 
     final response = await http.post(
@@ -71,5 +65,4 @@ class BinMovementService {
 
     return response.statusCode == 201;
   }
-
 }
