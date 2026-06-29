@@ -12,7 +12,6 @@ class BinTypeService {
   Future<List<BinType>> getBinTypes() async {
     final token = await TokenStorage.getAccessToken();
 
-    print("TOKEN TYPES: $token");
 
     final response = await http.get(
       Uri.parse("$baseUrl/bins/types/"),

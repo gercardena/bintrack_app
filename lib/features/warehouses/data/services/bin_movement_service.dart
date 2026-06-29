@@ -12,7 +12,6 @@ class BinMovementService {
   Future<List<BinMovement>> getMovements() async {
     final token = await TokenStorage.getAccessToken();
 
-    print("TOKEN MOVEMENTS: $token");
 
     final response = await http.get(
       Uri.parse("$baseUrl/bins/movements/"),
