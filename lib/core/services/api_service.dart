@@ -1,15 +1,16 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 
-import '../../features/auth/data/token_storage.dart';
 import '../../features/auth/data/auth_api.dart';
+import '../../features/auth/data/token_storage.dart';
+import '../config/api_config.dart';
 
 class ApiService {
-
-  static const String baseUrl = "http://192.168.11.215:8000/api";
+  static const String baseUrl = ApiConfig.apiBaseUrl;
 
   // ==========================
-  // 🔹 MÉTODO BASE
+  // MÉTODO BASE
   // ==========================
 
   static Future<http.Response> _request({
@@ -17,7 +18,6 @@ class ApiService {
     required String endpoint,
     Map<String, dynamic>? body,
   }) async {
-
     String? token = await TokenStorage.getAccessToken();
 
     final url = Uri.parse("$baseUrl$endpoint");
@@ -53,7 +53,7 @@ class ApiService {
         );
         break;
 
-      default: // GET
+      default:
         response = await http.get(
           url,
           headers: headers,
@@ -61,18 +61,13 @@ class ApiService {
     }
 
     // ==========================
-    // 🔥 TOKEN EXPIRADO
+    // TOKEN EXPIRADO
     // ==========================
+
     if (response.statusCode == 401) {
-
-      print("🔁 TOKEN EXPIRADO → REFRESH");
-
       final newToken = await AuthApi.refreshToken();
 
       if (newToken == null) {
-
-        print("❌ REFRESH FALLÓ → LOGOUT");
-
         await TokenStorage.clearTokens();
         throw Exception("Sesión expirada");
       }
@@ -115,7 +110,7 @@ class ApiService {
   }
 
   // ==========================
-  // 🔹 MÉTODOS PÚBLICOS
+  // MÉTODOS PÚBLICOS
   // ==========================
 
   static Future<http.Response> get(String endpoint) {
