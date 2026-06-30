@@ -52,3 +52,6 @@ android/key.properties
 
 # Android keystore files
 *.jks
+
+# Android/Kotlin local cache
+android/.kotlin/
