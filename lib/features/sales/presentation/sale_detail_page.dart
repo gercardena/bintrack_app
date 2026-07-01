@@ -493,7 +493,7 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
     }
 
     return DropdownButtonFormField<ProductPresentation>(
-      value: presentationSeleccionada,
+      initialValue: presentationSeleccionada,
       isExpanded: true,
       dropdownColor: card,
       style: const TextStyle(

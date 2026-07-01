@@ -186,7 +186,7 @@ class _CreateBinTypePageState
                   const SizedBox(height: 12),
 
                   DropdownButtonFormField<String>(
-                    value: tipo,
+                    initialValue: tipo,
                     dropdownColor: card,
                     style: const TextStyle(
                       color: Colors.white,

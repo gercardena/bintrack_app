@@ -303,7 +303,7 @@ class _SalesPageState extends State<SalesPage> {
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
-                      value: metodoSeleccionado,
+                      initialValue: metodoSeleccionado,
                       isExpanded: true,
                       decoration:
                           const InputDecoration(
