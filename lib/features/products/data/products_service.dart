@@ -3,7 +3,6 @@ import 'dart:convert';
 import '../../../core/services/api_service.dart';
 
 class Product {
-
   final int id;
   final String nombre;
   final double precio;
@@ -15,7 +14,6 @@ class Product {
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
-
     return Product(
       id: json["id"],
       nombre: json["nombre"],
@@ -25,20 +23,10 @@ class Product {
 }
 
 class ProductsService {
-
-  // =========================================
-  // 🔥 GET PRODUCTS
-  // =========================================
-
   Future<List<Product>> getProducts() async {
-
     final response = await ApiService.get("/productos/");
 
-    print("PRODUCTS STATUS: ${response.statusCode}");
-    print("PRODUCTS BODY: ${response.body}");
-
     if (response.statusCode == 200) {
-
       final List data = jsonDecode(response.body);
 
       return data.map((e) => Product.fromJson(e)).toList();
