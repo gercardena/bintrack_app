@@ -20,9 +20,6 @@ class ProductsApi {
       },
     );
 
-    print("PRODUCTS STATUS: ${response.statusCode}");
-    print("PRODUCTS BODY: ${response.body}");
-
     if (response.statusCode == 200) {
       final List data = jsonDecode(response.body);
 
@@ -52,9 +49,6 @@ class ProductsApi {
       }),
     );
 
-    print("CREATE PRODUCT STATUS: ${response.statusCode}");
-    print("CREATE PRODUCT BODY: ${response.body}");
-
     if (response.statusCode == 201) {
       return jsonDecode(response.body);
     }
@@ -71,8 +65,6 @@ class ProductsApi {
         'Authorization': 'Bearer $token',
       },
     );
-
-    print("DELETE PRODUCT STATUS: ${response.statusCode}");
 
     return response.statusCode == 204;
   }
@@ -97,9 +89,6 @@ class ProductsApi {
         "descripcion": descripcion ?? "",
       }),
     );
-
-    print("UPDATE PRODUCT STATUS: ${response.statusCode}");
-    print("UPDATE PRODUCT BODY: ${response.body}");
 
     return response.statusCode == 200;
   }

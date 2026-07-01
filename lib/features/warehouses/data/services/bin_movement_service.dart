@@ -12,7 +12,6 @@ class BinMovementService {
   Future<List<BinMovement>> getMovements() async {
     final token = await TokenStorage.getAccessToken();
 
-
     final response = await http.get(
       Uri.parse("$baseUrl/bins/movements/"),
       headers: {
@@ -20,9 +19,6 @@ class BinMovementService {
         "Authorization": "Bearer $token",
       },
     );
-
-    print("STATUS MOVEMENTS: ${response.statusCode}");
-    print("BODY MOVEMENTS: ${response.body}");
 
     if (response.statusCode == 200) {
       final List data = jsonDecode(response.body);
@@ -58,9 +54,6 @@ class BinMovementService {
         "referencia": referencia ?? "",
       }),
     );
-
-    print("CREATE MOVEMENT STATUS: ${response.statusCode}");
-    print("CREATE MOVEMENT BODY: ${response.body}");
 
     return response.statusCode == 201;
   }

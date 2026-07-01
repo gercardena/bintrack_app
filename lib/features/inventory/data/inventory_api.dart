@@ -19,9 +19,6 @@ class InventoryApi {
       },
     );
 
-    print("INVENTORY STATUS: ${response.statusCode}");
-    print("INVENTORY BODY: ${response.body}");
-
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     }
@@ -49,9 +46,6 @@ class InventoryApi {
       }),
     );
 
-    print("CREAR INVENTARIO STATUS: ${response.statusCode}");
-    print("CREAR INVENTARIO BODY: ${response.body}");
-
     return response.statusCode == 201;
   }
 
@@ -74,9 +68,6 @@ class InventoryApi {
         "cantidad": cantidad,
       }),
     );
-
-    print("AJUSTAR STOCK STATUS: ${response.statusCode}");
-    print("AJUSTAR STOCK BODY: ${response.body}");
 
     return response.statusCode == 200;
   }

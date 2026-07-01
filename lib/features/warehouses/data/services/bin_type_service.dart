@@ -12,7 +12,6 @@ class BinTypeService {
   Future<List<BinType>> getBinTypes() async {
     final token = await TokenStorage.getAccessToken();
 
-
     final response = await http.get(
       Uri.parse("$baseUrl/bins/types/"),
       headers: {
@@ -20,9 +19,6 @@ class BinTypeService {
         "Authorization": "Bearer $token",
       },
     );
-
-    print("STATUS TYPES: ${response.statusCode}");
-    print("BODY TYPES: ${response.body}");
 
     if (response.statusCode == 200) {
       final List data = jsonDecode(response.body);
@@ -54,9 +50,6 @@ class BinTypeService {
         "valor_deposito": valorDeposito,
       }),
     );
-
-    print("CREATE TYPE STATUS: ${response.statusCode}");
-    print("CREATE TYPE BODY: ${response.body}");
 
     if (response.statusCode != 201) {
       throw Exception("Error creando tipo de envase");
