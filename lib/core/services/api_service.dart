@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:http/http.dart' as http;
 
@@ -9,6 +11,14 @@ import '../config/api_config.dart';
 class ApiService {
   static const String baseUrl = ApiConfig.apiBaseUrl;
 
+  static const Duration _timeout = Duration(
+    seconds: 15,
+  );
+
+  static const String connectionErrorMessage =
+      "No pudimos conectar con el servidor. "
+      "Revisa tu conexión o intenta nuevamente.";
+
   // ==========================
   // MÉTODO BASE
   // ==========================
@@ -18,95 +28,110 @@ class ApiService {
     required String endpoint,
     Map<String, dynamic>? body,
   }) async {
-    String? token = await TokenStorage.getAccessToken();
+    final token = await TokenStorage.getAccessToken();
 
     final url = Uri.parse("$baseUrl$endpoint");
 
-    Map<String, String> headers = {
+    final headers = {
       "Content-Type": "application/json",
       if (token != null) "Authorization": "Bearer $token",
     };
 
-    http.Response response;
+    try {
+      final response = await _sendRequest(
+        method: method,
+        url: url,
+        headers: headers,
+        body: body,
+      );
 
+      if (response.statusCode == 401) {
+        return await _retryWithRefresh(
+          method: method,
+          url: url,
+          body: body,
+        );
+      }
+
+      return response;
+    } on TimeoutException {
+      throw Exception(
+        "El servidor tardó demasiado en responder. "
+        "Intenta nuevamente.",
+      );
+    } on SocketException {
+      throw Exception(connectionErrorMessage);
+    } on http.ClientException {
+      throw Exception(connectionErrorMessage);
+    }
+  }
+
+  static Future<http.Response> _sendRequest({
+    required String method,
+    required Uri url,
+    required Map<String, String> headers,
+    Map<String, dynamic>? body,
+  }) async {
     switch (method) {
       case "POST":
-        response = await http.post(
-          url,
-          headers: headers,
-          body: body != null ? jsonEncode(body) : null,
-        );
-        break;
+        return await http
+            .post(
+              url,
+              headers: headers,
+              body: body != null ? jsonEncode(body) : null,
+            )
+            .timeout(_timeout);
 
       case "PUT":
-        response = await http.put(
-          url,
-          headers: headers,
-          body: body != null ? jsonEncode(body) : null,
-        );
-        break;
+        return await http
+            .put(
+              url,
+              headers: headers,
+              body: body != null ? jsonEncode(body) : null,
+            )
+            .timeout(_timeout);
 
       case "DELETE":
-        response = await http.delete(
-          url,
-          headers: headers,
-        );
-        break;
+        return await http
+            .delete(
+              url,
+              headers: headers,
+            )
+            .timeout(_timeout);
 
       default:
-        response = await http.get(
-          url,
-          headers: headers,
-        );
+        return await http
+            .get(
+              url,
+              headers: headers,
+            )
+            .timeout(_timeout);
+    }
+  }
+
+  static Future<http.Response> _retryWithRefresh({
+    required String method,
+    required Uri url,
+    Map<String, dynamic>? body,
+  }) async {
+    final newToken = await AuthApi.refreshToken();
+
+    if (newToken == null) {
+      await TokenStorage.clearTokens();
+      throw Exception("Sesión expirada. Inicia sesión nuevamente.");
     }
 
-    // ==========================
-    // TOKEN EXPIRADO
-    // ==========================
+    final retryHeaders = {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer $newToken",
+    };
 
-    if (response.statusCode == 401) {
-      final newToken = await AuthApi.refreshToken();
-
-      if (newToken == null) {
-        await TokenStorage.clearTokens();
-        throw Exception("Sesión expirada");
-      }
-
-      final retryHeaders = {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $newToken",
-      };
-
-      switch (method) {
-        case "POST":
-          return await http.post(
-            url,
-            headers: retryHeaders,
-            body: body != null ? jsonEncode(body) : null,
-          );
-
-        case "PUT":
-          return await http.put(
-            url,
-            headers: retryHeaders,
-            body: body != null ? jsonEncode(body) : null,
-          );
-
-        case "DELETE":
-          return await http.delete(
-            url,
-            headers: retryHeaders,
-          );
-
-        default:
-          return await http.get(
-            url,
-            headers: retryHeaders,
-          );
-      }
-    }
-
-    return response;
+    return await _sendRequest(
+      method: method,
+      url: url,
+      headers: retryHeaders,
+      body: body,
+    );
   }
 
   // ==========================
@@ -114,7 +139,10 @@ class ApiService {
   // ==========================
 
   static Future<http.Response> get(String endpoint) {
-    return _request(method: "GET", endpoint: endpoint);
+    return _request(
+      method: "GET",
+      endpoint: endpoint,
+    );
   }
 
   static Future<http.Response> post(
