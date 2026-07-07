@@ -827,6 +827,26 @@ class _EditarProductoPageState
             "Esta presentación tiene precio y stock propio.",
           ),
 
+          if (presentation.capacidadDescripcion != null) ...[
+            const SizedBox(height: 8),
+            _infoPill(
+              icon: Icons.scale,
+              text:
+                  "Capacidad: ${presentation.capacidadDescripcion}",
+              color: Colors.lightGreenAccent,
+            ),
+          ],
+
+          if (presentation.contenidoDescripcion != null) ...[
+            const SizedBox(height: 8),
+            _infoPill(
+              icon: Icons.account_tree,
+              text:
+                  "Contiene: ${presentation.contenidoDescripcion}",
+              color: Colors.amberAccent,
+            ),
+          ],
+
           const SizedBox(height: 14),
 
           TextFormField(
@@ -993,6 +1013,48 @@ class _EditarProductoPageState
           ),
         ),
       ],
+    );
+  }
+
+  Widget _infoPill({
+    required IconData icon,
+    required String text,
+    required Color color,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 10,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: color.withValues(alpha: 0.25),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            icon,
+            color: color,
+            size: 18,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: color,
+                height: 1.3,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
