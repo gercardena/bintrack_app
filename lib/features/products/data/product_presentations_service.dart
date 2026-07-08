@@ -151,12 +151,47 @@ class ProductPresentationsService {
         "bin_type": presentation.binTypeId,
         "precio": precio.toStringAsFixed(2),
         "activo": presentation.activo,
+        "unidad_medida": presentation.unidadMedida ?? "",
+        "cantidad_por_envase": presentation.cantidadPorEnvase,
+        "envase_contenido": presentation.envaseContenidoId,
+        "cantidad_envase_contenido":
+            presentation.cantidadEnvaseContenido,
       },
     );
 
     if (response.statusCode != 200) {
       throw Exception(
         "Error guardando precio: ${response.body}",
+      );
+    }
+  }
+
+  Future<void> saveMetadata({
+    required ProductPresentation presentation,
+    String? unidadMedida,
+    double? cantidadPorEnvase,
+    int? envaseContenidoId,
+    double? cantidadEnvaseContenido,
+  }) async {
+    final body = <String, dynamic>{
+      "product": presentation.productId,
+      "bin_type": presentation.binTypeId,
+      "precio": presentation.precio.toStringAsFixed(2),
+      "activo": presentation.activo,
+      "unidad_medida": unidadMedida?.trim() ?? "",
+      "cantidad_por_envase": cantidadPorEnvase,
+      "envase_contenido": envaseContenidoId,
+      "cantidad_envase_contenido": cantidadEnvaseContenido,
+    };
+
+    final response = await ApiService.put(
+      "/productos/presentations/${presentation.id}/",
+      body: body,
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        "Error guardando detalle: ${response.body}",
       );
     }
   }
@@ -172,6 +207,11 @@ class ProductPresentationsService {
         "bin_type": presentation.binTypeId,
         "precio": presentation.precio.toStringAsFixed(2),
         "activo": activo,
+        "unidad_medida": presentation.unidadMedida ?? "",
+        "cantidad_por_envase": presentation.cantidadPorEnvase,
+        "envase_contenido": presentation.envaseContenidoId,
+        "cantidad_envase_contenido":
+            presentation.cantidadEnvaseContenido,
       },
     );
 
@@ -196,3 +236,6 @@ class ProductPresentationsService {
     }
   }
 }
+
+
+

@@ -1,10 +1,12 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../data/products_api.dart';
 import '../data/product_presentations_service.dart';
 import '../data/models/product_model.dart';
 import '../data/models/product_presentation_model.dart';
 
+import '../../warehouses/data/models/bin_type_model.dart';
+import '../../warehouses/data/services/bin_type_service.dart';
 import 'agregar_presentacion_page.dart';
 
 class EditarProductoPage extends StatefulWidget {
@@ -27,6 +29,8 @@ class _EditarProductoPageState
   final ProductPresentationsService presentationsService =
       ProductPresentationsService();
 
+  final BinTypeService binTypeService = BinTypeService();
+
   static const Color background = Color(0xFF0F172A);
   static const Color card = Color(0xFF1E293B);
 
@@ -45,6 +49,7 @@ class _EditarProductoPageState
   int? savingStockId;
   int? savingPriceId;
   int? savingActiveId;
+  int? savingMetadataId;
 
   @override
   void initState() {
@@ -145,6 +150,453 @@ class _EditarProductoPageState
     }
   }
 
+  double? _parseOptionalDouble(String value) {
+    final cleanValue = value.trim().replaceAll(",", ".");
+
+    if (cleanValue.isEmpty) {
+      return null;
+    }
+
+    return double.tryParse(cleanValue);
+  }
+
+  String _formatOptionalDouble(double? value) {
+    if (value == null) return "";
+
+    if (value % 1 == 0) {
+      return value.toStringAsFixed(0);
+    }
+
+    return value.toString();
+  }
+
+  BinType? _findBinTypeById(
+    List<BinType> binTypes,
+    int? id,
+  ) {
+    if (id == null) return null;
+
+    for (final binType in binTypes) {
+      if (binType.id == id) {
+        return binType;
+      }
+    }
+
+    return null;
+  }
+
+  Future<void> editarMetadata(
+    ProductPresentation presentation,
+  ) async {
+    List<BinType> binTypes;
+
+    try {
+      binTypes = await binTypeService.getBinTypes();
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "No pudimos cargar los envases: $e",
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    final unidadCtrl = TextEditingController(
+      text: presentation.unidadMedida ?? "",
+    );
+
+    final cantidadPorEnvaseCtrl = TextEditingController(
+      text: _formatOptionalDouble(
+        presentation.cantidadPorEnvase,
+      ),
+    );
+
+    final cantidadEnvaseContenidoCtrl = TextEditingController(
+      text: _formatOptionalDouble(
+        presentation.cantidadEnvaseContenido,
+      ),
+    );
+
+    BinType? selectedEnvaseContenido = _findBinTypeById(
+      binTypes,
+      presentation.envaseContenidoId,
+    );
+
+    String? errorText;
+    bool saving = false;
+
+    try {
+      await showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: card,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(24),
+          ),
+        ),
+        builder: (sheetContext) {
+          return StatefulBuilder(
+            builder: (context, setModalState) {
+              Future<void> save() async {
+                final cantidadPorEnvase = _parseOptionalDouble(
+                  cantidadPorEnvaseCtrl.text,
+                );
+
+                final cantidadEnvaseContenido =
+                    _parseOptionalDouble(
+                  cantidadEnvaseContenidoCtrl.text,
+                );
+
+                if (cantidadPorEnvaseCtrl.text.trim().isNotEmpty &&
+                    (cantidadPorEnvase == null ||
+                        cantidadPorEnvase <= 0)) {
+                  setModalState(() {
+                    errorText =
+                        "La cantidad por envase debe ser mayor que cero o quedar vacía.";
+                  });
+                  return;
+                }
+
+                if (cantidadEnvaseContenidoCtrl.text
+                        .trim()
+                        .isNotEmpty &&
+                    (cantidadEnvaseContenido == null ||
+                        cantidadEnvaseContenido <= 0)) {
+                  setModalState(() {
+                    errorText =
+                        "La cantidad contenida debe ser mayor que cero o quedar vacía.";
+                  });
+                  return;
+                }
+
+                if (selectedEnvaseContenido != null &&
+                    selectedEnvaseContenido!.id ==
+                        presentation.binTypeId) {
+                  setModalState(() {
+                    errorText =
+                        "El envase contenido debe ser distinto al envase principal.";
+                  });
+                  return;
+                }
+
+                setModalState(() {
+                  saving = true;
+                  errorText = null;
+                });
+
+                if (mounted) {
+                  setState(() {
+                    savingMetadataId = presentation.id;
+                  });
+                }
+
+                try {
+                  await presentationsService.saveMetadata(
+                    presentation: presentation,
+                    unidadMedida: unidadCtrl.text,
+                    cantidadPorEnvase: cantidadPorEnvase,
+                    envaseContenidoId:
+                        selectedEnvaseContenido?.id,
+                    cantidadEnvaseContenido:
+                        cantidadEnvaseContenido,
+                  );
+
+                  await cargarPresentaciones();
+
+                  if (!mounted) return;
+
+                  if (!sheetContext.mounted) return;
+
+                  Navigator.pop(sheetContext);
+
+                  scaffoldMessenger.showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        "Detalle actualizado correctamente.",
+                      ),
+                    ),
+                  );
+                } catch (e) {
+                  setModalState(() {
+                    saving = false;
+                    errorText = e.toString();
+                  });
+                } finally {
+                  if (mounted) {
+                    setState(() {
+                      savingMetadataId = null;
+                    });
+                  }
+                }
+              }
+
+              return SafeArea(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    left: 16,
+                    right: 16,
+                    top: 18,
+                    bottom: MediaQuery.of(context)
+                            .viewInsets
+                            .bottom +
+                        18,
+                  ),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment:
+                          CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.schema,
+                              color: Colors.lightGreenAccent,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                "Detalle del envase",
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          "Opcional. Úsalo solo si quieres indicar capacidad o contenido.",
+                          style: TextStyle(
+                            color: Colors.white60,
+                            height: 1.35,
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        TextFormField(
+                          controller: unidadCtrl,
+                          enabled: !saving,
+                          cursorColor: Colors.black,
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          decoration: InputDecoration(
+                            labelText: "Unidad",
+                            hintText: "Ej: cajas, kg, unidades",
+                            labelStyle: const TextStyle(
+                              color: Colors.black54,
+                            ),
+                            hintStyle: const TextStyle(
+                              color: Colors.black38,
+                            ),
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: cantidadPorEnvaseCtrl,
+                          enabled: !saving,
+                          cursorColor: Colors.black,
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          keyboardType:
+                              const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          decoration: InputDecoration(
+                            labelText: "Cantidad",
+                            hintText: "Ej: 80",
+                            labelStyle: const TextStyle(
+                              color: Colors.black54,
+                            ),
+                            hintStyle: const TextStyle(
+                              color: Colors.black38,
+                            ),
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<BinType>(
+                          initialValue: selectedEnvaseContenido,
+                          dropdownColor: card,
+                          style: const TextStyle(
+                            color: Colors.white,
+                          ),
+                          decoration: const InputDecoration(
+                            labelText: "Envase contenido",
+                            hintText: "Opcional",
+                          ),
+                          selectedItemBuilder: (context) {
+                            return binTypes.map((binType) {
+                              return Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  binType.nombre,
+                                  style: const TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              );
+                            }).toList();
+                          },
+                          items: binTypes
+                              .map(
+                                (binType) =>
+                                    DropdownMenuItem<BinType>(
+                                  value: binType,
+                                  child: Text(
+                                    binType.nombre,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: saving
+                              ? null
+                              : (value) {
+                                  setModalState(() {
+                                    selectedEnvaseContenido = value;
+                                  });
+                                },
+                        ),
+                        if (selectedEnvaseContenido != null) ...[
+                          const SizedBox(height: 8),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton.icon(
+                              onPressed: saving
+                                  ? null
+                                  : () {
+                                      setModalState(() {
+                                        selectedEnvaseContenido = null;
+                                      });
+                                    },
+                              icon: const Icon(
+                                Icons.clear,
+                                size: 18,
+                              ),
+                              label: const Text(
+                                "Quitar envase contenido",
+                              ),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller:
+                              cantidadEnvaseContenidoCtrl,
+                          enabled: !saving,
+                          cursorColor: Colors.black,
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          keyboardType:
+                              const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          decoration: InputDecoration(
+                            labelText: "Cantidad contenida",
+                            hintText: "Ej: 80",
+                            labelStyle: const TextStyle(
+                              color: Colors.black54,
+                            ),
+                            hintStyle: const TextStyle(
+                              color: Colors.black38,
+                            ),
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                        ),
+                        if (errorText != null) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            errorText!,
+                            style: const TextStyle(
+                              color: Colors.redAccent,
+                              height: 1.35,
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 18),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: saving
+                                    ? null
+                                    : () => Navigator.pop(
+                                          sheetContext,
+                                        ),
+                                child: const Text("Cancelar"),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: FilledButton.icon(
+                                onPressed: saving ? null : save,
+                                icon: saving
+                                    ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child:
+                                            CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Icon(Icons.save),
+                                label: const Text("Guardar"),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      );
+    } finally {
+      unidadCtrl.dispose();
+      cantidadPorEnvaseCtrl.dispose();
+      cantidadEnvaseContenidoCtrl.dispose();
+    }
+  }
   Future<void> guardarProducto() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -765,6 +1217,9 @@ class _EditarProductoPageState
     final isSavingActive =
         savingActiveId == presentation.id;
 
+    final isSavingMetadata =
+        savingMetadataId == presentation.id;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
@@ -847,6 +1302,41 @@ class _EditarProductoPageState
             ),
           ],
 
+          const SizedBox(height: 10),
+
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.lightGreenAccent,
+                side: BorderSide(
+                  color: Colors.lightGreenAccent.withValues(
+                    alpha: 0.45,
+                  ),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 14,
+                ),
+              ),
+              onPressed: isSavingMetadata
+                  ? null
+                  : () => editarMetadata(
+                        presentation,
+                      ),
+              icon: isSavingMetadata
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Icon(Icons.tune),
+              label: const Text(
+                "Editar detalle",
+              ),
+            ),
+          ),
           const SizedBox(height: 14),
 
           TextFormField(
@@ -1091,3 +1581,10 @@ class _EditarProductoPageState
     );
   }
 }
+
+
+
+
+
+
+
