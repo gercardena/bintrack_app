@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 
 import '../../../core/services/api_service.dart';
 import 'models/product_presentation_model.dart';
@@ -50,15 +50,39 @@ class ProductPresentationsService {
     required int productId,
     required int binTypeId,
     required double precio,
+    String? unidadMedida,
+    double? cantidadPorEnvase,
+    int? envaseContenidoId,
+    double? cantidadEnvaseContenido,
   }) async {
+    final body = <String, dynamic>{
+      "product": productId,
+      "bin_type": binTypeId,
+      "precio": precio.toStringAsFixed(2),
+      "activo": true,
+    };
+
+    if (unidadMedida != null && unidadMedida.trim().isNotEmpty) {
+      body["unidad_medida"] = unidadMedida.trim();
+    }
+
+    if (cantidadPorEnvase != null && cantidadPorEnvase > 0) {
+      body["cantidad_por_envase"] = cantidadPorEnvase;
+    }
+
+    if (envaseContenidoId != null) {
+      body["envase_contenido"] = envaseContenidoId;
+    }
+
+    if (cantidadEnvaseContenido != null &&
+        cantidadEnvaseContenido > 0) {
+      body["cantidad_envase_contenido"] =
+          cantidadEnvaseContenido;
+    }
+
     final response = await ApiService.post(
       "/productos/presentations/",
-      body: {
-        "product": productId,
-        "bin_type": binTypeId,
-        "precio": precio.toStringAsFixed(2),
-        "activo": true,
-      },
+      body: body,
     );
 
     if (response.statusCode != 201) {

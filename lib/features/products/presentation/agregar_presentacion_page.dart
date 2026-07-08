@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/primary_button.dart';
@@ -38,9 +38,14 @@ class _AgregarPresentacionPageState
 
   final precioCtrl = TextEditingController();
   final stockCtrl = TextEditingController(text: "0");
+  final unidadMedidaCtrl = TextEditingController();
+  final cantidadPorEnvaseCtrl = TextEditingController();
+  final cantidadEnvaseContenidoCtrl = TextEditingController();
 
+  List<BinType> allBinTypes = [];
   List<BinType> availableBinTypes = [];
   BinType? selectedBinType;
+  BinType? selectedEnvaseContenido;
 
   bool loadingTypes = true;
   bool saving = false;
@@ -67,6 +72,7 @@ class _AgregarPresentacionPageState
       if (!mounted) return;
 
       setState(() {
+        allBinTypes = allTypes;
         availableBinTypes = available;
         selectedBinType =
             available.isNotEmpty ? available.first : null;
@@ -87,6 +93,16 @@ class _AgregarPresentacionPageState
         ),
       );
     }
+  }
+
+  double? _parseOptionalDouble(String value) {
+    final cleanValue = value.trim().replaceAll(",", ".");
+
+    if (cleanValue.isEmpty) {
+      return null;
+    }
+
+    return double.tryParse(cleanValue);
   }
 
   Future<void> guardar() async {
@@ -115,6 +131,14 @@ class _AgregarPresentacionPageState
       stockCtrl.text.trim(),
     );
 
+    final cantidadPorEnvase = _parseOptionalDouble(
+      cantidadPorEnvaseCtrl.text,
+    );
+
+    final cantidadEnvaseContenido = _parseOptionalDouble(
+      cantidadEnvaseContenidoCtrl.text,
+    );
+
     if (precio == null || precio <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -137,6 +161,43 @@ class _AgregarPresentacionPageState
       return;
     }
 
+    if (cantidadPorEnvaseCtrl.text.trim().isNotEmpty &&
+        (cantidadPorEnvase == null || cantidadPorEnvase <= 0)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Ingresa una cantidad por envase válida o deja el campo vacío.",
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (cantidadEnvaseContenidoCtrl.text.trim().isNotEmpty &&
+        (cantidadEnvaseContenido == null ||
+            cantidadEnvaseContenido <= 0)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Ingresa una cantidad contenida válida o deja el campo vacío.",
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (selectedEnvaseContenido != null &&
+        selectedEnvaseContenido!.id == selectedBinType!.id) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "El envase contenido debe ser distinto al envase principal.",
+          ),
+        ),
+      );
+      return;
+    }
+
     setState(() {
       saving = true;
     });
@@ -149,6 +210,10 @@ class _AgregarPresentacionPageState
         productId: widget.productId,
         binTypeId: selectedBinType!.id,
         precio: precio,
+        unidadMedida: unidadMedidaCtrl.text.trim(),
+        cantidadPorEnvase: cantidadPorEnvase,
+        envaseContenidoId: selectedEnvaseContenido?.id,
+        cantidadEnvaseContenido: cantidadEnvaseContenido,
       );
 
       await presentationsService.saveStock(
@@ -200,6 +265,9 @@ class _AgregarPresentacionPageState
   void dispose() {
     precioCtrl.dispose();
     stockCtrl.dispose();
+    unidadMedidaCtrl.dispose();
+    cantidadPorEnvaseCtrl.dispose();
+    cantidadEnvaseContenidoCtrl.dispose();
     super.dispose();
   }
 
@@ -310,6 +378,120 @@ class _AgregarPresentacionPageState
                             _smallHelp(
                               "Solo aparecen envases que este producto "
                               "todavía no usa.",
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        _sectionCard(
+                          title: "Detalle opcional",
+                          icon: Icons.schema,
+                          color: Colors.lightGreenAccent,
+                          children: [
+                            AppTextField(
+                              controller: unidadMedidaCtrl,
+                              label:
+                                  "Unidad de medida (ej: cajas, kg, unidades)",
+                            ),
+                            const SizedBox(height: 12),
+                            AppTextField(
+                              controller: cantidadPorEnvaseCtrl,
+                              label:
+                                  "Cantidad por envase (ej: 80)",
+                              keyboardType:
+                                  const TextInputType
+                                      .numberWithOptions(
+                                decimal: true,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            _smallHelp(
+                              "Estos datos describen la capacidad del envase. "
+                              "Ejemplo: pallet con 80 cajas o bin con 350 kg.",
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        _sectionCard(
+                          title: "Contenido opcional",
+                          icon: Icons.account_tree,
+                          color: Colors.amberAccent,
+                          children: [
+                            DropdownButtonFormField<BinType>(
+                              initialValue: selectedEnvaseContenido,
+                              dropdownColor: card,
+                              style: const TextStyle(
+                                color: Colors.white,
+                              ),
+                              decoration:
+                                  const InputDecoration(
+                                labelText:
+                                    "Envase contenido (opcional)",
+                              ),
+                              items: allBinTypes
+                                  .map(
+                                    (binType) =>
+                                        DropdownMenuItem<
+                                            BinType>(
+                                      value: binType,
+                                      child: Text(
+                                        binType.nombre,
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: saving
+                                  ? null
+                                  : (value) {
+                                      setState(() {
+                                        selectedEnvaseContenido =
+                                            value;
+                                      });
+                                    },
+                            ),
+                            if (selectedEnvaseContenido != null) ...[
+                              const SizedBox(height: 8),
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: TextButton.icon(
+                                  onPressed: saving
+                                      ? null
+                                      : () {
+                                          setState(() {
+                                            selectedEnvaseContenido =
+                                                null;
+                                          });
+                                        },
+                                  icon: const Icon(
+                                    Icons.clear,
+                                    size: 18,
+                                  ),
+                                  label: const Text(
+                                    "Quitar envase contenido",
+                                  ),
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 12),
+                            AppTextField(
+                              controller:
+                                  cantidadEnvaseContenidoCtrl,
+                              label:
+                                  "Cantidad contenida (ej: 80)",
+                              keyboardType:
+                                  const TextInputType
+                                      .numberWithOptions(
+                                decimal: true,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            _smallHelp(
+                              "Úsalo cuando un envase principal contiene "
+                              "otros envases. Ejemplo: pallet que contiene "
+                              "80 cajas.",
                             ),
                           ],
                         ),
