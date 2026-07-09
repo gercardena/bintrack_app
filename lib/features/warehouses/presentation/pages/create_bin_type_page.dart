@@ -207,6 +207,26 @@ class _CreateBinTypePageState
                         value: "CAJA",
                         child: Text("Caja"),
                       ),
+                      DropdownMenuItem(
+                        value: "GAMELA",
+                        child: Text("Gamela"),
+                      ),
+                      DropdownMenuItem(
+                        value: "BANDEJA",
+                        child: Text("Bandeja"),
+                      ),
+                      DropdownMenuItem(
+                        value: "SACO",
+                        child: Text("Saco"),
+                      ),
+                      DropdownMenuItem(
+                        value: "BOLSA",
+                        child: Text("Bolsa"),
+                      ),
+                      DropdownMenuItem(
+                        value: "OTRO",
+                        child: Text("Otro"),
+                      ),
                     ],
                     onChanged: saving
                         ? null
