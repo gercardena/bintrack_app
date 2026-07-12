@@ -21,6 +21,38 @@ class UserGuidePage extends StatelessWidget {
           _sectionTitle("Flujo recomendado"),
           _stepCard(
             number: "1",
+            title: "Configura tus envases",
+            description:
+                "Crea los envases que usa tu negocio, como bins, pallets, cajas, gamelas, bandejas, sacos o bolsas.",
+            icon: Icons.warehouse,
+            color: Colors.brown,
+          ),
+          _stepCard(
+            number: "2",
+            title: "Registra entrada de envases",
+            description:
+                "Antes de cargar stock de productos, registra cuántos envases disponibles tienes en bodega.",
+            icon: Icons.input,
+            color: Colors.orange,
+          ),
+          _stepCard(
+            number: "3",
+            title: "Crea productos y presentaciones",
+            description:
+                "Crea tus productos y define cómo se venden: por caja, pallet, bin u otro envase. Cada presentación tiene precio y stock propio.",
+            icon: Icons.inventory_2,
+            color: Colors.green,
+          ),
+          _stepCard(
+            number: "4",
+            title: "Agrega detalle de presentación",
+            description:
+                "Si una presentación contiene otra, indícalo en el detalle. Por ejemplo: un pallet contiene 80 cajas.",
+            icon: Icons.account_tree,
+            color: Colors.lightGreen,
+          ),
+          _stepCard(
+            number: "5",
             title: "Crea tus clientes",
             description:
                 "Registra los clientes que recibirán productos o envases.",
@@ -28,47 +60,23 @@ class UserGuidePage extends StatelessWidget {
             color: Colors.indigo,
           ),
           _stepCard(
-            number: "2",
-            title: "Configura tus envases",
-            description:
-                "Define los tipos de envase que usas, como bins o pallets.",
-            icon: Icons.warehouse,
-            color: Colors.brown,
-          ),
-          _stepCard(
-            number: "3",
-            title: "Registra entrada de envases",
-            description:
-                "Antes de crear stock lleno, registra cuántos envases físicos tienes disponibles.",
-            icon: Icons.input,
-            color: Colors.orange,
-          ),
-          _stepCard(
-            number: "4",
-            title: "Crea productos y presentaciones",
-            description:
-                "Relaciona cada producto con un envase, precio y stock lleno.",
-            icon: Icons.inventory_2,
-            color: Colors.green,
-          ),
-          _stepCard(
-            number: "5",
+            number: "6",
             title: "Crea una venta",
             description:
-                "Selecciona un cliente activo y agrega productos disponibles.",
+                "Selecciona un cliente y agrega una presentación disponible, como Ciruelas + Caja de Ciruelas o Ciruelas + Pallet Madera.",
             icon: Icons.point_of_sale,
             color: Colors.blue,
           ),
           _stepCard(
-            number: "6",
+            number: "7",
             title: "Confirma la venta",
             description:
-                "Al confirmar, la app descuenta stock lleno y registra envases en cliente.",
+                "Al confirmar, la app descuenta el stock de la presentación vendida.",
             icon: Icons.check_circle,
             color: Colors.teal,
           ),
           _stepCard(
-            number: "7",
+            number: "8",
             title: "Registra el pago",
             description:
                 "Cuando el cliente paga, registra el pago para cerrar la venta.",
@@ -76,7 +84,7 @@ class UserGuidePage extends StatelessWidget {
             color: Colors.purple,
           ),
           _stepCard(
-            number: "8",
+            number: "9",
             title: "Genera comprobante si corresponde",
             description:
                 "El comprobante es opcional y queda asociado a la venta pagada. No es boleta ni factura tributaria.",
@@ -249,7 +257,7 @@ class UserGuidePage extends StatelessWidget {
           SizedBox(width: 10),
           Expanded(
             child: Text(
-              "Regla importante: para crear productos con stock, primero debe existir entrada de envases disponibles.",
+              "Regla importante: para cargar stock de una presentación, primero debe existir entrada de envases disponibles. Ejemplo: antes de crear 100 cajas de ciruelas con stock, registra una entrada de 100 cajas en bodega.",
               style: TextStyle(
                 color: Colors.white,
                 height: 1.35,
