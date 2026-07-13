@@ -128,8 +128,18 @@ class ProductPresentationsService {
         response.statusCode == 201;
 
     if (!success) {
+      final responseText = response.body.toLowerCase();
+
+      if (responseText.contains("envases disponibles")) {
+        throw Exception(
+          "No hay envases disponibles para cargar este stock. "
+          "Primero registra una entrada de envases en Bodega > Movimientos.",
+        );
+      }
+
       throw Exception(
-        "Error guardando stock: ${response.body}",
+        "No se pudo guardar el stock. "
+        "Revisa los datos e intenta nuevamente.",
       );
     }
   }
