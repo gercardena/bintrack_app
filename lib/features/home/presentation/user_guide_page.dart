@@ -257,7 +257,10 @@ class UserGuidePage extends StatelessWidget {
           SizedBox(width: 10),
           Expanded(
             child: Text(
-              "Regla importante: para cargar stock de una presentación, primero debe existir entrada de envases disponibles. Ejemplo: antes de crear 100 cajas de ciruelas con stock, registra una entrada de 100 cajas en bodega.",
+              "Regla importante: para cargar stock de una presentación, primero debe existir entrada de envases disponibles. "
+              "Ejemplo: antes de crear 100 cajas de ciruelas con stock, registra una entrada de 100 cajas en bodega.\n\n"
+              "Si vendes un pallet, la app descuenta el stock del pallet, no las cajas contenidas. "
+              "Para transformar pallets o bins en cajas se usará el flujo futuro de reenvasado.",
               style: TextStyle(
                 color: Colors.white,
                 height: 1.35,
