@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import '../../../../core/services/api_service.dart';
 import '../models/sale_model.dart';
+import '../models/sales_dashboard_model.dart';
 
 class SalesService {
   Future<List<Sale>> getSales() async {
@@ -199,5 +200,26 @@ class SalesService {
         "Error generando comprobante: ${response.body}",
       );
     }
+  }
+  Future<SalesDashboard> getDashboard() async {
+    final response = await ApiService.get(
+      "/ventas/sales/dashboard/",
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        "Error cargando resumen de ventas: ${response.body}",
+      );
+    }
+
+    final decoded = jsonDecode(response.body);
+
+    if (decoded is! Map<String, dynamic>) {
+      throw Exception(
+        "Respuesta inválida al cargar resumen de ventas",
+      );
+    }
+
+    return SalesDashboard.fromJson(decoded);
   }
 }
