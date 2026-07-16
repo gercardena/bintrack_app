@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../auth/presentation/protected_page.dart';
 
 import '../data/models/sale_model.dart';
+import '../data/models/sales_dashboard_model.dart';
 import '../data/services/sale_service.dart';
 
 import 'create_sale_page.dart';
@@ -24,6 +25,7 @@ class _SalesPageState extends State<SalesPage> {
   static const Color card = Color(0xFF1E293B);
 
   List<Sale> sales = [];
+  SalesDashboard? dashboard;
 
   bool loading = true;
   String? errorMessage;
@@ -45,11 +47,13 @@ class _SalesPageState extends State<SalesPage> {
 
     try {
       final data = await _service.getSales();
+      final dashboardData = await _service.getDashboard();
 
       if (!mounted) return;
 
       setState(() {
         sales = data;
+        dashboard = dashboardData;
         loading = false;
       });
     } catch (e) {
@@ -679,16 +683,18 @@ class _SalesPageState extends State<SalesPage> {
           Row(
             children: [
               _summaryBox(
-                label: "Borradores",
-                value: "$totalBorradores",
-                icon: Icons.edit_note,
+                label: "Hoy",
+                value:
+                "\$${precioFormateado(dashboard?.ingresosHoy ?? 0)}",
+                icon: Icons.today,
                 color: Colors.cyanAccent,
               ),
               const SizedBox(width: 10),
               _summaryBox(
-                label: "Confirmadas",
-                value: "$totalConfirmadas",
-                icon: Icons.check_circle_outline,
+                label: "Mes",
+                value:
+                "\$${precioFormateado(dashboard?.ingresosMes ?? 0)}",
+                icon: Icons.calendar_month,
                 color: Colors.orangeAccent,
               ),
             ],
@@ -700,16 +706,16 @@ class _SalesPageState extends State<SalesPage> {
             children: [
               _summaryBox(
                 label: "Pagadas",
-                value: "$totalPagadas",
+                value: "${dashboard?.ventasPagadas ?? totalPagadas}",
                 icon: Icons.payments,
                 color: Colors.greenAccent,
               ),
               const SizedBox(width: 10),
               _summaryBox(
-                label: "Total activo",
+                label: "Pendientes",
                 value:
-                    "\$${precioFormateado(totalVendido)}",
-                icon: Icons.attach_money,
+                    "${dashboard?.ventasConfirmadas ?? totalConfirmadas}",
+                icon: Icons.pending_actions,
                 color: Colors.amberAccent,
               ),
             ],
