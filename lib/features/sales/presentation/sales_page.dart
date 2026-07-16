@@ -677,6 +677,15 @@ class _SalesPageState extends State<SalesPage> {
               fontWeight: FontWeight.bold,
             ),
           ),
+          const SizedBox(height: 4),
+          const Text(
+            "Ingresos calculados sobre ventas pagadas.",
+            style: TextStyle(
+              color: Colors.white70,
+              height: 1.3,
+              fontSize: 12.5,
+            ),
+          ),
 
           const SizedBox(height: 14),
 
