@@ -176,9 +176,9 @@ class _InventoryPageState extends State<InventoryPage> {
           SizedBox(width: 12),
           Expanded(
             child: Text(
-              "El inventario cruza envases físicos, envases en clientes "
-              "y stock lleno. Disponible significa envases vacíos "
-              "que aún puedes usar.",
+              "El inventario muestra envases vacíos disponibles,"
+              "envases llenos listos para vender y envases que "
+              "están en clientes.",
               style: TextStyle(
                 color: Colors.white,
                 height: 1.35,
@@ -221,6 +221,15 @@ class _InventoryPageState extends State<InventoryPage> {
               color: Colors.white,
               fontSize: 18,
               fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            "Vacíos sirven para cargar stock. Llenos son productos listos para vender.",
+            style: TextStyle(
+              color: Colors.white70,
+              height: 1.3,
+              fontSize: 12.5,
             ),
           ),
 
@@ -382,7 +391,7 @@ class _InventoryPageState extends State<InventoryPage> {
                     ),
                     const SizedBox(height: 4),
                     const Text(
-                      "Control físico de envases",
+                      "Estado operativo del envase",
                       style: TextStyle(
                         color: Colors.white60,
                         height: 1.25,
