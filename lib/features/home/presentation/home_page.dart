@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/auth/user_controller.dart';
 import '../../auth/presentation/logout.dart';
 import '../../clientes/presentation/clientes_page.dart';
 import '../../products/presentation/products_page.dart';
@@ -102,6 +103,8 @@ class HomePage extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: [
           _welcomeCard(),
+          const SizedBox(height: 12),
+          _subscriptionCard(),
           const SizedBox(height: 16),
           _primaryAction(
             context,
@@ -196,6 +199,114 @@ class HomePage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _subscriptionCard() {
+    final user = UserController().user ?? {};
+
+    final activa = user["suscripcion_activa"] == true;
+    final plan = user["suscripcion_plan"]?.toString();
+    final fechaFinRaw =
+        user["suscripcion_fecha_fin"]?.toString();
+    final estado =
+        user["suscripcion_estado"]?.toString() ??
+            "sin_suscripcion";
+
+    final fechaTexto = _formatSubscriptionDate(
+      fechaFinRaw,
+    );
+
+    final color =
+        activa ? Colors.greenAccent : Colors.orangeAccent;
+
+    final title = activa
+        ? "Suscripción activa"
+        : "Suscripción pendiente";
+
+    final subtitle = activa
+        ? "Plan ${plan ?? "actual"}"
+            "${fechaTexto != null ? " · Vigente hasta $fechaTexto" : ""}"
+        : _subscriptionPendingText(estado);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: color.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            activa
+                ? Icons.verified_user
+                : Icons.info_outline,
+            color: color,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15.5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _subscriptionPendingText(String estado) {
+    if (estado == "vencida") {
+      return "Tu plan está vencido. Renueva tu suscripción para mantener el acceso completo.";
+    }
+
+    if (estado == "inactiva") {
+      return "Tu suscripción está inactiva. Contacta al administrador para regularizarla.";
+    }
+
+    return "Activa tu plan mensual para usar BinTrack con acceso completo.";
+  }
+
+  String? _formatSubscriptionDate(String? rawDate) {
+    if (rawDate == null || rawDate.trim().isEmpty) {
+      return null;
+    }
+
+    final date = DateTime.tryParse(rawDate);
+
+    if (date == null) {
+      return null;
+    }
+
+    final localDate = date.toLocal();
+
+    final day = localDate.day.toString().padLeft(2, "0");
+    final month =
+        localDate.month.toString().padLeft(2, "0");
+    final year = localDate.year.toString();
+
+    return "$day/$month/$year";
   }
 
   Widget _welcomeCard() {
