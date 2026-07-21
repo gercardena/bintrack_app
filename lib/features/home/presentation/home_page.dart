@@ -132,19 +132,19 @@ class HomePage extends StatelessWidget {
               ),
               _menuButton(
                 context,
-                title: "Clientes",
-                subtitle: "Registra compradores",
-                icon: Icons.people,
-                color: Colors.indigo,
-                page: const ClientesPage(),
-              ),
-              _menuButton(
-                context,
                 title: "Envases",
                 subtitle: "Tipos y movimientos",
                 icon: Icons.warehouse,
                 color: Colors.brown,
                 page: const WarehousesPage(),
+              ),
+              _menuButton(
+                context,
+                title: "Clientes",
+                subtitle: "Registra compradores",
+                icon: Icons.people,
+                color: Colors.indigo,
+                page: const ClientesPage(),
               ),
               _menuButton(
                 context,
