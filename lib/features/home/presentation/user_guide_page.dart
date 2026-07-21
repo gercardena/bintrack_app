@@ -18,6 +18,8 @@ class UserGuidePage extends StatelessWidget {
         children: [
           _introCard(),
           const SizedBox(height: 18),
+          _subscriptionNote(),
+          const SizedBox(height: 18),
           _sectionTitle("Flujo recomendado"),
           _stepCard(
             number: "1",
@@ -37,6 +39,14 @@ class UserGuidePage extends StatelessWidget {
           ),
           _stepCard(
             number: "3",
+            title: "Crea tus clientes",
+            description:
+                "Registra los clientes que recibirán productos, envases o comprobantes.",
+            icon: Icons.people,
+            color: Colors.indigo,
+          ),
+          _stepCard(
+            number: "4",
             title: "Crea productos y presentaciones",
             description:
                 "Crea tus productos y define cómo se venden: por caja, pallet, bin u otro envase. Cada presentación tiene precio y stock propio.",
@@ -44,7 +54,7 @@ class UserGuidePage extends StatelessWidget {
             color: Colors.green,
           ),
           _stepCard(
-            number: "4",
+            number: "5",
             title: "Agrega detalle de presentación",
             description:
                 "Si una presentación contiene otra, indícalo en el detalle. Por ejemplo: un pallet contiene 80 cajas.",
@@ -52,15 +62,15 @@ class UserGuidePage extends StatelessWidget {
             color: Colors.lightGreen,
           ),
           _stepCard(
-            number: "5",
-            title: "Crea tus clientes",
+            number: "6",
+            title: "Carga stock inicial",
             description:
-                "Registra los clientes que recibirán productos o envases.",
-            icon: Icons.people,
-            color: Colors.indigo,
+                "Agrega cuántas unidades llenas tienes de cada presentación. Ejemplo: 100 cajas de ciruelas o 3 pallets de ciruelas.",
+            icon: Icons.add_box,
+            color: Colors.cyan,
           ),
           _stepCard(
-            number: "6",
+            number: "7",
             title: "Crea una venta",
             description:
                 "Selecciona un cliente y agrega una presentación disponible, como Ciruelas + Caja de Ciruelas o Ciruelas + Pallet Madera.",
@@ -68,7 +78,7 @@ class UserGuidePage extends StatelessWidget {
             color: Colors.blue,
           ),
           _stepCard(
-            number: "7",
+            number: "8",
             title: "Confirma la venta",
             description:
                 "Al confirmar, la app descuenta el stock de la presentación vendida.",
@@ -76,20 +86,36 @@ class UserGuidePage extends StatelessWidget {
             color: Colors.teal,
           ),
           _stepCard(
-            number: "8",
+            number: "9",
             title: "Registra el pago",
             description:
-                "Cuando el cliente paga, registra el pago para cerrar la venta.",
+                "Cuando el cliente paga, registra el pago para cerrar la venta y reflejar el ingreso.",
             icon: Icons.payments,
             color: Colors.purple,
           ),
           _stepCard(
-            number: "9",
+            number: "10",
             title: "Genera comprobante si corresponde",
             description:
                 "El comprobante es opcional y queda asociado a la venta pagada. No es boleta ni factura tributaria.",
             icon: Icons.receipt_long,
             color: Colors.deepPurple,
+          ),
+          _stepCard(
+            number: "11",
+            title: "Revisa inventario",
+            description:
+                "Consulta envases disponibles, envases llenos, stock de productos y alertas de inventario.",
+            icon: Icons.storage,
+            color: Colors.amber,
+          ),
+          _stepCard(
+            number: "12",
+            title: "Revisa balance de envases",
+            description:
+                "Consulta qué clientes tienen envases pendientes y el depósito asociado a esos envases.",
+            icon: Icons.assessment,
+            color: Colors.deepPurpleAccent,
           ),
           const SizedBox(height: 18),
           _warningCard(),
@@ -133,6 +159,39 @@ class UserGuidePage extends StatelessWidget {
             style: TextStyle(
               color: Colors.white70,
               height: 1.35,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _subscriptionNote() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.green.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.greenAccent.withValues(alpha: 0.35),
+        ),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.verified_user,
+            color: Colors.greenAccent,
+          ),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              "En el Home puedes ver el estado de tu suscripción. "
+              "Por ahora este estado es informativo y no bloquea módulos durante las pruebas internas.",
+              style: TextStyle(
+                color: Colors.white,
+                height: 1.35,
+              ),
             ),
           ),
         ],
