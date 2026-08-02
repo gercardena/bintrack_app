@@ -340,14 +340,29 @@ class _AgregarPresentacionPageState
                           children: [
                             DropdownButtonFormField<BinType>(
                               initialValue: selectedBinType,
-                              dropdownColor: card,
-                              style: const TextStyle(
-                                color: Colors.white,
-                              ),
-                              decoration:
-                                  const InputDecoration(
-                                labelText:
-                                    "Tipo de envase",
+                                  isExpanded: true,
+                                  dropdownColor: card,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                  ),
+                                  selectedItemBuilder: (context) {
+                                    return availableBinTypes.map((binType) {
+                                      return Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: Text(
+                                          binType.nombre,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      );
+                                    }).toList();
+                                  },
+                                  decoration:
+                                      const InputDecoration(
+                                    labelText:
+                                          "Tipo de envase",
                               ),
                               items: availableBinTypes
                                   .map(

@@ -42,6 +42,15 @@ class _CreateBinMovementPageState
   bool loading = true;
   bool saving = false;
 
+  bool get requiereCliente {
+    return movementType == "prestamo" ||
+        movementType == "devolucion";
+  }
+
+  bool get muestraDeposito {
+    return movementType == "prestamo";
+  }
+
   @override
   void initState() {
     super.initState();
@@ -69,14 +78,11 @@ class _CreateBinMovementPageState
         clients = loadedClients;
         types = loadedTypes;
 
-        if (clients.isNotEmpty) {
-          selectedClient = clients.first;
-        }
-
         if (types.isNotEmpty) {
           selectedType = types.first;
         }
 
+        selectedClient = null;
         loading = false;
       });
     } catch (e) {
@@ -99,13 +105,13 @@ class _CreateBinMovementPageState
   String movementLabel(String value) {
     switch (value) {
       case "entrada":
-        return "Entrada";
+        return "Entrada al almacén";
       case "prestamo":
-        return "Préstamo";
+        return "Préstamo a cliente";
       case "devolucion":
-        return "Devolución";
+        return "Devolución de cliente";
       case "baja":
-        return "Baja";
+        return "Baja de envases";
       default:
         return value;
     }
@@ -114,31 +120,19 @@ class _CreateBinMovementPageState
   String movementDescription(String value) {
     switch (value) {
       case "entrada":
-        return "Aumenta los envases físicos disponibles. No representa envases entregados a un cliente.";
+        return "Usa Entrada cuando recibes envases vacíos en el almacén. Aumenta los envases disponibles y no requiere cliente.";
       case "prestamo":
-        return "Entrega envases a un cliente y aumenta su saldo pendiente.";
+        return "Usa Préstamo cuando entregas envases vacíos a un cliente. El cliente queda con saldo pendiente.";
       case "devolucion":
-        return "Registra envases que vuelven desde un cliente.";
+        return "Usa Devolución cuando un cliente devuelve envases al almacén. Reduce su saldo pendiente.";
       case "baja":
-        return "Descuenta envases perdidos, rotos o no utilizables.";
+        return "Usa Baja para descontar envases rotos, perdidos o no utilizables. No requiere cliente.";
       default:
         return "Movimiento de envases.";
     }
   }
 
-  String clienteLabel() {
-    if (movementType == "entrada") {
-      return "Cliente de referencia / responsable";
-    }
-
-    return "Cliente";
-  }
-
   String clienteHelp() {
-    if (movementType == "entrada") {
-      return "Las entradas aumentan stock físico; el cliente solo queda como referencia o responsable.";
-    }
-
     if (movementType == "prestamo") {
       return "Selecciona el cliente que recibe los envases.";
     }
@@ -147,7 +141,22 @@ class _CreateBinMovementPageState
       return "Selecciona el cliente que devuelve los envases.";
     }
 
-    return "Selecciona el cliente asociado como referencia del movimiento.";
+    return "Este movimiento no requiere cliente.";
+  }
+
+  String referenciaSugerida() {
+    switch (movementType) {
+      case "entrada":
+        return "Entrada al almacén";
+      case "prestamo":
+        return "Préstamo a cliente";
+      case "devolucion":
+        return "Devolución de cliente";
+      case "baja":
+        return "Baja de envases";
+      default:
+        return "Movimiento";
+    }
   }
 
   Color movementColor(String value) {
@@ -177,11 +186,13 @@ class _CreateBinMovementPageState
       return false;
     }
 
-    if (selectedClient == null) {
+    if (requiereCliente && selectedClient == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            "Selecciona un cliente de referencia.",
+            movementType == "prestamo"
+                ? "Selecciona el cliente que recibe los envases."
+                : "Selecciona el cliente que devuelve los envases.",
           ),
         ),
       );
@@ -210,12 +221,14 @@ class _CreateBinMovementPageState
 
     if (!validarFormulario()) return;
 
-    final deposito = double.tryParse(
-          depositoController.text
-              .trim()
-              .replaceAll(",", "."),
-        ) ??
-        0;
+    final deposito = muestraDeposito
+        ? double.tryParse(
+              depositoController.text
+                  .trim()
+                  .replaceAll(",", "."),
+            ) ??
+            0
+        : 0.0;
 
     setState(() {
       saving = true;
@@ -223,7 +236,8 @@ class _CreateBinMovementPageState
 
     try {
       final ok = await movementService.createMovement(
-        cliente: selectedClient!.id,
+        cliente:
+            requiereCliente ? selectedClient!.id : null,
         binType: selectedType!.id,
         tipoMovimiento: movementType,
         cantidad: int.parse(
@@ -232,7 +246,7 @@ class _CreateBinMovementPageState
         depositoPagado: deposito,
         referencia:
             referenciaController.text.trim().isEmpty
-                ? "Movimiento ${movementLabel(movementType)}"
+                ? referenciaSugerida()
                 : referenciaController.text.trim(),
       );
 
@@ -240,9 +254,9 @@ class _CreateBinMovementPageState
 
       if (ok) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              "Movimiento creado correctamente.",
+              "${movementLabel(movementType)} registrado correctamente.",
             ),
           ),
         );
@@ -344,7 +358,7 @@ class _CreateBinMovementPageState
             _introCard(),
             const SizedBox(height: 16),
             _sectionCard(
-              title: "Movimiento",
+              title: "Tipo de movimiento",
               icon: Icons.swap_horiz,
               color: movementColor(movementType),
               children: [
@@ -357,17 +371,26 @@ class _CreateBinMovementPageState
             ),
             const SizedBox(height: 16),
             _sectionCard(
-              title: "Envase y cliente",
+              title: requiereCliente
+                  ? "Envase y cliente"
+                  : "Envase",
               icon: Icons.inventory_2,
               color: Colors.cyanAccent,
               children: [
                 selectorTipoEnvase(),
-                const SizedBox(height: 12),
-                selectorCliente(),
-                const SizedBox(height: 10),
-                _smallHelp(
-                  clienteHelp(),
-                ),
+                if (requiereCliente) ...[
+                  const SizedBox(height: 12),
+                  selectorCliente(),
+                  const SizedBox(height: 10),
+                  _smallHelp(
+                    clienteHelp(),
+                  ),
+                ] else ...[
+                  const SizedBox(height: 10),
+                  _smallHelp(
+                    "Este movimiento se registra directamente contra el almacén. No se asocia a ningún cliente.",
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: 16),
@@ -377,13 +400,14 @@ class _CreateBinMovementPageState
               color: Colors.orangeAccent,
               children: [
                 campoCantidad(),
-                const SizedBox(height: 12),
-                campoDeposito(),
-                const SizedBox(height: 10),
-                _smallHelp(
-                  "El depósito pagado es una garantía asociada "
-                  "a envases prestados. No es precio de venta.",
-                ),
+                if (muestraDeposito) ...[
+                  const SizedBox(height: 12),
+                  campoDeposito(),
+                  const SizedBox(height: 10),
+                  _smallHelp(
+                    "El depósito pagado es una garantía asociada a envases prestados. No es precio de venta.",
+                  ),
+                ],
                 const SizedBox(height: 12),
                 campoReferencia(),
               ],
@@ -421,8 +445,8 @@ class _CreateBinMovementPageState
                 selectedClient = value;
               });
             },
-      decoration: InputDecoration(
-        labelText: clienteLabel(),
+      decoration: const InputDecoration(
+        labelText: "Cliente",
       ),
     );
   }
@@ -468,19 +492,19 @@ class _CreateBinMovementPageState
       items: const [
         DropdownMenuItem(
           value: "entrada",
-          child: Text("Entrada"),
+          child: Text("Entrada al almacén"),
         ),
         DropdownMenuItem(
           value: "prestamo",
-          child: Text("Préstamo"),
+          child: Text("Préstamo a cliente"),
         ),
         DropdownMenuItem(
           value: "devolucion",
-          child: Text("Devolución"),
+          child: Text("Devolución de cliente"),
         ),
         DropdownMenuItem(
           value: "baja",
-          child: Text("Baja"),
+          child: Text("Baja de envases"),
         ),
       ],
       onChanged: saving
@@ -490,6 +514,17 @@ class _CreateBinMovementPageState
 
               setState(() {
                 movementType = value;
+
+                if (!requiereCliente) {
+                  selectedClient = null;
+                } else if (selectedClient == null &&
+                    clients.isNotEmpty) {
+                  selectedClient = clients.first;
+                }
+
+                if (!muestraDeposito) {
+                  depositoController.clear();
+                }
               });
             },
       decoration: const InputDecoration(
@@ -507,6 +542,7 @@ class _CreateBinMovementPageState
       keyboardType: TextInputType.number,
       decoration: const InputDecoration(
         labelText: "Cantidad de envases",
+        hintText: "Ej: 2, 10, 100",
       ),
     );
   }
@@ -524,6 +560,7 @@ class _CreateBinMovementPageState
       decoration: const InputDecoration(
         labelText: "Depósito pagado",
         prefixText: "\$",
+        hintText: "Ej: 140000",
       ),
     );
   }
@@ -555,7 +592,9 @@ class _CreateBinMovementPageState
                 ),
               )
             : const Icon(Icons.save),
-        label: const Text("Guardar movimiento"),
+        label: Text(
+          "Guardar ${movementLabel(movementType)}",
+        ),
       ),
     );
   }
@@ -591,8 +630,7 @@ class _CreateBinMovementPageState
           SizedBox(width: 12),
           Expanded(
             child: Text(
-              "Registra un movimiento para actualizar el control "
-              "de envases físicos y saldos por cliente.",
+              "Registra entradas al almacén, préstamos a clientes, devoluciones o bajas de envases físicos.",
               style: TextStyle(
                 color: Colors.white,
                 height: 1.35,
@@ -630,12 +668,14 @@ class _CreateBinMovementPageState
                 color: color,
               ),
               const SizedBox(width: 8),
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
