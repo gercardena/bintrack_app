@@ -700,6 +700,8 @@ class _AgregarPresentacionPageState
   }
 
   Widget _emptyState() {
+    final hasAnyBinTypes = allBinTypes.isNotEmpty;
+
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
@@ -710,10 +712,12 @@ class _AgregarPresentacionPageState
           color: Colors.white.withValues(alpha: 0.35),
         ),
         const SizedBox(height: 16),
-        const Center(
+        Center(
           child: Text(
-            "No hay envases disponibles",
-            style: TextStyle(
+            hasAnyBinTypes
+                ? "Este producto ya usa todos los envases"
+                : "No hay envases creados",
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -721,13 +725,26 @@ class _AgregarPresentacionPageState
           ),
         ),
         const SizedBox(height: 8),
-        const Text(
-          "Este producto ya usa todos los tipos de envase "
-          "registrados, o todavía no existen envases creados.",
+        Text(
+          hasAnyBinTypes
+              ? "Para este producto ya existe una presentación con cada tipo de envase registrado. Puedes volver al detalle del producto para editar precio, stock o datos de sus presentaciones."
+              : "Primero crea un tipo de envase en el módulo Envases. Luego podrás volver aquí para agregar una presentación al producto.",
           textAlign: TextAlign.center,
-          style: TextStyle(
+          style: const TextStyle(
             color: Colors.white60,
             height: 1.35,
+          ),
+        ),
+        const SizedBox(height: 20),
+        OutlinedButton.icon(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          icon: const Icon(Icons.arrow_back),
+          label: Text(
+            hasAnyBinTypes
+                ? "Volver al detalle del producto"
+                : "Volver",
           ),
         ),
       ],
