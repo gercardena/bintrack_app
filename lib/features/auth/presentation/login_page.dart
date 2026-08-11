@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../data/auth_api.dart';
 import '../../home/presentation/home_page.dart';
+import 'register_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -62,6 +63,15 @@ class _LoginPageState extends State<LoginPage> {
         });
       }
     }
+  }
+
+  Future<void> _openRegister() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const RegisterPage(),
+      ),
+    );
   }
 
   @override
@@ -258,6 +268,17 @@ class _LoginPageState extends State<LoginPage> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: _isLoading ? null : _openRegister,
+              child: const Text(
+                "Crear cuenta",
+                style: TextStyle(
+                  color: Colors.cyanAccent,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],

@@ -68,6 +68,80 @@ class AuthApi {
     }
   }
 
+  static Future<Map<String, dynamic>> register({
+    required String username,
+    required String email,
+    required String password,
+    String? rut,
+    String? telefono,
+  }) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$_baseUrl/api/accounts/register/'),
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode({
+              'username': username,
+              'email': email,
+              'password': password,
+              'rut': rut?.trim().isEmpty == true
+                  ? null
+                  : rut?.trim(),
+              'telefono': telefono?.trim().isEmpty == true
+                  ? null
+                  : telefono?.trim(),
+            }),
+          )
+          .timeout(_timeout);
+
+      if (response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+
+        if (data is Map<String, dynamic>) {
+          return data;
+        }
+
+        return {};
+      }
+
+      String detail =
+          'No pudimos crear la cuenta. Revisa los datos e intenta nuevamente.';
+
+      try {
+        final data = jsonDecode(response.body);
+
+        if (data is Map<String, dynamic>) {
+          detail = data.entries
+              .map(
+                (entry) => '${entry.key}: ${entry.value}',
+              )
+              .join('\n');
+        }
+      } catch (_) {
+        // Conservamos el mensaje genérico.
+      }
+
+      throw Exception(detail);
+    } on TimeoutException {
+      throw Exception(
+        'El servidor tardó demasiado en responder. '
+        'Intenta nuevamente.',
+      );
+    } on SocketException {
+      throw Exception(
+        'No pudimos conectar con el servidor. '
+        'Revisa tu conexión o intenta nuevamente.',
+      );
+    } on http.ClientException {
+      throw Exception(
+        'No pudimos conectar con el servidor. '
+        'Revisa tu conexión o intenta nuevamente.',
+      );
+    }
+  }
+
   static Future<String?> refreshToken() async {
     final refresh = await TokenStorage.getRefreshToken();
 
