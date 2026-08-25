@@ -132,8 +132,9 @@ class ProductPresentationsService {
 
       if (responseText.contains("envases disponibles")) {
         throw Exception(
-          "No hay envases disponibles para cargar este stock. "
-          "Primero registra una entrada de envases en Bodega > Movimientos.",
+          "No hay envases físicos disponibles para cargar este stock. "
+          "Crear el envase solo agrega el nombre al catálogo; "
+          "después debes registrar una entrada al almacén en Bodega > Movimientos.",
         );
       }
 

@@ -23,17 +23,17 @@ class UserGuidePage extends StatelessWidget {
           _sectionTitle("Flujo recomendado"),
           _stepCard(
             number: "1",
-            title: "Configura tus envases",
+            title: "Crea el catálogo de envases",
             description:
-                "Crea los envases que usa tu negocio, como bins, pallets, cajas, gamelas, bandejas, sacos o bolsas.",
+                "Primero define los tipos de envase que usa tu negocio: bins, pallets, cajas, gamelas, bandejas, sacos o bolsas. Este paso solo crea el nombre del envase; todavía no suma cantidad disponible.",
             icon: Icons.warehouse,
             color: Colors.brown,
           ),
           _stepCard(
             number: "2",
-            title: "Registra entrada de envases",
+            title: "Registra entrada al almacén",
             description:
-                "Antes de cargar stock de productos, registra cuántos envases disponibles tienes en bodega.",
+                "Después de crear el envase, registra cuántos envases físicos entraron a tu bodega. Sin esta entrada, la app no tendrá envases disponibles para cargar stock o crear presentaciones.",
             icon: Icons.input,
             color: Colors.orange,
           ),
@@ -316,8 +316,9 @@ class UserGuidePage extends StatelessWidget {
           SizedBox(width: 10),
           Expanded(
             child: Text(
-              "Regla importante: para cargar stock de una presentación, primero debe existir entrada de envases disponibles. "
-              "Ejemplo: antes de crear 100 cajas de ciruelas con stock, registra una entrada de 100 cajas en bodega.\n\n"
+              "Regla importante: crear un envase no agrega stock físico. "
+              "Primero crea el catálogo del envase y luego registra una entrada al almacén con la cantidad real disponible.\n\n"
+              "Ejemplo: si tienes 100 cajas de ciruelas, primero crea el envase Caja y luego registra una entrada de 100 cajas en bodega.\n\n"
               "Si vendes un pallet, la app descuenta el stock del pallet, no las cajas contenidas. "
               "Para transformar pallets o bins en cajas se usará el flujo futuro de reenvasado.",
               style: TextStyle(
