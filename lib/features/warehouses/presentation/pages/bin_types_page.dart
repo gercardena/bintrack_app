@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../data/services/bin_type_service.dart';
 import '../../data/models/bin_type_model.dart';
+import '../../data/services/bin_type_service.dart';
 
 import 'create_bin_type_page.dart';
 
@@ -9,8 +9,7 @@ class BinTypesPage extends StatefulWidget {
   const BinTypesPage({super.key});
 
   @override
-  State<BinTypesPage> createState() =>
-      _BinTypesPageState();
+  State<BinTypesPage> createState() => _BinTypesPageState();
 }
 
 class _BinTypesPageState extends State<BinTypesPage> {
@@ -20,6 +19,7 @@ class _BinTypesPageState extends State<BinTypesPage> {
   static const Color card = Color(0xFF1E293B);
 
   List<BinType> types = [];
+
   bool loading = true;
   String? errorMessage;
 
@@ -69,6 +69,21 @@ class _BinTypesPageState extends State<BinTypesPage> {
     }
   }
 
+  Future<void> openEditPage(BinType type) async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CreateBinTypePage(
+          binType: type,
+        ),
+      ),
+    );
+
+    if (result == true && mounted) {
+      await loadTypes();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -79,6 +94,12 @@ class _BinTypesPageState extends State<BinTypesPage> {
         backgroundColor: background,
         foregroundColor: Colors.white,
         elevation: 0,
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: openCreatePage,
+        backgroundColor: Colors.blueAccent,
+        icon: const Icon(Icons.add),
+        label: const Text("Nuevo"),
       ),
       body: loading
           ? const Center(
@@ -91,24 +112,16 @@ class _BinTypesPageState extends State<BinTypesPage> {
                   child: types.isEmpty
                       ? _emptyState()
                       : ListView(
-                          padding:
-                              const EdgeInsets.all(16),
+                          physics:
+                              const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.all(16),
                           children: [
                             _introCard(),
                             const SizedBox(height: 14),
-                            ...types.map(
-                              _typeCard,
-                            ),
+                            ...types.map(_typeCard),
                           ],
                         ),
                 ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: const Color(0xFF2563EB),
-        foregroundColor: Colors.white,
-        onPressed: openCreatePage,
-        icon: const Icon(Icons.add),
-        label: const Text("Nuevo envase"),
-      ),
     );
   }
 
@@ -133,9 +146,9 @@ class _BinTypesPageState extends State<BinTypesPage> {
           SizedBox(width: 12),
           Expanded(
             child: Text(
-              "Define los tipos de envase que usará tu operación: "
-              "bins, pallets, cajas u otros. Cada uno puede tener "
-              "un valor de depósito como garantía.",
+              "Aquí defines el catálogo de envases que usa tu operación. "
+              "Crear un envase no agrega stock físico; para sumar cantidad "
+              "disponible debes registrar una entrada en Bodega > Movimientos.",
               style: TextStyle(
                 color: Colors.white,
                 height: 1.35,
@@ -147,69 +160,73 @@ class _BinTypesPageState extends State<BinTypesPage> {
     );
   }
 
-  Widget _typeCard(
-    BinType type,
-  ) {
+  Widget _typeCard(BinType type) {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: card,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.06),
         ),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
       ),
       child: Row(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CircleAvatar(
-            radius: 24,
-            backgroundColor:
-                Colors.blueAccent.withValues(alpha: 0.18),
+            backgroundColor: Colors.blueAccent.withValues(
+              alpha: 0.18,
+            ),
             child: const Icon(
               Icons.inventory_2,
               color: Colors.blueAccent,
             ),
           ),
-
           const SizedBox(width: 12),
-
           Expanded(
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   type.nombre,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 17,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-
-                const SizedBox(height: 6),
-
-                if (type.material.isNotEmpty)
+                const SizedBox(height: 8),
+                _infoLine(
+                  Icons.category,
+                  "Tipo: ${type.tipoNombre}",
+                ),
+                if (type.material.trim().isNotEmpty)
                   _infoLine(
                     Icons.construction,
                     "Material: ${type.material}",
                   ),
-
                 _infoLine(
                   Icons.savings_outlined,
                   "Depósito por envase: \$${type.valorDeposito}",
+                ),
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OutlinedButton.icon(
+                    onPressed: () => openEditPage(type),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.blueAccent,
+                      side: const BorderSide(
+                        color: Colors.blueAccent,
+                      ),
+                    ),
+                    icon: const Icon(
+                      Icons.edit,
+                      size: 18,
+                    ),
+                    label: const Text("Editar"),
+                  ),
                 ),
               ],
             ),
@@ -224,22 +241,19 @@ class _BinTypesPageState extends State<BinTypesPage> {
     String text,
   ) {
     return Padding(
-      padding: const EdgeInsets.only(top: 3),
+      padding: const EdgeInsets.only(top: 5),
       child: Row(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
             icon,
-            size: 16,
-            color: Colors.white54,
+            color: Colors.white70,
+            size: 17,
           ),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
               text,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 color: Colors.white70,
                 height: 1.25,
@@ -253,84 +267,77 @@ class _BinTypesPageState extends State<BinTypesPage> {
 
   Widget _emptyState() {
     return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(24),
-      children: [
-        const SizedBox(height: 90),
+      children: const [
+        SizedBox(height: 80),
         Icon(
           Icons.inventory_2_outlined,
-          size: 82,
-          color: Colors.white.withValues(alpha: 0.35),
+          color: Colors.white38,
+          size: 64,
         ),
-        const SizedBox(height: 16),
-        const Center(
-          child: Text(
-            "No hay tipos de envase",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          "Crea tu primer tipo de envase para poder registrar "
-          "entradas, préstamos, devoluciones y stock.",
+        SizedBox(height: 16),
+        Text(
+          "No hay tipos de envase creados",
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: Colors.white60,
-            height: 1.35,
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(height: 22),
-        FilledButton.icon(
-          onPressed: openCreatePage,
-          icon: const Icon(Icons.add),
-          label: const Text("Crear tipo de envase"),
+        SizedBox(height: 8),
+        Text(
+          "Crea primero el catálogo del envase. Luego registra una entrada "
+          "para indicar cuántos envases físicos hay disponibles.",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.white70,
+            height: 1.35,
+          ),
         ),
       ],
     );
   }
 
   Widget _errorState() {
-    return RefreshIndicator(
-      onRefresh: loadTypes,
-      child: ListView(
+    return Center(
+      child: Padding(
         padding: const EdgeInsets.all(24),
-        children: [
-          const SizedBox(height: 90),
-          const Icon(
-            Icons.error_outline,
-            size: 72,
-            color: Colors.redAccent,
-          ),
-          const SizedBox(height: 16),
-          const Center(
-            child: Text(
-              "No pudimos cargar los tipos de envase",
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              color: Colors.redAccent,
+              size: 48,
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              "No se pudieron cargar los tipos de envase",
+              textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 18,
+                fontSize: 17,
                 fontWeight: FontWeight.bold,
               ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            errorMessage ?? "",
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white60,
-              height: 1.35,
+            const SizedBox(height: 8),
+            Text(
+              errorMessage ?? "",
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white70,
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
-          FilledButton.icon(
-            onPressed: loadTypes,
-            icon: const Icon(Icons.refresh),
-            label: const Text("Reintentar"),
-          ),
-        ],
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: loadTypes,
+              icon: const Icon(Icons.refresh),
+              label: const Text("Reintentar"),
+            ),
+          ],
+        ),
       ),
     );
   }

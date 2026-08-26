@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../../data/models/bin_type_model.dart';
 import '../../data/services/bin_type_service.dart';
 
 class CreateBinTypePage extends StatefulWidget {
-  const CreateBinTypePage({super.key});
+  final BinType? binType;
+
+  const CreateBinTypePage({
+    super.key,
+    this.binType,
+  });
 
   @override
   State<CreateBinTypePage> createState() =>
@@ -26,6 +32,22 @@ class _CreateBinTypePageState
   bool saving = false;
 
   final service = BinTypeService();
+
+  bool get isEditing => widget.binType != null;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final binType = widget.binType;
+
+    if (binType != null) {
+      nombreController.text = binType.nombre;
+      materialController.text = binType.material;
+      depositoController.text = binType.valorDeposito;
+      tipo = binType.tipo;
+    }
+  }
 
   Future<void> guardar() async {
     if (!_formKey.currentState!.validate()) {
@@ -52,19 +74,31 @@ class _CreateBinTypePageState
     });
 
     try {
-      await service.createBinType(
-        nombre: nombreController.text.trim(),
-        tipo: tipo,
-        material: materialController.text.trim(),
-        valorDeposito: deposito,
-      );
+      if (isEditing) {
+        await service.updateBinType(
+          id: widget.binType!.id,
+          nombre: nombreController.text.trim(),
+          tipo: tipo,
+          material: materialController.text.trim(),
+          valorDeposito: deposito,
+        );
+      } else {
+        await service.createBinType(
+          nombre: nombreController.text.trim(),
+          tipo: tipo,
+          material: materialController.text.trim(),
+          valorDeposito: deposito,
+        );
+      }
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            "Tipo de envase creado correctamente.",
+            isEditing
+                ? "Tipo de envase actualizado correctamente."
+                : "Tipo de envase creado correctamente.",
           ),
         ),
       );
@@ -76,7 +110,9 @@ class _CreateBinTypePageState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            "No fue posible crear el tipo de envase: $e",
+            isEditing
+                ? "No fue posible actualizar el tipo de envase: $e"
+                : "No fue posible crear el tipo de envase: $e",
           ),
         ),
       );
@@ -151,7 +187,11 @@ class _CreateBinTypePageState
       child: Scaffold(
         backgroundColor: background,
         appBar: AppBar(
-          title: const Text("Nuevo tipo de envase"),
+          title: Text(
+            isEditing
+                ? "Editar tipo de envase"
+                : "Nuevo tipo de envase",
+          ),
           centerTitle: true,
           backgroundColor: background,
           foregroundColor: Colors.white,
@@ -304,7 +344,9 @@ class _CreateBinTypePageState
                   label: Text(
                     saving
                         ? "Guardando..."
-                        : "Guardar tipo de envase",
+                        : isEditing
+                            ? "Guardar cambios"
+                            : "Guardar tipo de envase",
                   ),
                 ),
               ),
@@ -336,20 +378,21 @@ class _CreateBinTypePageState
           ),
         ],
       ),
-      child: const Row(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
-            Icons.add_box,
+            isEditing ? Icons.edit : Icons.add_box,
             color: Colors.white,
             size: 32,
           ),
-          SizedBox(width: 12),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
-              "Crea un tipo de envase para controlar entradas, "
-              "préstamos, devoluciones y depósitos.",
-              style: TextStyle(
+              isEditing
+                  ? "Actualiza el nombre, tipo, material o depósito del envase."
+                  : "Crea un tipo de envase para controlar entradas, préstamos, devoluciones y depósitos.",
+              style: const TextStyle(
                 color: Colors.white,
                 height: 1.35,
               ),
