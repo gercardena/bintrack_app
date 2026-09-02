@@ -124,7 +124,7 @@ class _CreateBinMovementPageState
       case "prestamo":
         return "Usa Préstamo cuando entregas envases vacíos a un cliente. El cliente queda con saldo pendiente.";
       case "devolucion":
-        return "Usa Devolución cuando un cliente devuelve envases al almacén. Reduce su saldo pendiente.";
+        return "Usa Devolución cuando un cliente devuelve envases vacíos al almacén, incluso si esos envases salieron antes en una venta. Reduce su saldo pendiente y aumenta los envases vacíos disponibles.";
       case "baja":
         return "Usa Baja para descontar envases rotos, perdidos o no utilizables. No requiere cliente.";
       default:
@@ -630,7 +630,7 @@ class _CreateBinMovementPageState
           SizedBox(width: 12),
           Expanded(
             child: Text(
-              "Registra entradas al almacén, préstamos a clientes, devoluciones o bajas de envases físicos.",
+              "Registra entradas al almacén, préstamos a clientes, devoluciones o bajas de envases físicos. Las ventas ya registran automáticamente los envases entregados al cliente.",
               style: TextStyle(
                 color: Colors.white,
                 height: 1.35,

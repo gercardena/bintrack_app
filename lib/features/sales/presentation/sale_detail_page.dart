@@ -207,7 +207,12 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
           ),
           content: Text(
             "Al confirmar se descontará el stock lleno "
-            "y se registrarán los envases entregados al cliente.\n\n"
+            "y los envases quedarán registrados como entregados "
+            "al cliente.\n\n"
+            "Si el cliente devuelve envases vacíos después, "
+            "regístralo en Bodega > Movimientos > Devolución.\n\n"
+            "No registres un préstamo manual por esta venta: "
+            "la venta ya lo hace automáticamente.\n\n"
             "Total: \$${precioFormateado(currentSale.total)}",
           ),
           actions: [
@@ -741,7 +746,10 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
               Expanded(
                 child: Text(
                   "Confirmar la venta descontará stock lleno "
-                  "y registrará envases entregados al cliente.",
+                  "y registrará automáticamente los envases "
+                  "como entregados al cliente. Si luego devuelve "
+                  "envases vacíos, regístralos en Bodega > "
+                  "Movimientos > Devolución.",
                   style: TextStyle(
                     color: Colors.white,
                     height: 1.35,
