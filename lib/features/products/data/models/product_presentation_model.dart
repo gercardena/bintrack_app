@@ -7,6 +7,7 @@ class ProductPresentation {
   final String binNombre;
 
   final double precio;
+  final String tipoCobro;
   final bool activo;
 
   final String? unidadMedida;
@@ -25,6 +26,7 @@ class ProductPresentation {
     required this.binTypeId,
     required this.binNombre,
     required this.precio,
+    required this.tipoCobro,
     required this.activo,
     required this.unidadMedida,
     required this.cantidadPorEnvase,
@@ -47,6 +49,8 @@ class ProductPresentation {
       binTypeId: parseInt(json["bin_type"]),
       binNombre: json["bin_nombre"]?.toString() ?? "",
       precio: parseDouble(json["precio"]),
+      tipoCobro:
+          json["tipo_cobro"]?.toString() ?? "envase",
       activo: json["activo"] == true,
       unidadMedida: emptyToNull(json["unidad_medida"]),
       cantidadPorEnvase: parseNullableDouble(
@@ -68,6 +72,30 @@ class ProductPresentation {
           ? parseInt(stock["cantidad"])
           : 0,
     );
+  }
+
+  bool get cobraPorKilo {
+    return tipoCobro == "kilo";
+  }
+
+  bool get cobraPorEnvase {
+    return tipoCobro != "kilo";
+  }
+
+  String get tipoCobroNombre {
+    if (cobraPorKilo) {
+      return "Por kilo";
+    }
+
+    return "Por envase";
+  }
+
+  String get precioDescripcion {
+    if (cobraPorKilo) {
+      return "\$${precio.toStringAsFixed(0)} por kilo";
+    }
+
+    return "\$${precio.toStringAsFixed(0)} por envase";
   }
 
   bool get tieneCapacidad {
