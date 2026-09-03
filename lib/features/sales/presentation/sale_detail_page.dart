@@ -511,7 +511,7 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
             child: Text(
               "${presentation.productNombre} + "
               "${presentation.binNombre} - "
-              "\$${precioFormateado(presentation.precio)} "
+              "${presentation.precioDescripcion} "
               "(Stock: ${presentation.stockCantidad})",
               overflow: TextOverflow.ellipsis,
             ),

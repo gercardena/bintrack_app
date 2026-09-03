@@ -545,6 +545,12 @@ class _ProductsPageState extends State<ProductsPage> {
                   ),
                 ),
                 Text(
+                  "Cobro: ${presentation.tipoCobroNombre}",
+                  style: const TextStyle(
+                    color: Colors.white70,
+                  ),
+                ),
+                Text(
                   "Envases llenos disponibles: "
                   "${presentation.stockCantidad}",
                   style: const TextStyle(
