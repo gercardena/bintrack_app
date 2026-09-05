@@ -50,6 +50,7 @@ class ProductPresentationsService {
     required int productId,
     required int binTypeId,
     required double precio,
+    String tipoCobro = "envase",
     String? unidadMedida,
     double? cantidadPorEnvase,
     int? envaseContenidoId,
@@ -59,6 +60,7 @@ class ProductPresentationsService {
       "product": productId,
       "bin_type": binTypeId,
       "precio": precio.toStringAsFixed(2),
+      "tipo_cobro": tipoCobro,
       "activo": true,
     };
 
@@ -250,6 +252,4 @@ class ProductPresentationsService {
     }
   }
 }
-
-
 

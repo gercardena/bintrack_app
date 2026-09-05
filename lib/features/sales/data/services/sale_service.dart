@@ -89,6 +89,9 @@ class SalesService {
     required int productId,
     required int binId,
     required int cantidad,
+    String tipoCobro = "envase",
+    double? precioUnitario,
+    double? kilosPesados,
   }) async {
     if (cantidad <= 0) {
       throw Exception(
@@ -96,14 +99,45 @@ class SalesService {
       );
     }
 
+    if (tipoCobro != "envase" && tipoCobro != "kilo") {
+      throw Exception(
+        "Tipo de cobro inválido",
+      );
+    }
+
+    if (precioUnitario != null && precioUnitario <= 0) {
+      throw Exception(
+        "El precio debe ser mayor que cero",
+      );
+    }
+
+    if (kilosPesados != null && kilosPesados <= 0) {
+      throw Exception(
+        "Los kilos pesados deben ser mayores que cero",
+      );
+    }
+
+    final body = <String, dynamic>{
+      "sale": saleId,
+      "product": productId,
+      "bin": binId,
+      "cantidad": cantidad,
+      "tipo_cobro_snapshot": tipoCobro,
+    };
+
+    if (precioUnitario != null) {
+      body["precio_unitario"] =
+          precioUnitario.toStringAsFixed(2);
+    }
+
+    if (kilosPesados != null) {
+      body["kilos_pesados"] =
+          kilosPesados.toStringAsFixed(2);
+    }
+
     final response = await ApiService.post(
       "/ventas/items/",
-      body: {
-        "sale": saleId,
-        "product": productId,
-        "bin": binId,
-        "cantidad": cantidad,
-      },
+      body: body,
     );
 
     if (response.statusCode != 200 &&
@@ -125,18 +159,19 @@ class SalesService {
       );
     }
   }
-  Future<void> deleteDraftSale(int saleId) async {
-  final response = await ApiService.delete(
-    "/ventas/sales/$saleId/",
-  );
 
-  if (response.statusCode != 204) {
-    throw Exception(
-      "Error eliminando venta borrador: "
-      "${response.body}",
+  Future<void> deleteDraftSale(int saleId) async {
+    final response = await ApiService.delete(
+      "/ventas/sales/$saleId/",
     );
+
+    if (response.statusCode != 204) {
+      throw Exception(
+        "Error eliminando venta borrador: "
+        "${response.body}",
+      );
+    }
   }
-}
 
   Future<void> confirmSale(int id) async {
     final response = await ApiService.post(
@@ -149,45 +184,47 @@ class SalesService {
       );
     }
   }
+
   Future<void> cancelSale(int id) async {
-  final response = await ApiService.post(
-    "/ventas/sales/$id/cancel/",
-  );
-
-  if (response.statusCode != 200) {
-    throw Exception(
-      "Error cancelando venta: ${response.body}",
+    final response = await ApiService.post(
+      "/ventas/sales/$id/cancel/",
     );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        "Error cancelando venta: ${response.body}",
+      );
+    }
   }
-}
+
   Future<void> registerPayment({
-  required int saleId,
-  required String metodo,
-  String? referencia,
-}) async {
-  final body = {
-    "sale": saleId,
-    "metodo": metodo,
-  };
+    required int saleId,
+    required String metodo,
+    String? referencia,
+  }) async {
+    final body = {
+      "sale": saleId,
+      "metodo": metodo,
+    };
 
-  final cleanReference = referencia?.trim();
+    final cleanReference = referencia?.trim();
 
-  if (cleanReference != null &&
-      cleanReference.isNotEmpty) {
-    body["referencia"] = cleanReference;
-  }
+    if (cleanReference != null &&
+        cleanReference.isNotEmpty) {
+      body["referencia"] = cleanReference;
+    }
 
-  final response = await ApiService.post(
-    "/pagos/",
-    body: body,
-  );
-
-  if (response.statusCode != 201) {
-    throw Exception(
-      "Error registrando pago: ${response.body}",
+    final response = await ApiService.post(
+      "/pagos/",
+      body: body,
     );
+
+    if (response.statusCode != 201) {
+      throw Exception(
+        "Error registrando pago: ${response.body}",
+      );
+    }
   }
-}
 
   Future<void> generateInvoice(int saleId) async {
     final response = await ApiService.post(
@@ -201,6 +238,7 @@ class SalesService {
       );
     }
   }
+
   Future<SalesDashboard> getDashboard() async {
     final response = await ApiService.get(
       "/ventas/sales/dashboard/",

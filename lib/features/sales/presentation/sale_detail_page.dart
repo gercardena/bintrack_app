@@ -31,6 +31,12 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
   final TextEditingController cantidadController =
       TextEditingController();
 
+  final TextEditingController precioController =
+      TextEditingController();
+
+  final TextEditingController kilosController =
+      TextEditingController();
+
   List<ProductPresentation> presentations = [];
 
   ProductPresentation? presentationSeleccionada;
@@ -39,6 +45,10 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
   bool loading = true;
   bool saving = false;
   String? errorMessage;
+
+  bool get cobraPorKilo {
+    return presentationSeleccionada?.cobraPorKilo == true;
+  }
 
   @override
   void initState() {
@@ -136,6 +146,42 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
       return;
     }
 
+    final precioUnitario = double.tryParse(
+      precioController.text.trim().replaceAll(",", "."),
+    );
+
+    if (precioUnitario == null || precioUnitario <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Ingresa un precio válido mayor que cero.",
+          ),
+        ),
+      );
+
+      return;
+    }
+
+    double? kilosPesados;
+
+    if (presentation.cobraPorKilo) {
+      kilosPesados = double.tryParse(
+        kilosController.text.trim().replaceAll(",", "."),
+      );
+
+      if (kilosPesados == null || kilosPesados <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              "Ingresa los kilos pesados para esta venta.",
+            ),
+          ),
+        );
+
+        return;
+      }
+    }
+
     setState(() {
       saving = true;
     });
@@ -146,6 +192,9 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
         productId: presentation.productId,
         binId: presentation.binTypeId,
         cantidad: cantidad,
+        tipoCobro: presentation.tipoCobro,
+        precioUnitario: precioUnitario,
+        kilosPesados: kilosPesados,
       );
 
       await recargarVenta();
@@ -153,6 +202,8 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
       if (!mounted) return;
 
       cantidadController.clear();
+      precioController.clear();
+      kilosController.clear();
 
       setState(() {
         presentationSeleccionada = null;
@@ -279,6 +330,8 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
   @override
   void dispose() {
     cantidadController.dispose();
+    precioController.dispose();
+    kilosController.dispose();
     super.dispose();
   }
 
@@ -347,9 +400,20 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
                             const SizedBox(height: 12),
                             _quantityField(),
                             const SizedBox(height: 12),
+                            if (cobraPorKilo) ...[
+                              _kilosField(),
+                              const SizedBox(height: 12),
+                            ],
+                            _priceField(),
+                            const SizedBox(height: 12),
                             _smallHelp(
-                              "La cantidad corresponde a envases llenos "
-                              "de la presentación seleccionada.",
+                              cobraPorKilo
+                                  ? "Esta presentación cobra por kilo. "
+                                      "Ingresa la cantidad de envases vendidos, "
+                                      "los kilos pesados y el precio por kilo."
+                                  : "La cantidad corresponde a envases llenos. "
+                                      "El precio se carga desde la presentación, "
+                                      "pero puedes cambiarlo solo para esta venta.",
                             ),
                             const SizedBox(height: 16),
                             SizedBox(
@@ -523,6 +587,10 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
           : (value) {
               setState(() {
                 presentationSeleccionada = value;
+                kilosController.clear();
+                precioController.text = value == null
+                    ? ""
+                    : value.precio.toStringAsFixed(0);
               });
             },
       decoration: const InputDecoration(
@@ -539,8 +607,44 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
       ),
       keyboardType: TextInputType.number,
       decoration: const InputDecoration(
-        labelText: "Cantidad",
+        labelText: "Cantidad de envases",
         hintText: "Ej: 1",
+      ),
+    );
+  }
+
+  Widget _kilosField() {
+    return TextField(
+      controller: kilosController,
+      style: const TextStyle(
+        color: Colors.white,
+      ),
+      keyboardType: const TextInputType.numberWithOptions(
+        decimal: true,
+      ),
+      decoration: const InputDecoration(
+        labelText: "Kilos pesados",
+        hintText: "Ej: 385.5",
+        suffixText: "kg",
+      ),
+    );
+  }
+
+  Widget _priceField() {
+    return TextField(
+      controller: precioController,
+      style: const TextStyle(
+        color: Colors.white,
+      ),
+      keyboardType: const TextInputType.numberWithOptions(
+        decimal: true,
+      ),
+      decoration: InputDecoration(
+        labelText: cobraPorKilo
+            ? "Precio por kilo para esta venta"
+            : "Precio para esta venta",
+        hintText: cobraPorKilo ? "Ej: 600" : "Ej: 100000",
+        prefixText: "\$ ",
       ),
     );
   }
@@ -625,7 +729,7 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
               ),
               const SizedBox(width: 10),
               _miniMetric(
-                label: "Precio unit.",
+                label: "Precio venta",
                 value:
                     "\$${precioFormateado(item.precioUnitario)}",
                 color: Colors.greenAccent,

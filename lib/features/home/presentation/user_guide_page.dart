@@ -49,44 +49,60 @@ class UserGuidePage extends StatelessWidget {
             number: "4",
             title: "Crea productos y presentaciones",
             description:
-                "Crea tus productos y define cómo se venden: por caja, pallet, bin u otro envase. Cada presentación tiene precio y stock propio.",
+                "Crea tus productos y define sus presentaciones. Una presentación es producto + envase + tipo de cobro + precio. Puede cobrarse por envase completo o por kilo pesado.",
             icon: Icons.inventory_2,
             color: Colors.green,
           ),
           _stepCard(
             number: "5",
-            title: "Agrega detalle de presentación",
+            title: "Elige el tipo de cobro",
             description:
-                "Si una presentación contiene otra, indícalo en el detalle. Por ejemplo: un pallet contiene 80 cajas.",
+                "Usa Por envase cuando el precio corresponde al bin, caja, pallet u otro envase completo. Usa Por kilo cuando el cliente se lleva el envase lleno, se pesa, y el total se calcula por kilos.",
+            icon: Icons.sell,
+            color: Colors.purple,
+          ),
+          _stepCard(
+            number: "6",
+            title: "Agrega detalle opcional",
+            description:
+                "Si te sirve como referencia, puedes indicar unidad y cantidad por envase. Ejemplo: un bin aproximado de 350 kg. Si un envase contiene otros envases, también puedes indicarlo. Ejemplo: un pallet contiene 80 cajas.",
             icon: Icons.account_tree,
             color: Colors.lightGreen,
           ),
           _stepCard(
-            number: "6",
+            number: "7",
             title: "Carga stock inicial",
             description:
-                "Agrega cuántas unidades llenas tienes de cada presentación. Ejemplo: 100 cajas de ciruelas o 3 pallets de ciruelas.",
+                "Agrega cuántos envases llenos tienes listos para vender. Aunque una presentación cobre por kilo, el stock sigue siendo cantidad de envases llenos.",
             icon: Icons.add_box,
             color: Colors.cyan,
           ),
           _stepCard(
-            number: "7",
+            number: "8",
             title: "Crea una venta",
             description:
-                "Selecciona un cliente y agrega una presentación disponible, como Ciruelas + Caja de Ciruelas o Ciruelas + Pallet Madera.",
+                "Selecciona un cliente y agrega una presentación disponible. Si cobra por envase, ingresa cantidad de envases y precio por envase. Si cobra por kilo, ingresa cantidad de envases, kilos pesados y precio por kilo.",
             icon: Icons.point_of_sale,
             color: Colors.blue,
           ),
           _stepCard(
-            number: "8",
+            number: "9",
+            title: "Ajusta precio si corresponde",
+            description:
+                "El precio se carga desde la presentación, pero puedes cambiarlo en una venta puntual si hubo rebaja o acuerdo con el cliente. Ese cambio no modifica el precio base del producto.",
+            icon: Icons.price_change,
+            color: Colors.greenAccent,
+          ),
+          _stepCard(
+            number: "10",
             title: "Confirma la venta",
             description:
-                "Al confirmar, la app descuenta el stock de la presentación vendida.",
+                "Al confirmar, la app descuenta el stock lleno de la presentación vendida y registra automáticamente los envases como entregados al cliente.",
             icon: Icons.check_circle,
             color: Colors.teal,
           ),
           _stepCard(
-            number: "9",
+            number: "11",
             title: "Registra el pago",
             description:
                 "Cuando el cliente paga, registra el pago para cerrar la venta y reflejar el ingreso.",
@@ -94,7 +110,7 @@ class UserGuidePage extends StatelessWidget {
             color: Colors.purple,
           ),
           _stepCard(
-            number: "10",
+            number: "12",
             title: "Genera comprobante si corresponde",
             description:
                 "El comprobante es opcional y queda asociado a la venta pagada. No es boleta ni factura tributaria.",
@@ -102,20 +118,28 @@ class UserGuidePage extends StatelessWidget {
             color: Colors.deepPurple,
           ),
           _stepCard(
-            number: "11",
+            number: "13",
             title: "Revisa inventario",
             description:
-                "Consulta envases disponibles, envases llenos, stock de productos y alertas de inventario.",
+                "Consulta envases vacíos disponibles, envases llenos, stock de productos y alertas de inventario.",
             icon: Icons.storage,
             color: Colors.amber,
           ),
           _stepCard(
-            number: "12",
+            number: "14",
             title: "Revisa balance de envases",
             description:
-                "Consulta qué clientes tienen envases pendientes y el depósito asociado a esos envases.",
+                "Consulta qué clientes tienen envases pendientes y el depósito asociado a esos envases. Una venta por kilo también entrega envases, por lo tanto también afecta el balance.",
             icon: Icons.assessment,
             color: Colors.deepPurpleAccent,
+          ),
+          _stepCard(
+            number: "15",
+            title: "Registra devolución de envases",
+            description:
+                "Si el cliente devuelve envases vacíos después de la venta, regístralo en Bodega > Movimientos > Devolución. Eso descuenta el saldo pendiente del cliente.",
+            icon: Icons.assignment_return,
+            color: Colors.orangeAccent,
           ),
           const SizedBox(height: 18),
           _warningCard(),
@@ -319,6 +343,8 @@ class UserGuidePage extends StatelessWidget {
               "Regla importante: crear un envase no agrega stock físico. "
               "Primero crea el catálogo del envase y luego registra una entrada al almacén con la cantidad real disponible.\n\n"
               "Ejemplo: si tienes 100 cajas de ciruelas, primero crea el envase Caja y luego registra una entrada de 100 cajas en bodega.\n\n"
+              "El stock de productos siempre se mide en envases llenos. "
+              "Si vendes por kilo, la plata se calcula por kilos pesados, pero el inventario descuenta envases llenos.\n\n"
               "Si vendes un pallet, la app descuenta el stock del pallet, no las cajas contenidas. "
               "Para transformar pallets o bins en cajas se usará el flujo futuro de reenvasado.",
               style: TextStyle(

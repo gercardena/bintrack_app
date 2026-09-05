@@ -44,11 +44,16 @@ class _AgregarPresentacionPageState
 
   List<BinType> allBinTypes = [];
   List<BinType> availableBinTypes = [];
+
   BinType? selectedBinType;
   BinType? selectedEnvaseContenido;
 
+  String selectedTipoCobro = "envase";
+
   bool loadingTypes = true;
   bool saving = false;
+
+  bool get cobraPorKilo => selectedTipoCobro == "kilo";
 
   @override
   void initState() {
@@ -60,22 +65,13 @@ class _AgregarPresentacionPageState
     try {
       final allTypes = await binTypeService.getBinTypes();
 
-      final available = allTypes
-          .where(
-            (binType) =>
-                !widget.existingBinTypeIds.contains(
-              binType.id,
-            ),
-          )
-          .toList();
-
       if (!mounted) return;
 
       setState(() {
         allBinTypes = allTypes;
-        availableBinTypes = available;
+        availableBinTypes = allTypes;
         selectedBinType =
-            available.isNotEmpty ? available.first : null;
+            allTypes.isNotEmpty ? allTypes.first : null;
         loadingTypes = false;
       });
     } catch (e) {
@@ -210,6 +206,7 @@ class _AgregarPresentacionPageState
         productId: widget.productId,
         binTypeId: selectedBinType!.id,
         precio: precio,
+        tipoCobro: selectedTipoCobro,
         unidadMedida: unidadMedidaCtrl.text.trim(),
         cantidadPorEnvase: cantidadPorEnvase,
         envaseContenidoId: selectedEnvaseContenido?.id,
@@ -340,29 +337,32 @@ class _AgregarPresentacionPageState
                           children: [
                             DropdownButtonFormField<BinType>(
                               initialValue: selectedBinType,
-                                  isExpanded: true,
-                                  dropdownColor: card,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                  ),
-                                  selectedItemBuilder: (context) {
-                                    return availableBinTypes.map((binType) {
-                                      return Align(
-                                        alignment: Alignment.centerLeft,
-                                        child: Text(
-                                          binType.nombre,
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
+                              isExpanded: true,
+                              dropdownColor: card,
+                              style: const TextStyle(
+                                color: Colors.white,
+                              ),
+                              selectedItemBuilder: (context) {
+                                return availableBinTypes.map(
+                                  (binType) {
+                                    return Align(
+                                      alignment:
+                                          Alignment.centerLeft,
+                                      child: Text(
+                                        binType.nombre,
+                                        style: const TextStyle(
+                                          color: Colors.white,
                                         ),
-                                      );
-                                    }).toList();
+                                        overflow:
+                                            TextOverflow.ellipsis,
+                                      ),
+                                    );
                                   },
-                                  decoration:
-                                      const InputDecoration(
-                                    labelText:
-                                          "Tipo de envase",
+                                ).toList();
+                              },
+                              decoration:
+                                  const InputDecoration(
+                                labelText: "Tipo de envase",
                               ),
                               items: availableBinTypes
                                   .map(
@@ -391,8 +391,61 @@ class _AgregarPresentacionPageState
                             ),
                             const SizedBox(height: 10),
                             _smallHelp(
-                              "Solo aparecen envases que este producto "
-                              "todavía no usa.",
+                              "Puedes usar el mismo envase en dos "
+                              "presentaciones distintas: una por envase "
+                              "y otra por kilo.",
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        _sectionCard(
+                          title: "Tipo de cobro",
+                          icon: Icons.sell,
+                          color: Colors.purpleAccent,
+                          children: [
+                            DropdownButtonFormField<String>(
+                              initialValue: selectedTipoCobro,
+                              dropdownColor: card,
+                              style: const TextStyle(
+                                color: Colors.white,
+                              ),
+                              decoration:
+                                  const InputDecoration(
+                                labelText: "Cómo se cobra",
+                              ),
+                              items: const [
+                                DropdownMenuItem<String>(
+                                  value: "envase",
+                                  child: Text(
+                                    "Por envase completo",
+                                  ),
+                                ),
+                                DropdownMenuItem<String>(
+                                  value: "kilo",
+                                  child: Text(
+                                    "Por kilo pesado",
+                                  ),
+                                ),
+                              ],
+                              onChanged: saving
+                                  ? null
+                                  : (value) {
+                                      if (value == null) return;
+
+                                      setState(() {
+                                        selectedTipoCobro =
+                                            value;
+                                      });
+                                    },
+                            ),
+                            const SizedBox(height: 10),
+                            _smallHelp(
+                              cobraPorKilo
+                                  ? "El cliente se lleva el envase lleno, "
+                                      "pero el total se calcula por kilos."
+                                  : "El precio corresponde al envase completo.",
                             ),
                           ],
                         ),
@@ -406,14 +459,12 @@ class _AgregarPresentacionPageState
                           children: [
                             AppTextField(
                               controller: unidadMedidaCtrl,
-                              label:
-                                  "Unidad de medida (ej: cajas, kg, unidades)",
+                              label: "Unidad",
                             ),
                             const SizedBox(height: 12),
                             AppTextField(
                               controller: cantidadPorEnvaseCtrl,
-                              label:
-                                  "Cantidad por envase (ej: 80)",
+                              label: "Cantidad por envase",
                               keyboardType:
                                   const TextInputType
                                       .numberWithOptions(
@@ -422,8 +473,10 @@ class _AgregarPresentacionPageState
                             ),
                             const SizedBox(height: 10),
                             _smallHelp(
-                              "Estos datos describen la capacidad del envase. "
-                              "Ejemplo: pallet con 80 cajas o bin con 350 kg.",
+                              "Describe la capacidad del envase si te sirve "
+                              "como dato interno. Ejemplo: unidad kg y "
+                              "cantidad 350 para un bin aproximado de 350 kg. "
+                              "Puedes dejarlo vacío.",
                             ),
                           ],
                         ),
@@ -436,15 +489,15 @@ class _AgregarPresentacionPageState
                           color: Colors.amberAccent,
                           children: [
                             DropdownButtonFormField<BinType>(
-                              initialValue: selectedEnvaseContenido,
+                              initialValue:
+                                  selectedEnvaseContenido,
                               dropdownColor: card,
                               style: const TextStyle(
                                 color: Colors.white,
                               ),
                               decoration:
                                   const InputDecoration(
-                                labelText:
-                                    "Envase contenido (opcional)",
+                                labelText: "Contenido interno",
                               ),
                               items: allBinTypes
                                   .map(
@@ -467,10 +520,12 @@ class _AgregarPresentacionPageState
                                       });
                                     },
                             ),
-                            if (selectedEnvaseContenido != null) ...[
+                            if (selectedEnvaseContenido !=
+                                null) ...[
                               const SizedBox(height: 8),
                               Align(
-                                alignment: Alignment.centerLeft,
+                                alignment:
+                                    Alignment.centerLeft,
                                 child: TextButton.icon(
                                   onPressed: saving
                                       ? null
@@ -485,7 +540,7 @@ class _AgregarPresentacionPageState
                                     size: 18,
                                   ),
                                   label: const Text(
-                                    "Quitar envase contenido",
+                                    "Quitar contenido interno",
                                   ),
                                 ),
                               ),
@@ -494,8 +549,7 @@ class _AgregarPresentacionPageState
                             AppTextField(
                               controller:
                                   cantidadEnvaseContenidoCtrl,
-                              label:
-                                  "Cantidad contenida (ej: 80)",
+                              label: "Cantidad contenida",
                               keyboardType:
                                   const TextInputType
                                       .numberWithOptions(
@@ -504,9 +558,10 @@ class _AgregarPresentacionPageState
                             ),
                             const SizedBox(height: 10),
                             _smallHelp(
-                              "Úsalo cuando un envase principal contiene "
-                              "otros envases. Ejemplo: pallet que contiene "
-                              "80 cajas.",
+                              "Úsalo solo si un envase contiene otros "
+                              "envases. Ejemplo: un pallet que contiene "
+                              "80 cajas. Si vendes bins completos o por kilo, "
+                              "puedes dejarlo vacío.",
                             ),
                           ],
                         ),
@@ -520,8 +575,9 @@ class _AgregarPresentacionPageState
                           children: [
                             AppTextField(
                               controller: precioCtrl,
-                              label:
-                                  "Precio para este envase",
+                              label: cobraPorKilo
+                                  ? "Precio por kilo"
+                                  : "Precio por envase",
                               keyboardType:
                                   const TextInputType
                                       .numberWithOptions(
@@ -537,8 +593,11 @@ class _AgregarPresentacionPageState
                             ),
                             const SizedBox(height: 10),
                             _smallHelp(
-                              "Este precio aplica solo a la combinación "
-                              "producto + envase seleccionada.",
+                              cobraPorKilo
+                                  ? "Precio base por kilo. En cada venta "
+                                      "podrás mantenerlo o ajustarlo si hay rebaja."
+                                  : "Precio base del envase completo. En cada "
+                                      "venta podrás mantenerlo o ajustarlo si hay rebaja.",
                             ),
                           ],
                         ),
@@ -552,8 +611,7 @@ class _AgregarPresentacionPageState
                           children: [
                             AppTextField(
                               controller: stockCtrl,
-                              label:
-                                  "Envases llenos listos para vender",
+                              label: "Stock inicial",
                               keyboardType:
                                   TextInputType.number,
                               validator: (value) =>
@@ -566,8 +624,11 @@ class _AgregarPresentacionPageState
                             ),
                             const SizedBox(height: 10),
                             _smallHelp(
-                              "Este número representa envases llenos. "
-                              "Si aún no tienes stock preparado, usa 0.",
+                              cobraPorKilo
+                                  ? "Aunque cobre por kilo, el stock sigue "
+                                      "siendo cantidad de envases llenos disponibles."
+                                  : "Cantidad de envases llenos listos para vender. "
+                                      "Si aún no tienes stock preparado, usa 0.",
                             ),
                           ],
                         ),
@@ -619,8 +680,8 @@ class _AgregarPresentacionPageState
           Expanded(
             child: Text(
               "Agrega una nueva presentación para este producto. "
-              "Una presentación es producto + envase + precio "
-              "+ stock propio.",
+              "Una presentación es producto + envase + tipo de cobro "
+              "+ precio + stock propio.",
               style: TextStyle(
                 color: Colors.white,
                 height: 1.35,
@@ -700,8 +761,6 @@ class _AgregarPresentacionPageState
   }
 
   Widget _emptyState() {
-    final hasAnyBinTypes = allBinTypes.isNotEmpty;
-
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
@@ -712,12 +771,10 @@ class _AgregarPresentacionPageState
           color: Colors.white.withValues(alpha: 0.35),
         ),
         const SizedBox(height: 16),
-        Center(
+        const Center(
           child: Text(
-            hasAnyBinTypes
-                ? "Este producto ya usa todos los envases"
-                : "No hay envases creados",
-            style: const TextStyle(
+            "No hay envases creados",
+            style: TextStyle(
               color: Colors.white,
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -725,12 +782,11 @@ class _AgregarPresentacionPageState
           ),
         ),
         const SizedBox(height: 8),
-        Text(
-          hasAnyBinTypes
-              ? "Para este producto ya existe una presentación con cada tipo de envase registrado. Puedes volver al detalle del producto para editar precio, stock o datos de sus presentaciones."
-              : "Primero crea un tipo de envase en el módulo Envases. Luego podrás volver aquí para agregar una presentación al producto.",
+        const Text(
+          "Primero crea un tipo de envase en el módulo Envases. "
+          "Luego podrás volver aquí para agregar una presentación al producto.",
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             color: Colors.white60,
             height: 1.35,
           ),
@@ -741,11 +797,7 @@ class _AgregarPresentacionPageState
             Navigator.pop(context);
           },
           icon: const Icon(Icons.arrow_back),
-          label: Text(
-            hasAnyBinTypes
-                ? "Volver al detalle del producto"
-                : "Volver",
-          ),
+          label: const Text("Volver"),
         ),
       ],
     );
