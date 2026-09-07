@@ -11,6 +11,7 @@ import '../../sales/presentation/create_sale_page.dart';
 import '../../invoices/presentation/invoices_page.dart';
 import '../../payments/presentation/payments_page.dart';
 import 'user_guide_page.dart';
+import 'privacy_policy_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -129,6 +130,14 @@ class HomePage extends StatelessWidget {
                 color: Colors.cyan,
                 page: const UserGuidePage(),
                 highlighted: true,
+              ),
+              _menuButton(
+                context,
+                title: "Privacidad",
+                subtitle: "Uso de datos",
+                icon: Icons.privacy_tip,
+                color: Colors.blueGrey,
+                page: const PrivacyPolicyPage(),
               ),
               _menuButton(
                 context,
