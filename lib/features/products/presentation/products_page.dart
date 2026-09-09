@@ -24,6 +24,9 @@ class _ProductsPageState extends State<ProductsPage> {
   static const Color background = Color(0xFF0F172A);
   static const Color card = Color(0xFF1E293B);
 
+  final TextEditingController searchController =
+      TextEditingController();
+
   List<Product> products = [];
 
   Map<int, List<ProductPresentation>>
@@ -31,11 +34,50 @@ class _ProductsPageState extends State<ProductsPage> {
 
   bool loading = true;
   String? errorMessage;
+  String searchText = "";
+
+  List<Product> get filteredProducts {
+    final query = searchText.trim().toLowerCase();
+
+    if (query.isEmpty) {
+      return products;
+    }
+
+    return products.where((product) {
+      final presentations =
+          presentationsByProduct[product.id] ?? [];
+
+      final productMatch =
+          product.nombre.toLowerCase().contains(query) ||
+              product.descripcion.toLowerCase().contains(query);
+
+      final presentationMatch = presentations.any(
+        (presentation) =>
+            presentation.binNombre
+                .toLowerCase()
+                .contains(query) ||
+            presentation.tipoCobroNombre
+                .toLowerCase()
+                .contains(query) ||
+            presentation.precioDescripcion
+                .toLowerCase()
+                .contains(query),
+      );
+
+      return productMatch || presentationMatch;
+    }).toList();
+  }
 
   @override
   void initState() {
     super.initState();
     cargarProductos();
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
   }
 
   Future<void> cargarProductos() async {
@@ -174,8 +216,18 @@ class _ProductsPageState extends State<ProductsPage> {
     }
   }
 
+  void clearSearch() {
+    searchController.clear();
+
+    setState(() {
+      searchText = "";
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final visibleProducts = filteredProducts;
+
     return Scaffold(
       backgroundColor: background,
       appBar: AppBar(
@@ -201,19 +253,24 @@ class _ProductsPageState extends State<ProductsPage> {
                           children: [
                             _headerCard(),
                             const SizedBox(height: 14),
-                            ...products.map(
-                              (product) {
-                                final presentations =
-                                    presentationsByProduct[
-                                            product.id] ??
-                                        [];
+                            _searchField(),
+                            const SizedBox(height: 14),
+                            if (visibleProducts.isEmpty)
+                              _noSearchResults()
+                            else
+                              ...visibleProducts.map(
+                                (product) {
+                                  final presentations =
+                                      presentationsByProduct[
+                                              product.id] ??
+                                          [];
 
-                                return _productCard(
-                                  product,
-                                  presentations,
-                                );
-                              },
-                            ),
+                                  return _productCard(
+                                    product,
+                                    presentations,
+                                  );
+                                },
+                              ),
                           ],
                         ),
                 ),
@@ -255,6 +312,93 @@ class _ProductsPageState extends State<ProductsPage> {
               "Aquí se administran los productos y sus "
               "presentaciones. Una presentación es la "
               "combinación de producto + envase + precio.",
+              style: TextStyle(
+                color: Colors.white,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _searchField() {
+    return TextField(
+      controller: searchController,
+      style: const TextStyle(
+        color: Colors.white,
+      ),
+      onChanged: (value) {
+        setState(() {
+          searchText = value;
+        });
+      },
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: Colors.white.withValues(alpha: 0.06),
+        labelText: "Buscar producto o presentación",
+        hintText: "Ej: naranjas, bin, kilo, caja...",
+        labelStyle: const TextStyle(
+          color: Colors.white70,
+        ),
+        hintStyle: const TextStyle(
+          color: Colors.white38,
+        ),
+        prefixIcon: const Icon(
+          Icons.search,
+          color: Colors.white54,
+        ),
+        suffixIcon: searchText.trim().isEmpty
+            ? null
+            : IconButton(
+                tooltip: "Limpiar búsqueda",
+                icon: const Icon(
+                  Icons.clear,
+                  color: Colors.white54,
+                ),
+                onPressed: clearSearch,
+              ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(
+            color: Colors.white.withValues(alpha: 0.12),
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(
+            color: Colors.greenAccent,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _noSearchResults() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.orange.withValues(alpha: 0.30),
+        ),
+      ),
+      child: const Row(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.search_off,
+            color: Colors.orangeAccent,
+          ),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              "No encontramos productos o presentaciones "
+              "con esa búsqueda.",
               style: TextStyle(
                 color: Colors.white,
                 height: 1.35,
@@ -538,8 +682,7 @@ class _ProductsPageState extends State<ProductsPage> {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  "Precio por envase: "
-                  "\$${presentation.precio.toStringAsFixed(0)}",
+                  presentation.precioDescripcion,
                   style: const TextStyle(
                     color: Colors.white70,
                   ),
