@@ -413,6 +413,22 @@ class _InvoicesPageState
               ),
             ),
           ),
+          if (invoice.items.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            const Divider(
+              color: Colors.white12,
+              height: 20,
+            ),
+            const Text(
+              "Detalle de productos",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...invoice.items.map(_invoiceItemLine),
+          ],
           const SizedBox(height: 12),
           _amountLine(
             "Subtotal",
@@ -436,6 +452,75 @@ class _InvoicesPageState
             Icons.calendar_month_outlined,
             "Generado",
             formatearFecha(invoice.fechaEmision),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _invoiceItemLine(InvoiceItem item) {
+    final detalleCantidad = item.esPorKilo
+        ? "${item.binsCantidad} envase(s) · "
+            "${item.kilosPesados?.toStringAsFixed(2) ?? "0.00"} kg"
+        : "${item.cantidad} envase(s)";
+
+    final precioLabel = item.esPorKilo
+        ? "\$${formatearMonto(item.precioUnitario)} / kg"
+        : "\$${formatearMonto(item.precioUnitario)} / envase";
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.06),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          Text(
+            "${item.productNombre} / ${item.binNombre}",
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            detalleCantidad,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 12.5,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisAlignment:
+                MainAxisAlignment.spaceBetween,
+            children: [
+              Flexible(
+                child: Text(
+                  precioLabel,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white54,
+                    fontSize: 12.5,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                "\$${formatearMonto(item.subtotal)}",
+                style: const TextStyle(
+                  color: Colors.greenAccent,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
         ],
       ),
