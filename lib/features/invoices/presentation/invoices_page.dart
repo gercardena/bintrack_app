@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../data/invoices_service.dart';
 import '../models/invoice_model.dart';
@@ -90,6 +91,89 @@ class _InvoicesPageState
     return invoices.fold<double>(
       0,
       (total, invoice) => total + invoice.total,
+    );
+  }
+
+  String textoCompartirComprobante(Invoice invoice) {
+    final buffer = StringBuffer();
+
+    buffer.writeln("Comprobante interno BinTrack");
+    buffer.writeln("N° ${invoice.numero}");
+    buffer.writeln("");
+    buffer.writeln("Venta: ${invoice.saleNumero}");
+    buffer.writeln("Estado: ${estadoVenta(invoice.saleEstado)}");
+    buffer.writeln("Fecha: ${formatearFecha(invoice.fechaEmision)}");
+    buffer.writeln("");
+    buffer.writeln("Cliente: ${invoice.clienteNombre}");
+    buffer.writeln("RUT: ${invoice.clienteRut}");
+
+    if (invoice.clienteDireccion?.isNotEmpty == true) {
+      buffer.writeln(
+        "Dirección: ${invoice.clienteDireccion}",
+      );
+    }
+
+    if (invoice.items.isNotEmpty) {
+      buffer.writeln("");
+      buffer.writeln("Detalle:");
+
+      for (final item in invoice.items) {
+        buffer.writeln(
+          "- ${item.productNombre} / ${item.binNombre}",
+        );
+
+        if (item.esPorKilo) {
+          buffer.writeln(
+            "  ${item.binsCantidad} envase(s) · "
+            "${item.kilosPesados?.toStringAsFixed(2) ?? "0.00"} kg",
+          );
+          buffer.writeln(
+            "  Precio: "
+            "\$${formatearMonto(item.precioUnitario)} / kg",
+          );
+        } else {
+          buffer.writeln(
+            "  Cantidad: ${item.cantidad} envase(s)",
+          );
+          buffer.writeln(
+            "  Precio: "
+            "\$${formatearMonto(item.precioUnitario)} / envase",
+          );
+        }
+
+        buffer.writeln(
+          "  Subtotal: \$${formatearMonto(item.subtotal)}",
+        );
+      }
+    }
+
+    buffer.writeln("");
+    buffer.writeln(
+      "Subtotal: \$${formatearMonto(invoice.subtotal)}",
+    );
+    buffer.writeln(
+      "IVA informativo: \$${formatearMonto(invoice.iva)}",
+    );
+    buffer.writeln(
+      "Total: \$${formatearMonto(invoice.total)}",
+    );
+    buffer.writeln("");
+    buffer.writeln(
+      "Documento interno no tributario. "
+      "No reemplaza boleta ni factura ante el SII.",
+    );
+
+    return buffer.toString();
+  }
+
+  Future<void> compartirComprobante(
+    Invoice invoice,
+  ) async {
+    await SharePlus.instance.share(
+      ShareParams(
+        text: textoCompartirComprobante(invoice),
+        subject: "Comprobante ${invoice.numero}",
+      ),
     );
   }
 
@@ -452,6 +536,17 @@ class _InvoicesPageState
             Icons.calendar_month_outlined,
             "Generado",
             formatearFecha(invoice.fechaEmision),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => compartirComprobante(
+                invoice,
+              ),
+              icon: const Icon(Icons.share_outlined),
+              label: const Text("Compartir comprobante"),
+            ),
           ),
         ],
       ),
