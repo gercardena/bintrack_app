@@ -10,6 +10,7 @@ import '../../sales/presentation/sales_page.dart';
 import '../../sales/presentation/create_sale_page.dart';
 import '../../invoices/presentation/invoices_page.dart';
 import '../../payments/presentation/payments_page.dart';
+import '../../reports/presentation/sales_report_page.dart';
 import 'user_guide_page.dart';
 import 'privacy_policy_page.dart';
 
@@ -200,6 +201,14 @@ class HomePage extends StatelessWidget {
                 icon: Icons.receipt_long,
                 color: Colors.deepPurple,
                 page: const InvoicesPage(),
+              ),
+              _menuButton(
+                context,
+                title: "Reportes",
+                subtitle: "Ventas y crédito",
+                icon: Icons.analytics_outlined,
+                color: Colors.lightGreen,
+                page: const SalesReportPage(),
               ),
             ],
           ),
