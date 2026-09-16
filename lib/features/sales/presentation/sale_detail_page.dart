@@ -37,6 +37,9 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
   final TextEditingController kilosController =
       TextEditingController();
 
+  final TextEditingController buscarController =
+      TextEditingController();
+
   List<ProductPresentation> presentations = [];
 
   ProductPresentation? presentationSeleccionada;
@@ -48,6 +51,27 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
 
   bool get cobraPorKilo {
     return presentationSeleccionada?.cobraPorKilo == true;
+  }
+
+  List<ProductPresentation> get presentacionesFiltradas {
+    final query = buscarController.text
+        .trim()
+        .toLowerCase();
+
+    if (query.isEmpty) {
+      return presentations;
+    }
+
+    return presentations.where((presentation) {
+      final texto = [
+        presentation.productNombre,
+        presentation.binNombre,
+        presentation.precioDescripcion,
+        presentation.tipoCobro,
+      ].join(" ").toLowerCase();
+
+      return texto.contains(query);
+    }).toList();
   }
 
   @override
@@ -332,6 +356,7 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
     cantidadController.dispose();
     precioController.dispose();
     kilosController.dispose();
+    buscarController.dispose();
     super.dispose();
   }
 
@@ -367,6 +392,13 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
       child: Scaffold(
         backgroundColor: background,
         appBar: AppBar(
+          leading: IconButton(
+            tooltip: "Volver",
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              Navigator.maybePop(context);
+            },
+          ),
           title: Text(
             "Venta #${currentSale?.numero ?? widget.saleId}",
           ),
@@ -561,41 +593,108 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
       );
     }
 
-    return DropdownButtonFormField<ProductPresentation>(
-      initialValue: presentationSeleccionada,
-      isExpanded: true,
-      dropdownColor: card,
-      style: const TextStyle(
-        color: Colors.white,
-      ),
-      items: presentations.map(
-        (presentation) {
-          return DropdownMenuItem<ProductPresentation>(
-            value: presentation,
-            child: Text(
-              "${presentation.productNombre} + "
-              "${presentation.binNombre} - "
-              "${presentation.precioDescripcion} "
-              "(Stock: ${presentation.stockCantidad})",
-              overflow: TextOverflow.ellipsis,
-            ),
+    final opciones = [
+      ...presentacionesFiltradas,
+    ];
+
+    if (presentationSeleccionada != null &&
+        !opciones.any(
+          (presentation) =>
+              presentation.id ==
+              presentationSeleccionada!.id,
+        )) {
+      opciones.insert(
+        0,
+        presentationSeleccionada!,
+      );
+    }
+
+    final dropdownValue = presentationSeleccionada == null
+        ? null
+        : opciones.firstWhere(
+            (presentation) =>
+                presentation.id ==
+                presentationSeleccionada!.id,
           );
-        },
-      ).toList(),
-      onChanged: saving
-          ? null
-          : (value) {
-              setState(() {
-                presentationSeleccionada = value;
-                kilosController.clear();
-                precioController.text = value == null
-                    ? ""
-                    : value.precio.toStringAsFixed(0);
-              });
-            },
-      decoration: const InputDecoration(
-        labelText: "Producto y envase",
-      ),
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: buscarController,
+          style: const TextStyle(
+            color: Colors.white,
+          ),
+          decoration: const InputDecoration(
+            labelText: "Buscar producto o envase",
+            hintText: "Ej: naranja, bin, caja...",
+            prefixIcon: Icon(
+              Icons.search,
+              color: Colors.white54,
+            ),
+          ),
+          onChanged: (_) {
+            setState(() {});
+          },
+        ),
+        const SizedBox(height: 12),
+        if (opciones.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.orange.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Colors.orange.withValues(alpha: 0.35),
+              ),
+            ),
+            child: const Text(
+              "No encontramos presentaciones con esa búsqueda.",
+              style: TextStyle(
+                color: Colors.white,
+                height: 1.35,
+              ),
+            ),
+          )
+        else
+          DropdownButtonFormField<ProductPresentation>(
+            initialValue: dropdownValue,
+            isExpanded: true,
+            dropdownColor: card,
+            style: const TextStyle(
+              color: Colors.white,
+            ),
+            items: opciones.map(
+              (presentation) {
+                return DropdownMenuItem<ProductPresentation>(
+                  value: presentation,
+                  child: Text(
+                    "${presentation.productNombre} + "
+                    "${presentation.binNombre} - "
+                    "${presentation.precioDescripcion} "
+                    "(Stock: ${presentation.stockCantidad})",
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                );
+              },
+            ).toList(),
+            onChanged: saving
+                ? null
+                : (value) {
+                    setState(() {
+                      presentationSeleccionada = value;
+                      kilosController.clear();
+                      precioController.text = value == null
+                          ? ""
+                          : value.precio.toStringAsFixed(0);
+                    });
+                  },
+            decoration: const InputDecoration(
+              labelText: "Producto y envase",
+            ),
+          ),
+      ],
     );
   }
 

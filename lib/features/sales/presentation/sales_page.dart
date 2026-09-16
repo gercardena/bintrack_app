@@ -24,6 +24,9 @@ class _SalesPageState extends State<SalesPage> {
   static const Color background = Color(0xFF0F172A);
   static const Color card = Color(0xFF1E293B);
 
+  final TextEditingController buscarController =
+      TextEditingController();
+
   List<Sale> sales = [];
   SalesDashboard? dashboard;
 
@@ -31,10 +34,52 @@ class _SalesPageState extends State<SalesPage> {
   String? errorMessage;
   int? processingSaleId;
 
+  List<Sale> get ventasFiltradas {
+    final query = buscarController.text
+        .trim()
+        .toLowerCase();
+
+    if (query.isEmpty) {
+      return sales;
+    }
+
+    return sales.where((sale) {
+      final itemsText = sale.items
+          .map(
+            (item) => [
+              item.productNombre,
+              item.binNombre,
+              item.cantidad.toString(),
+              item.precioUnitario.toStringAsFixed(0),
+              item.subtotal.toStringAsFixed(0),
+            ].join(" "),
+          )
+          .join(" ");
+
+      final texto = [
+        sale.numero,
+        sale.clienteNombre ?? "",
+        sale.estado,
+        etiquetaEstado(sale.estado),
+        ayudaEstado(sale.estado),
+        sale.total.toStringAsFixed(0),
+        itemsText,
+      ].join(" ").toLowerCase();
+
+      return texto.contains(query);
+    }).toList();
+  }
+
   @override
   void initState() {
     super.initState();
     cargarVentas();
+  }
+
+  @override
+  void dispose() {
+    buscarController.dispose();
+    super.dispose();
   }
 
   Future<void> cargarVentas() async {
@@ -561,6 +606,8 @@ class _SalesPageState extends State<SalesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final ventasVisibles = ventasFiltradas;
+
     return ProtectedPage(
       child: Scaffold(
         backgroundColor: background,
@@ -599,9 +646,14 @@ class _SalesPageState extends State<SalesPage> {
                               const SizedBox(height: 14),
                               _summaryCard(),
                               const SizedBox(height: 14),
-                              ...sales.map(
-                                construirTarjeta,
-                              ),
+                              _searchCard(),
+                              const SizedBox(height: 14),
+                              if (ventasVisibles.isEmpty)
+                                _emptySearchState()
+                              else
+                                ...ventasVisibles.map(
+                                  construirTarjeta,
+                                ),
                               const SizedBox(height: 80),
                             ],
                           ),
@@ -694,7 +746,7 @@ class _SalesPageState extends State<SalesPage> {
               _summaryBox(
                 label: "Hoy",
                 value:
-                "\$${precioFormateado(dashboard?.ingresosHoy ?? 0)}",
+                    "\$${precioFormateado(dashboard?.ingresosHoy ?? 0)}",
                 icon: Icons.today,
                 color: Colors.cyanAccent,
               ),
@@ -702,7 +754,7 @@ class _SalesPageState extends State<SalesPage> {
               _summaryBox(
                 label: "Mes",
                 value:
-                "\$${precioFormateado(dashboard?.ingresosMes ?? 0)}",
+                    "\$${precioFormateado(dashboard?.ingresosMes ?? 0)}",
                 icon: Icons.calendar_month,
                 color: Colors.orangeAccent,
               ),
@@ -783,6 +835,98 @@ class _SalesPageState extends State<SalesPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _searchCard() {
+    final totalResultados = ventasFiltradas.length;
+    final buscando = buscarController.text
+        .trim()
+        .isNotEmpty;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.07),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: buscarController,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+            ),
+            cursorColor: Colors.cyanAccent,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor:
+                  Colors.white.withValues(alpha: 0.08),
+              labelText: "Buscar venta",
+              hintText:
+                  "Cliente, venta, producto, envase, estado...",
+              labelStyle: const TextStyle(
+                color: Colors.white70,
+              ),
+              hintStyle: const TextStyle(
+                color: Colors.white38,
+              ),
+              prefixIcon: const Icon(
+                Icons.search,
+                color: Colors.white54,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(
+                  color:
+                      Colors.white.withValues(alpha: 0.14),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(
+                  color: Colors.cyanAccent,
+                ),
+              ),
+              suffixIcon: buscando
+                  ? IconButton(
+                      tooltip: "Limpiar búsqueda",
+                      icon: const Icon(
+                        Icons.close,
+                        color: Colors.white54,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          buscarController.clear();
+                        });
+                      },
+                    )
+                  : null,
+            ),
+            onChanged: (_) {
+              setState(() {});
+            },
+          ),
+          const SizedBox(height: 8),
+          Text(
+            buscando
+                ? "Mostrando $totalResultados de ${sales.length} venta(s)."
+                : "Busca por cliente, número de venta, producto, envase o estado.",
+            style: const TextStyle(
+              color: Colors.white54,
+              fontSize: 12.5,
+              height: 1.3,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -879,6 +1023,12 @@ class _SalesPageState extends State<SalesPage> {
             "Artículos: ${sale.items.length}",
           ),
 
+          if (sale.items.isNotEmpty)
+            _infoLine(
+              Icons.inventory_2_outlined,
+              "Productos: ${_resumenProductos(sale)}",
+            ),
+
           _infoLine(
             Icons.attach_money,
             "Total: \$${precioFormateado(sale.total)}",
@@ -904,6 +1054,15 @@ class _SalesPageState extends State<SalesPage> {
         ],
       ),
     );
+  }
+
+  String _resumenProductos(Sale sale) {
+    return sale.items
+        .map(
+          (item) =>
+              "${item.productNombre} / ${item.binNombre}",
+        )
+        .join(", ");
   }
 
   Widget _actionButtons({
@@ -1081,6 +1240,47 @@ class _SalesPageState extends State<SalesPage> {
                 color: Colors.white70,
                 height: 1.25,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _emptySearchState() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: card,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.orangeAccent.withValues(alpha: 0.24),
+        ),
+      ),
+      child: const Column(
+        children: [
+          Icon(
+            Icons.search_off,
+            color: Colors.orangeAccent,
+            size: 42,
+          ),
+          SizedBox(height: 12),
+          Text(
+            "No encontramos ventas",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 6),
+          Text(
+            "Prueba buscando por cliente, número de venta, producto, envase o estado.",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white60,
+              height: 1.35,
             ),
           ),
         ],
