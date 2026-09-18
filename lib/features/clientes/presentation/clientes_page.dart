@@ -18,14 +18,49 @@ class _ClientesPageState extends State<ClientesPage> {
   static const Color background = Color(0xFF0F172A);
   static const Color card = Color(0xFF1E293B);
 
+  final TextEditingController buscarController =
+      TextEditingController();
+
   List<Cliente> clientes = [];
   bool loading = true;
   String? errorMessage;
+
+  List<Cliente> get clientesFiltrados {
+    final query = buscarController.text
+        .trim()
+        .toLowerCase();
+
+    if (query.isEmpty) {
+      return clientes;
+    }
+
+    return clientes.where((cliente) {
+      final estado =
+          cliente.activo ? "activo" : "inactivo";
+
+      final texto = [
+        cliente.nombre,
+        cliente.rut,
+        cliente.email ?? "",
+        cliente.telefono ?? "",
+        cliente.direccion ?? "",
+        estado,
+      ].join(" ").toLowerCase();
+
+      return texto.contains(query);
+    }).toList();
+  }
 
   @override
   void initState() {
     super.initState();
     cargarClientes();
+  }
+
+  @override
+  void dispose() {
+    buscarController.dispose();
+    super.dispose();
   }
 
   Future<void> cargarClientes() async {
@@ -151,6 +186,7 @@ class _ClientesPageState extends State<ClientesPage> {
         .length;
 
     final inactivos = clientes.length - activos;
+    final visibles = clientesFiltrados;
 
     return Scaffold(
       backgroundColor: background,
@@ -180,9 +216,14 @@ class _ClientesPageState extends State<ClientesPage> {
                               inactivos: inactivos,
                             ),
                             const SizedBox(height: 14),
-                            ...clientes.map(
-                              _clienteCard,
-                            ),
+                            _searchCard(),
+                            const SizedBox(height: 14),
+                            if (visibles.isEmpty)
+                              _emptySearchState()
+                            else
+                              ...visibles.map(
+                                _clienteCard,
+                              ),
                           ],
                         ),
                 ),
@@ -264,6 +305,74 @@ class _ClientesPageState extends State<ClientesPage> {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _searchCard() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.cyanAccent.withValues(
+            alpha: 0.22,
+          ),
+        ),
+      ),
+      child: TextField(
+        controller: buscarController,
+        onChanged: (_) => setState(() {}),
+        style: const TextStyle(
+          color: Colors.white,
+        ),
+        cursorColor: Colors.cyanAccent,
+        decoration: InputDecoration(
+          prefixIcon: const Icon(
+            Icons.search,
+            color: Colors.cyanAccent,
+          ),
+          suffixIcon: buscarController.text.isEmpty
+              ? null
+              : IconButton(
+                  onPressed: () {
+                    buscarController.clear();
+                    setState(() {});
+                  },
+                  icon: const Icon(
+                    Icons.clear,
+                    color: Colors.white70,
+                  ),
+                ),
+          labelText: "Buscar cliente",
+          hintText:
+              "Nombre, RUT, teléfono, email, dirección o estado",
+          labelStyle: const TextStyle(
+            color: Colors.white70,
+          ),
+          hintStyle: const TextStyle(
+            color: Colors.white38,
+          ),
+          filled: true,
+          fillColor: Colors.black.withValues(
+            alpha: 0.18,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(
+              color: Colors.white.withValues(
+                alpha: 0.12,
+              ),
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(
+              color: Colors.cyanAccent,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -354,9 +463,7 @@ class _ClientesPageState extends State<ClientesPage> {
                   ),
                 ),
               ),
-
               const SizedBox(width: 12),
-
               Expanded(
                 child: Column(
                   crossAxisAlignment:
@@ -378,41 +485,33 @@ class _ClientesPageState extends State<ClientesPage> {
                         _statusPill(cliente.activo),
                       ],
                     ),
-
                     const SizedBox(height: 4),
-
                     Text(
                       "RUT: ${cliente.rut}",
                       style: const TextStyle(
                         color: Colors.white60,
                       ),
                     ),
-
                     const SizedBox(height: 8),
-
                     if (cliente.telefono != null &&
                         cliente.telefono!.isNotEmpty)
                       _infoLine(
                         Icons.phone,
                         cliente.telefono!,
                       ),
-
                     if (cliente.email != null &&
                         cliente.email!.isNotEmpty)
                       _infoLine(
                         Icons.email_outlined,
                         cliente.email!,
                       ),
-
                     if (cliente.direccion != null &&
                         cliente.direccion!.isNotEmpty)
                       _infoLine(
                         Icons.location_on_outlined,
                         cliente.direccion!,
                       ),
-
                     const SizedBox(height: 10),
-
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
@@ -525,6 +624,50 @@ class _ClientesPageState extends State<ClientesPage> {
                 color: Colors.white70,
                 height: 1.25,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _emptySearchState() {
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.white.withValues(
+            alpha: 0.10,
+          ),
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.search_off,
+            size: 52,
+            color: Colors.white.withValues(
+              alpha: 0.45,
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            "No encontramos clientes",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            "Prueba buscar por nombre, RUT, teléfono, email, dirección, activo o inactivo.",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white60,
+              height: 1.35,
             ),
           ),
         ],

@@ -16,6 +16,8 @@ class BinClientsPage extends StatefulWidget {
 
 class _BinClientsPageState extends State<BinClientsPage> {
   final BinClientService service = BinClientService();
+  final TextEditingController buscarController =
+      TextEditingController();
 
   static const Color background = Color(0xFF0F172A);
   static const Color card = Color(0xFF1E293B);
@@ -25,10 +27,42 @@ class _BinClientsPageState extends State<BinClientsPage> {
   bool loading = true;
   String? errorMessage;
 
+  List<BinClient> get clientesFiltrados {
+    final query = buscarController.text
+        .trim()
+        .toLowerCase();
+
+    if (query.isEmpty) {
+      return clients;
+    }
+
+    return clients.where((client) {
+      final estado =
+          client.activo ? "activo" : "inactivo";
+
+      final texto = [
+        client.nombre,
+        client.rut,
+        client.email,
+        client.telefono,
+        client.direccion,
+        estado,
+      ].join(" ").toLowerCase();
+
+      return texto.contains(query);
+    }).toList();
+  }
+
   @override
   void initState() {
     super.initState();
     loadClients();
+  }
+
+  @override
+  void dispose() {
+    buscarController.dispose();
+    super.dispose();
   }
 
   Future<void> loadClients() async {
@@ -90,6 +124,8 @@ class _BinClientsPageState extends State<BinClientsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final visibles = clientesFiltrados;
+
     return Scaffold(
       backgroundColor: background,
       appBar: AppBar(
@@ -115,9 +151,14 @@ class _BinClientsPageState extends State<BinClientsPage> {
                           children: [
                             _introCard(),
                             const SizedBox(height: 14),
-                            ...clients.map(
-                              _clientCard,
-                            ),
+                            _searchCard(),
+                            const SizedBox(height: 14),
+                            if (visibles.isEmpty)
+                              _emptySearchState()
+                            else
+                              ...visibles.map(
+                                _clientCard,
+                              ),
                           ],
                         ),
                 ),
@@ -166,6 +207,74 @@ class _BinClientsPageState extends State<BinClientsPage> {
     );
   }
 
+  Widget _searchCard() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.greenAccent.withValues(
+            alpha: 0.22,
+          ),
+        ),
+      ),
+      child: TextField(
+        controller: buscarController,
+        onChanged: (_) => setState(() {}),
+        style: const TextStyle(
+          color: Colors.white,
+        ),
+        cursorColor: Colors.greenAccent,
+        decoration: InputDecoration(
+          prefixIcon: const Icon(
+            Icons.search,
+            color: Colors.greenAccent,
+          ),
+          suffixIcon: buscarController.text.isEmpty
+              ? null
+              : IconButton(
+                  onPressed: () {
+                    buscarController.clear();
+                    setState(() {});
+                  },
+                  icon: const Icon(
+                    Icons.clear,
+                    color: Colors.white70,
+                  ),
+                ),
+          labelText: "Buscar cliente",
+          hintText:
+              "Nombre, RUT, teléfono, email, dirección o estado",
+          labelStyle: const TextStyle(
+            color: Colors.white70,
+          ),
+          hintStyle: const TextStyle(
+            color: Colors.white38,
+          ),
+          filled: true,
+          fillColor: Colors.black.withValues(
+            alpha: 0.18,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(
+              color: Colors.white.withValues(
+                alpha: 0.12,
+              ),
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(
+              color: Colors.greenAccent,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _clientCard(
     BinClient client,
   ) {
@@ -208,47 +317,61 @@ class _BinClientsPageState extends State<BinClientsPage> {
                   ),
                 ),
               ),
-
               const SizedBox(width: 12),
-
               Expanded(
                 child: Column(
                   crossAxisAlignment:
                       CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      client.nombre,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            client.nombre,
+                            maxLines: 2,
+                            overflow:
+                                TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _statusPill(client.activo),
+                      ],
                     ),
-
                     const SizedBox(height: 6),
-
                     _infoLine(
                       Icons.badge_outlined,
                       "RUT: ${client.rut}",
                     ),
-
                     if (client.telefono.isNotEmpty)
                       _infoLine(
                         Icons.phone,
                         client.telefono,
                       ),
-
+                    if (client.email.isNotEmpty)
+                      _infoLine(
+                        Icons.email_outlined,
+                        client.email,
+                      ),
+                    if (client.direccion.isNotEmpty)
+                      _infoLine(
+                        Icons.location_on_outlined,
+                        client.direccion,
+                      ),
                     const SizedBox(height: 10),
-
                     Align(
                       alignment: Alignment.centerLeft,
                       child: OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.cyanAccent,
+                          foregroundColor:
+                              Colors.cyanAccent,
                           side: BorderSide(
-                            color: Colors.cyanAccent.withValues(
+                            color: Colors.cyanAccent
+                                .withValues(
                               alpha: 0.45,
                             ),
                           ),
@@ -267,6 +390,33 @@ class _BinClientsPageState extends State<BinClientsPage> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _statusPill(bool activo) {
+    final color =
+        activo ? Colors.greenAccent : Colors.grey;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 9,
+        vertical: 5,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: color.withValues(alpha: 0.30),
+        ),
+      ),
+      child: Text(
+        activo ? "Activo" : "Inactivo",
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
         ),
       ),
     );
@@ -297,6 +447,50 @@ class _BinClientsPageState extends State<BinClientsPage> {
                 color: Colors.white70,
                 height: 1.25,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _emptySearchState() {
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.white.withValues(
+            alpha: 0.10,
+          ),
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.search_off,
+            size: 52,
+            color: Colors.white.withValues(
+              alpha: 0.45,
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            "No encontramos clientes",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            "Prueba buscar por nombre, RUT, teléfono, email, dirección, activo o inactivo.",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white60,
+              height: 1.35,
             ),
           ),
         ],

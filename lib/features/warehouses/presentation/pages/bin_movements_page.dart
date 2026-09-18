@@ -20,14 +20,48 @@ class _BinMovementsPageState
   static const Color background = Color(0xFF0F172A);
   static const Color card = Color(0xFF1E293B);
 
+  final TextEditingController buscarController =
+      TextEditingController();
+
   List<BinMovement> movements = [];
   bool loading = true;
   String? errorMessage;
+
+  List<BinMovement> get movimientosFiltrados {
+    final query = buscarController.text
+        .trim()
+        .toLowerCase();
+
+    if (query.isEmpty) {
+      return movements;
+    }
+
+    return movements.where((movement) {
+      final texto = [
+        movementLabel(movement.tipoMovimiento),
+        movement.tipoMovimiento,
+        movement.clienteNombre,
+        movement.binNombre,
+        movement.cantidad.toString(),
+        movement.depositoPagado.toString(),
+        movement.referencia,
+        movement.fecha,
+      ].join(" ").toLowerCase();
+
+      return texto.contains(query);
+    }).toList();
+  }
 
   @override
   void initState() {
     super.initState();
     loadMovements();
+  }
+
+  @override
+  void dispose() {
+    buscarController.dispose();
+    super.dispose();
   }
 
   Future<void> loadMovements() async {
@@ -132,6 +166,8 @@ class _BinMovementsPageState
 
   @override
   Widget build(BuildContext context) {
+    final visibles = movimientosFiltrados;
+
     return Scaffold(
       backgroundColor: background,
       appBar: AppBar(
@@ -157,9 +193,15 @@ class _BinMovementsPageState
                           children: [
                             _introCard(),
                             const SizedBox(height: 14),
-                            ...movements.map(
-                              _movementCard,
-                            ),
+                            _searchCard(),
+                            const SizedBox(height: 14),
+                            if (visibles.isEmpty)
+                              _emptySearchState()
+                            else
+                              ...visibles.map(
+                                _movementCard,
+                              ),
+                            const SizedBox(height: 80),
                           ],
                         ),
                 ),
@@ -201,6 +243,99 @@ class _BinMovementsPageState
                 color: Colors.white,
                 height: 1.35,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _searchCard() {
+    final buscando = buscarController.text
+        .trim()
+        .isNotEmpty;
+
+    final totalResultados = movimientosFiltrados.length;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.07),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: buscarController,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+            ),
+            cursorColor: Colors.orangeAccent,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor:
+                  Colors.white.withValues(alpha: 0.08),
+              labelText: "Buscar movimiento",
+              hintText:
+                  "Cliente, envase, tipo, referencia...",
+              labelStyle: const TextStyle(
+                color: Colors.white70,
+              ),
+              hintStyle: const TextStyle(
+                color: Colors.white38,
+              ),
+              prefixIcon: const Icon(
+                Icons.search,
+                color: Colors.white54,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide(
+                  color:
+                      Colors.white.withValues(alpha: 0.14),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: const BorderSide(
+                  color: Colors.orangeAccent,
+                ),
+              ),
+              suffixIcon: buscando
+                  ? IconButton(
+                      tooltip: "Limpiar búsqueda",
+                      icon: const Icon(
+                        Icons.close,
+                        color: Colors.white54,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          buscarController.clear();
+                        });
+                      },
+                    )
+                  : null,
+            ),
+            onChanged: (_) {
+              setState(() {});
+            },
+          ),
+          const SizedBox(height: 8),
+          Text(
+            buscando
+                ? "Mostrando $totalResultados de ${movements.length} movimiento(s)."
+                : "Busca por cliente, envase, tipo, referencia, fecha o cantidad.",
+            style: const TextStyle(
+              color: Colors.white54,
+              fontSize: 12.5,
+              height: 1.3,
             ),
           ),
         ],
@@ -331,6 +466,47 @@ class _BinMovementsPageState
                 color: Colors.white70,
                 height: 1.25,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _emptySearchState() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: card,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.orangeAccent.withValues(alpha: 0.24),
+        ),
+      ),
+      child: const Column(
+        children: [
+          Icon(
+            Icons.search_off,
+            color: Colors.orangeAccent,
+            size: 42,
+          ),
+          SizedBox(height: 12),
+          Text(
+            "No encontramos movimientos",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 6),
+          Text(
+            "Prueba buscando por cliente, envase, tipo, referencia o fecha.",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white60,
+              height: 1.35,
             ),
           ),
         ],

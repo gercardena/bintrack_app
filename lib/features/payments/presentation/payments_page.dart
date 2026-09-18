@@ -16,6 +16,9 @@ class _PaymentsPageState
   final PaymentsService service =
       PaymentsService();
 
+  final TextEditingController buscarController =
+      TextEditingController();
+
   late Future<List<Payment>> futurePayments;
 
   @override
@@ -24,12 +27,47 @@ class _PaymentsPageState
     futurePayments = service.getPayments();
   }
 
+  @override
+  void dispose() {
+    buscarController.dispose();
+    super.dispose();
+  }
+
   Future<void> recargar() async {
     setState(() {
       futurePayments = service.getPayments();
     });
 
     await futurePayments;
+  }
+
+  List<Payment> filtrarPagos(
+    List<Payment> payments,
+  ) {
+    final query = buscarController.text
+        .trim()
+        .toLowerCase();
+
+    if (query.isEmpty) {
+      return payments;
+    }
+
+    return payments.where((payment) {
+      final texto = [
+        payment.saleNumero,
+        payment.saleId.toString(),
+        payment.clienteNombre,
+        payment.metodo,
+        etiquetaMetodo(payment.metodo),
+        payment.referencia ?? "",
+        payment.fecha,
+        formatearFecha(payment.fecha),
+        payment.monto.toStringAsFixed(0),
+        payment.monto.toStringAsFixed(2),
+      ].join(" ").toLowerCase();
+
+      return texto.contains(query);
+    }).toList();
   }
 
   String etiquetaMetodo(String metodo) {
@@ -122,6 +160,8 @@ class _PaymentsPageState
             return _emptyState();
           }
 
+          final visibles = filtrarPagos(payments);
+
           return RefreshIndicator(
             onRefresh: recargar,
             child: ListView(
@@ -131,9 +171,14 @@ class _PaymentsPageState
               children: [
                 _summaryCard(payments),
                 const SizedBox(height: 18),
+                _searchCard(),
+                const SizedBox(height: 18),
                 _sectionTitle(),
                 const SizedBox(height: 12),
-                ...payments.map(_paymentCard),
+                if (visibles.isEmpty)
+                  _emptySearchState()
+                else
+                  ...visibles.map(_paymentCard),
               ],
             ),
           );
@@ -216,6 +261,74 @@ class _PaymentsPageState
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _searchCard() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF172033),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.greenAccent.withValues(
+            alpha: 0.22,
+          ),
+        ),
+      ),
+      child: TextField(
+        controller: buscarController,
+        onChanged: (_) => setState(() {}),
+        style: const TextStyle(
+          color: Colors.white,
+        ),
+        cursorColor: Colors.greenAccent,
+        decoration: InputDecoration(
+          prefixIcon: const Icon(
+            Icons.search,
+            color: Colors.greenAccent,
+          ),
+          suffixIcon: buscarController.text.isEmpty
+              ? null
+              : IconButton(
+                  onPressed: () {
+                    buscarController.clear();
+                    setState(() {});
+                  },
+                  icon: const Icon(
+                    Icons.clear,
+                    color: Colors.white70,
+                  ),
+                ),
+          labelText: "Buscar pago",
+          hintText:
+              "Cliente, venta, método, referencia, fecha o monto",
+          labelStyle: const TextStyle(
+            color: Colors.white70,
+          ),
+          hintStyle: const TextStyle(
+            color: Colors.white38,
+          ),
+          filled: true,
+          fillColor: Colors.black.withValues(
+            alpha: 0.18,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(
+              color: Colors.white.withValues(
+                alpha: 0.12,
+              ),
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(
+              color: Colors.greenAccent,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -355,6 +468,50 @@ class _PaymentsPageState
           color: Colors.white54,
           fontSize: 13,
         ),
+      ),
+    );
+  }
+
+  Widget _emptySearchState() {
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: const Color(0xFF172033),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.white.withValues(
+            alpha: 0.10,
+          ),
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.search_off,
+            size: 52,
+            color: Colors.white.withValues(
+              alpha: 0.45,
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            "No encontramos pagos",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            "Prueba buscar por cliente, venta, método, referencia, fecha o monto.",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white60,
+              height: 1.35,
+            ),
+          ),
+        ],
       ),
     );
   }

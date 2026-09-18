@@ -9,11 +9,14 @@ class BinTypesPage extends StatefulWidget {
   const BinTypesPage({super.key});
 
   @override
-  State<BinTypesPage> createState() => _BinTypesPageState();
+  State<BinTypesPage> createState() =>
+      _BinTypesPageState();
 }
 
 class _BinTypesPageState extends State<BinTypesPage> {
   final BinTypeService service = BinTypeService();
+  final TextEditingController buscarController =
+      TextEditingController();
 
   static const Color background = Color(0xFF0F172A);
   static const Color card = Color(0xFF1E293B);
@@ -23,10 +26,38 @@ class _BinTypesPageState extends State<BinTypesPage> {
   bool loading = true;
   String? errorMessage;
 
+  List<BinType> get tiposFiltrados {
+    final query = buscarController.text
+        .trim()
+        .toLowerCase();
+
+    if (query.isEmpty) {
+      return types;
+    }
+
+    return types.where((type) {
+      final texto = [
+        type.nombre,
+        type.tipo,
+        type.tipoNombre,
+        type.material,
+        type.valorDeposito,
+      ].join(" ").toLowerCase();
+
+      return texto.contains(query);
+    }).toList();
+  }
+
   @override
   void initState() {
     super.initState();
     loadTypes();
+  }
+
+  @override
+  void dispose() {
+    buscarController.dispose();
+    super.dispose();
   }
 
   Future<void> loadTypes() async {
@@ -86,6 +117,8 @@ class _BinTypesPageState extends State<BinTypesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final visibles = tiposFiltrados;
+
     return Scaffold(
       backgroundColor: background,
       appBar: AppBar(
@@ -118,7 +151,12 @@ class _BinTypesPageState extends State<BinTypesPage> {
                           children: [
                             _introCard(),
                             const SizedBox(height: 14),
-                            ...types.map(_typeCard),
+                            _searchCard(),
+                            const SizedBox(height: 14),
+                            if (visibles.isEmpty)
+                              _emptySearchState()
+                            else
+                              ...visibles.map(_typeCard),
                           ],
                         ),
                 ),
@@ -160,6 +198,74 @@ class _BinTypesPageState extends State<BinTypesPage> {
     );
   }
 
+  Widget _searchCard() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.blueAccent.withValues(
+            alpha: 0.24,
+          ),
+        ),
+      ),
+      child: TextField(
+        controller: buscarController,
+        onChanged: (_) => setState(() {}),
+        style: const TextStyle(
+          color: Colors.white,
+        ),
+        cursorColor: Colors.blueAccent,
+        decoration: InputDecoration(
+          prefixIcon: const Icon(
+            Icons.search,
+            color: Colors.blueAccent,
+          ),
+          suffixIcon: buscarController.text.isEmpty
+              ? null
+              : IconButton(
+                  onPressed: () {
+                    buscarController.clear();
+                    setState(() {});
+                  },
+                  icon: const Icon(
+                    Icons.clear,
+                    color: Colors.white70,
+                  ),
+                ),
+          labelText: "Buscar tipo de envase",
+          hintText:
+              "Nombre, tipo, material o valor de depósito",
+          labelStyle: const TextStyle(
+            color: Colors.white70,
+          ),
+          hintStyle: const TextStyle(
+            color: Colors.white38,
+          ),
+          filled: true,
+          fillColor: Colors.black.withValues(
+            alpha: 0.18,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(
+              color: Colors.white.withValues(
+                alpha: 0.12,
+              ),
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(
+              color: Colors.blueAccent,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _typeCard(BinType type) {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -186,7 +292,8 @@ class _BinTypesPageState extends State<BinTypesPage> {
           const SizedBox(width: 12),
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
               children: [
                 Text(
                   type.nombre,
@@ -243,7 +350,8 @@ class _BinTypesPageState extends State<BinTypesPage> {
     return Padding(
       padding: const EdgeInsets.only(top: 5),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
         children: [
           Icon(
             icon,
@@ -258,6 +366,50 @@ class _BinTypesPageState extends State<BinTypesPage> {
                 color: Colors.white70,
                 height: 1.25,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _emptySearchState() {
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.white.withValues(
+            alpha: 0.10,
+          ),
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.search_off,
+            size: 52,
+            color: Colors.white.withValues(
+              alpha: 0.45,
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            "No encontramos envases",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            "Prueba buscar por nombre, tipo, material o valor de depósito.",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white60,
+              height: 1.35,
             ),
           ),
         ],

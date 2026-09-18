@@ -17,6 +17,9 @@ class _InvoicesPageState
   final InvoicesService service =
       InvoicesService();
 
+  final TextEditingController buscarController =
+      TextEditingController();
+
   late Future<List<Invoice>> futureInvoices;
 
   @override
@@ -25,12 +28,66 @@ class _InvoicesPageState
     futureInvoices = service.getInvoices();
   }
 
+  @override
+  void dispose() {
+    buscarController.dispose();
+    super.dispose();
+  }
+
   Future<void> recargar() async {
     setState(() {
       futureInvoices = service.getInvoices();
     });
 
     await futureInvoices;
+  }
+
+  List<Invoice> filtrarComprobantes(
+    List<Invoice> invoices,
+  ) {
+    final query = buscarController.text
+        .trim()
+        .toLowerCase();
+
+    if (query.isEmpty) {
+      return invoices;
+    }
+
+    return invoices.where((invoice) {
+      final itemsTexto = invoice.items
+          .map(
+            (item) => [
+              item.productNombre,
+              item.binNombre,
+              item.tipoCobro,
+              item.cantidad.toString(),
+              item.binsCantidad.toString(),
+              item.kilosPesados?.toStringAsFixed(2) ?? "",
+              item.precioUnitario.toStringAsFixed(0),
+              item.subtotal.toStringAsFixed(0),
+            ].join(" "),
+          )
+          .join(" ");
+
+      final texto = [
+        invoice.numero,
+        invoice.saleNumero,
+        invoice.saleId.toString(),
+        invoice.saleEstado,
+        estadoVenta(invoice.saleEstado),
+        invoice.clienteNombre,
+        invoice.clienteRut,
+        invoice.clienteDireccion ?? "",
+        invoice.fechaEmision,
+        formatearFecha(invoice.fechaEmision),
+        invoice.subtotal.toStringAsFixed(0),
+        invoice.iva.toStringAsFixed(0),
+        invoice.total.toStringAsFixed(0),
+        itemsTexto,
+      ].join(" ").toLowerCase();
+
+      return texto.contains(query);
+    }).toList();
   }
 
   String estadoVenta(String estado) {
@@ -210,6 +267,8 @@ class _InvoicesPageState
             return _emptyState();
           }
 
+          final visibles = filtrarComprobantes(invoices);
+
           return RefreshIndicator(
             onRefresh: recargar,
             child: ListView(
@@ -220,10 +279,15 @@ class _InvoicesPageState
                 _summaryCard(invoices),
                 const SizedBox(height: 14),
                 _taxWarningCard(),
+                const SizedBox(height: 14),
+                _searchCard(),
                 const SizedBox(height: 18),
                 _sectionTitle(),
                 const SizedBox(height: 12),
-                ...invoices.map(_invoiceCard),
+                if (visibles.isEmpty)
+                  _emptySearchState()
+                else
+                  ...visibles.map(_invoiceCard),
               ],
             ),
           );
@@ -340,6 +404,74 @@ class _InvoicesPageState
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _searchCard() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF172033),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.purpleAccent.withValues(
+            alpha: 0.24,
+          ),
+        ),
+      ),
+      child: TextField(
+        controller: buscarController,
+        onChanged: (_) => setState(() {}),
+        style: const TextStyle(
+          color: Colors.white,
+        ),
+        cursorColor: Colors.purpleAccent,
+        decoration: InputDecoration(
+          prefixIcon: const Icon(
+            Icons.search,
+            color: Colors.purpleAccent,
+          ),
+          suffixIcon: buscarController.text.isEmpty
+              ? null
+              : IconButton(
+                  onPressed: () {
+                    buscarController.clear();
+                    setState(() {});
+                  },
+                  icon: const Icon(
+                    Icons.clear,
+                    color: Colors.white70,
+                  ),
+                ),
+          labelText: "Buscar comprobante",
+          hintText:
+              "Cliente, RUT, comprobante, venta, producto, fecha o monto",
+          labelStyle: const TextStyle(
+            color: Colors.white70,
+          ),
+          hintStyle: const TextStyle(
+            color: Colors.white38,
+          ),
+          filled: true,
+          fillColor: Colors.black.withValues(
+            alpha: 0.18,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(
+              color: Colors.white.withValues(
+                alpha: 0.12,
+              ),
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(
+              color: Colors.purpleAccent,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -695,6 +827,50 @@ class _InvoicesPageState
                   : Colors.white,
               fontSize: highlighted ? 17 : 13,
               fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _emptySearchState() {
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: const Color(0xFF172033),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.white.withValues(
+            alpha: 0.10,
+          ),
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.search_off,
+            size: 52,
+            color: Colors.white.withValues(
+              alpha: 0.45,
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            "No encontramos comprobantes",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            "Prueba buscar por cliente, RUT, comprobante, venta, producto, envase, fecha o monto.",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white60,
+              height: 1.35,
             ),
           ),
         ],
