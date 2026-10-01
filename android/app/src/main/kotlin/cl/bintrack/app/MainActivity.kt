@@ -1,5 +1,6 @@
-package com.example.bintrack_app
+package cl.bintrack.app
 
 import io.flutter.embedding.android.FlutterActivity
 
 class MainActivity : FlutterActivity()
+
