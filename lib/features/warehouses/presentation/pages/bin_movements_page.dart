@@ -46,6 +46,7 @@ class _BinMovementsPageState
         movement.depositoPagado.toString(),
         movement.referencia,
         movement.fecha,
+        formatearFecha(movement.fecha),
       ].join(" ").toLowerCase();
 
       return texto.contains(query);
@@ -102,6 +103,23 @@ class _BinMovementsPageState
     if (result == true && mounted) {
       await loadMovements();
     }
+  }
+
+  String formatearFecha(String value) {
+    final date = DateTime.tryParse(value);
+
+    if (date == null) {
+      return value;
+    }
+
+    final local = date.toLocal();
+
+    final day = local.day.toString().padLeft(2, "0");
+    final month = local.month.toString().padLeft(2, "0");
+    final hour = local.hour.toString().padLeft(2, "0");
+    final minute = local.minute.toString().padLeft(2, "0");
+
+    return "$day/$month/${local.year} $hour:$minute";
   }
 
   String movementLabel(String value) {
@@ -431,7 +449,7 @@ class _BinMovementsPageState
                   ),
                 _infoLine(
                   Icons.calendar_today,
-                  "Fecha: ${movement.fecha}",
+                  "Fecha: ${formatearFecha(movement.fecha)}",
                 ),
               ],
             ),

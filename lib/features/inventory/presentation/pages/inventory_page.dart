@@ -176,7 +176,7 @@ class _InventoryPageState extends State<InventoryPage> {
           SizedBox(width: 12),
           Expanded(
             child: Text(
-              "El inventario muestra envases vacíos disponibles,"
+              "El inventario muestra envases vacíos disponibles, "
               "envases llenos listos para vender y envases que "
               "están en clientes.",
               style: TextStyle(
