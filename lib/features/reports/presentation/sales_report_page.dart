@@ -1,3 +1,4 @@
+import 'sales_report_pdf_page.dart';
 import 'package:flutter/material.dart';
 
 import '../data/sales_report_service.dart';
@@ -7,14 +8,11 @@ class SalesReportPage extends StatefulWidget {
   const SalesReportPage({super.key});
 
   @override
-  State<SalesReportPage> createState() =>
-      _SalesReportPageState();
+  State<SalesReportPage> createState() => _SalesReportPageState();
 }
 
-class _SalesReportPageState
-    extends State<SalesReportPage> {
-  final SalesReportService service =
-      SalesReportService();
+class _SalesReportPageState extends State<SalesReportPage> {
+  final SalesReportService service = SalesReportService();
 
   String selectedPeriodo = "semana";
 
@@ -23,25 +21,19 @@ class _SalesReportPageState
   @override
   void initState() {
     super.initState();
-    futureReport = service.getReport(
-      periodo: selectedPeriodo,
-    );
+    futureReport = service.getReport(periodo: selectedPeriodo);
   }
 
   void cambiarPeriodo(String periodo) {
     setState(() {
       selectedPeriodo = periodo;
-      futureReport = service.getReport(
-        periodo: selectedPeriodo,
-      );
+      futureReport = service.getReport(periodo: selectedPeriodo);
     });
   }
 
   Future<void> recargar() async {
     setState(() {
-      futureReport = service.getReport(
-        periodo: selectedPeriodo,
-      );
+      futureReport = service.getReport(periodo: selectedPeriodo);
     });
 
     await futureReport;
@@ -70,10 +62,8 @@ class _SalesReportPageState
 
     final local = date.toLocal();
 
-    final day =
-        local.day.toString().padLeft(2, "0");
-    final month =
-        local.month.toString().padLeft(2, "0");
+    final day = local.day.toString().padLeft(2, "0");
+    final month = local.month.toString().padLeft(2, "0");
 
     return "$day/$month/${local.year}";
   }
@@ -107,17 +97,12 @@ class _SalesReportPageState
       body: FutureBuilder<SalesReport>(
         future: futureReport,
         builder: (context, snapshot) {
-          if (snapshot.connectionState ==
-              ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.hasError) {
-            return _errorState(
-              snapshot.error.toString(),
-            );
+            return _errorState(snapshot.error.toString());
           }
 
           final report = snapshot.data;
@@ -129,12 +114,21 @@ class _SalesReportPageState
           return RefreshIndicator(
             onRefresh: recargar,
             child: ListView(
-              physics:
-                  const AlwaysScrollableScrollPhysics(),
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16),
               children: [
                 _periodSelector(),
                 const SizedBox(height: 14),
+                FilledButton.icon(
+                  icon: const Icon(Icons.picture_as_pdf),
+                  label: const Text('Ver PDF / compartir / imprimir'),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => SalesReportPdfPage(report: report),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 _summaryCard(report),
                 const SizedBox(height: 12),
                 _totalsGrid(report),
@@ -173,16 +167,11 @@ class _SalesReportPageState
         selected: selected,
         label: Text(tituloPeriodo(periodo)),
         onSelected: (_) => cambiarPeriodo(periodo),
-        selectedColor: Colors.cyanAccent.withValues(
-          alpha: 0.24,
-        ),
+        selectedColor: Colors.cyanAccent.withValues(alpha: 0.24),
         backgroundColor: const Color(0xFF172033),
         labelStyle: TextStyle(
-          color: selected
-              ? Colors.cyanAccent
-              : Colors.white70,
-          fontWeight:
-              selected ? FontWeight.bold : FontWeight.normal,
+          color: selected ? Colors.cyanAccent : Colors.white70,
+          fontWeight: selected ? FontWeight.bold : FontWeight.normal,
         ),
         side: BorderSide(
           color: selected
@@ -198,17 +187,12 @@ class _SalesReportPageState
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [
-            Color(0xFF064E3B),
-            Color(0xFF111827),
-          ],
+          colors: [Color(0xFF064E3B), Color(0xFF111827)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.08),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.22),
@@ -222,9 +206,7 @@ class _SalesReportPageState
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.greenAccent.withValues(
-                alpha: 0.16,
-              ),
+              color: Colors.greenAccent.withValues(alpha: 0.16),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -236,14 +218,11 @@ class _SalesReportPageState
           const SizedBox(width: 14),
           Expanded(
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   "Reporte ${tituloPeriodo(report.periodo)}",
-                  style: const TextStyle(
-                    color: Colors.white70,
-                  ),
+                  style: const TextStyle(color: Colors.white70),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -279,10 +258,8 @@ class _SalesReportPageState
             Expanded(
               child: _metricCard(
                 title: "Contado / pagado",
-                value:
-                    "\$${formatearMonto(report.totalContado)}",
-                subtitle:
-                    "Clientes pagados: ${report.cantidadClientesPagados}",
+                value: "\$${formatearMonto(report.totalContado)}",
+                subtitle: "Clientes pagados: ${report.cantidadClientesPagados}",
                 color: Colors.greenAccent,
                 icon: Icons.payments_outlined,
               ),
@@ -291,10 +268,8 @@ class _SalesReportPageState
             Expanded(
               child: _metricCard(
                 title: "Crédito / pendiente",
-                value:
-                    "\$${formatearMonto(report.totalCredito)}",
-                subtitle:
-                    "Clientes deben: ${report.cantidadClientesCredito}",
+                value: "\$${formatearMonto(report.totalCredito)}",
+                subtitle: "Clientes deben: ${report.cantidadClientesCredito}",
                 color: Colors.amber,
                 icon: Icons.pending_actions_outlined,
               ),
@@ -308,8 +283,7 @@ class _SalesReportPageState
               child: _metricCard(
                 title: "Ventas",
                 value: report.cantidadVentas.toString(),
-                subtitle:
-                    "Pagadas: ${report.cantidadVentasContado}",
+                subtitle: "Pagadas: ${report.cantidadVentasContado}",
                 color: Colors.lightBlueAccent,
                 icon: Icons.receipt_long_outlined,
               ),
@@ -318,8 +292,7 @@ class _SalesReportPageState
             Expanded(
               child: _metricCard(
                 title: "Pendientes",
-                value:
-                    report.cantidadVentasCredito.toString(),
+                value: report.cantidadVentasCredito.toString(),
                 subtitle: "Ventas por cobrar",
                 color: Colors.orangeAccent,
                 icon: Icons.warning_amber_outlined,
@@ -343,26 +316,16 @@ class _SalesReportPageState
       decoration: BoxDecoration(
         color: const Color(0xFF172033),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: color.withValues(alpha: 0.24),
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.24)),
       ),
       child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            icon,
-            color: color,
-            size: 22,
-          ),
+          Icon(icon, color: color, size: 22),
           const SizedBox(height: 10),
           Text(
             title,
-            style: const TextStyle(
-              color: Colors.white60,
-              fontSize: 12.5,
-            ),
+            style: const TextStyle(color: Colors.white60, fontSize: 12.5),
           ),
           const SizedBox(height: 4),
           Text(
@@ -378,10 +341,7 @@ class _SalesReportPageState
           Text(
             subtitle,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Colors.white54,
-              fontSize: 12,
-            ),
+            style: const TextStyle(color: Colors.white54, fontSize: 12),
           ),
         ],
       ),
@@ -392,16 +352,11 @@ class _SalesReportPageState
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Icon(
-          Icons.list_alt_outlined,
-          color: Colors.cyanAccent,
-          size: 22,
-        ),
+        const Icon(Icons.list_alt_outlined, color: Colors.cyanAccent, size: 22),
         const SizedBox(width: 10),
         Expanded(
           child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
                 "Ventas del período",
@@ -415,10 +370,7 @@ class _SalesReportPageState
               Text(
                 "${report.cantidadVentas} venta(s) "
                 "entre contado y crédito.",
-                style: const TextStyle(
-                  color: Colors.white54,
-                  fontSize: 13,
-                ),
+                style: const TextStyle(color: Colors.white54, fontSize: 13),
               ),
             ],
           ),
@@ -436,17 +388,13 @@ class _SalesReportPageState
       decoration: BoxDecoration(
         color: const Color(0xFF172033),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.07),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
       ),
       child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 padding: const EdgeInsets.all(11),
@@ -464,8 +412,7 @@ class _SalesReportPageState
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       sale.clienteNombre,
@@ -492,25 +439,17 @@ class _SalesReportPageState
               Text(
                 "\$${formatearMonto(sale.total)}",
                 textAlign: TextAlign.right,
-                style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(color: color, fontWeight: FontWeight.bold),
               ),
             ],
           ),
           const SizedBox(height: 10),
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 6,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.11),
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-                color: color.withValues(alpha: 0.3),
-              ),
+              border: Border.all(color: color.withValues(alpha: 0.3)),
             ),
             child: Text(
               tipoLabel(sale.tipoReporte),
@@ -522,10 +461,7 @@ class _SalesReportPageState
             ),
           ),
           if (sale.items.isNotEmpty) ...[
-            const Divider(
-              color: Colors.white12,
-              height: 22,
-            ),
+            const Divider(color: Colors.white12, height: 22),
             ...sale.items.map(_saleItemLine),
           ],
         ],
@@ -536,28 +472,20 @@ class _SalesReportPageState
   Widget _saleItemLine(SalesReportItem item) {
     final cantidad = item.esPorKilo
         ? "${item.binsCantidad} envase(s) · "
-            "${item.kilosPesados?.toStringAsFixed(2) ?? "0.00"} kg"
+              "${item.kilosPesados?.toStringAsFixed(2) ?? "0.00"} kg"
         : "${item.cantidad} envase(s)";
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
-            Icons.circle,
-            size: 7,
-            color: Colors.white38,
-          ),
+          const Icon(Icons.circle, size: 7, color: Colors.white38),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               "${item.productNombre} / ${item.binNombre} · $cantidad",
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 12.5,
-              ),
+              style: const TextStyle(color: Colors.white70, fontSize: 12.5),
             ),
           ),
         ],
@@ -571,34 +499,22 @@ class _SalesReportPageState
       decoration: BoxDecoration(
         color: const Color(0xFF172033),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.07),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
       ),
       child: const Column(
         children: [
-          Icon(
-            Icons.analytics_outlined,
-            color: Colors.white38,
-            size: 44,
-          ),
+          Icon(Icons.analytics_outlined, color: Colors.white38, size: 44),
           SizedBox(height: 12),
           Text(
             "No hay ventas en este período",
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 6),
           Text(
             "Cuando existan ventas pagadas o pendientes, aparecerán en este reporte.",
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white60,
-              height: 1.35,
-            ),
+            style: TextStyle(color: Colors.white60, height: 1.35),
           ),
         ],
       ),
@@ -609,9 +525,7 @@ class _SalesReportPageState
     return const Center(
       child: Text(
         "No hay información de reporte.",
-        style: TextStyle(
-          color: Colors.white70,
-        ),
+        style: TextStyle(color: Colors.white70),
       ),
     );
   }
@@ -623,11 +537,7 @@ class _SalesReportPageState
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.error_outline,
-              color: Colors.redAccent,
-              size: 52,
-            ),
+            const Icon(Icons.error_outline, color: Colors.redAccent, size: 52),
             const SizedBox(height: 12),
             const Text(
               "No se pudo cargar el reporte",
@@ -641,9 +551,7 @@ class _SalesReportPageState
             Text(
               error,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white60,
-              ),
+              style: const TextStyle(color: Colors.white60),
             ),
             const SizedBox(height: 18),
             FilledButton.icon(

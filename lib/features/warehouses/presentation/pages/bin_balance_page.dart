@@ -7,8 +7,7 @@ class BinBalancePage extends StatefulWidget {
   const BinBalancePage({super.key});
 
   @override
-  State<BinBalancePage> createState() =>
-      _BinBalancePageState();
+  State<BinBalancePage> createState() => _BinBalancePageState();
 }
 
 class _BinBalancePageState extends State<BinBalancePage> {
@@ -18,6 +17,31 @@ class _BinBalancePageState extends State<BinBalancePage> {
   static const Color card = Color(0xFF1E293B);
 
   List<BinBalance> balances = [];
+
+  final searchController = TextEditingController();
+  String search = '';
+  bool onlyPending = false;
+
+  String normalize(String value) {
+    var result = value.toLowerCase().trim();
+    const accents = 'áéíóúüñ';
+    const plain = 'aeiouun';
+    for (var i = 0; i < accents.length; i++) {
+      result = result.replaceAll(accents[i], plain[i]);
+    }
+    return result;
+  }
+
+  List<BinBalance> get filteredBalances => balances.where((balance) {
+    return (!onlyPending || balance.saldo > 0) &&
+        normalize(balance.clienteNombre).contains(normalize(search));
+  }).toList();
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
+  }
 
   bool loading = true;
   String? errorMessage;
@@ -56,21 +80,13 @@ class _BinBalancePageState extends State<BinBalancePage> {
   }
 
   int get totalSaldo {
-    return balances.fold(
-      0,
-      (sum, balance) => sum + balance.saldo,
-    );
+    return balances.fold(0, (sum, balance) => sum + balance.saldo);
   }
 
   double get totalDeposito {
     return balances.fold(
       0,
-      (sum, balance) =>
-          sum +
-          (double.tryParse(
-                balance.depositoPendiente,
-              ) ??
-              0),
+      (sum, balance) => sum + (double.tryParse(balance.depositoPendiente) ?? 0),
     );
   }
 
@@ -92,6 +108,7 @@ class _BinBalancePageState extends State<BinBalancePage> {
 
   @override
   Widget build(BuildContext context) {
+    final visibleBalances = filteredBalances;
     return Scaffold(
       backgroundColor: background,
       appBar: AppBar(
@@ -102,29 +119,73 @@ class _BinBalancePageState extends State<BinBalancePage> {
         elevation: 0,
       ),
       body: loading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
+          ? const Center(child: CircularProgressIndicator())
           : errorMessage != null
-              ? _errorState()
-              : RefreshIndicator(
-                  onRefresh: loadBalance,
-                  child: balances.isEmpty
-                      ? _emptyState()
-                      : ListView(
-                          padding:
-                              const EdgeInsets.all(16),
-                          children: [
-                            _introCard(),
-                            const SizedBox(height: 14),
-                            _totalsCard(),
-                            const SizedBox(height: 14),
-                            ...balances.map(
-                              _balanceCard,
+          ? _errorState()
+          : RefreshIndicator(
+              onRefresh: loadBalance,
+              child: balances.isEmpty
+                  ? _emptyState()
+                  : ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.all(16),
+                      children: [
+                        _introCard(),
+                        const SizedBox(height: 14),
+                        _totalsCard(),
+                        const SizedBox(height: 14),
+                        TextField(
+                          controller: searchController,
+                          style: const TextStyle(color: Colors.white),
+                          onChanged: (value) => setState(() => search = value),
+                          decoration: InputDecoration(
+                            labelText: 'Buscar cliente por nombre',
+                            labelStyle: const TextStyle(color: Colors.white70),
+                            prefixIcon: const Icon(
+                              Icons.search,
+                              color: Colors.white70,
                             ),
-                          ],
+                            filled: true,
+                            fillColor: card,
+                            border: const OutlineInputBorder(),
+                            suffixIcon: search.isEmpty
+                                ? null
+                                : IconButton(
+                                    tooltip: 'Limpiar búsqueda',
+                                    icon: const Icon(
+                                      Icons.clear,
+                                      color: Colors.white70,
+                                    ),
+                                    onPressed: () {
+                                      searchController.clear();
+                                      setState(() => search = '');
+                                    },
+                                  ),
+                          ),
                         ),
-                ),
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: FilterChip(
+                            label: const Text('Solo pendientes'),
+                            selected: onlyPending,
+                            onSelected: (value) =>
+                                setState(() => onlyPending = value),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        if (visibleBalances.isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.all(20),
+                            child: Text(
+                              'No hay clientes que coincidan con los filtros.',
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                          ),
+                        ...visibleBalances.map(_balanceCard),
+                      ],
+                    ),
+            ),
     );
   }
 
@@ -135,29 +196,19 @@ class _BinBalancePageState extends State<BinBalancePage> {
         color: Colors.deepPurple.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: Colors.deepPurpleAccent.withValues(
-            alpha: 0.32,
-          ),
+          color: Colors.deepPurpleAccent.withValues(alpha: 0.32),
         ),
       ),
       child: const Row(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.assessment,
-            color: Colors.deepPurpleAccent,
-            size: 30,
-          ),
+          Icon(Icons.assessment, color: Colors.deepPurpleAccent, size: 30),
           SizedBox(width: 12),
           Expanded(
             child: Text(
               "El balance muestra cuántos envases tiene pendiente "
               "cada cliente y el depósito asociado a esos envases.",
-              style: TextStyle(
-                color: Colors.white,
-                height: 1.35,
-              ),
+              style: TextStyle(color: Colors.white, height: 1.35),
             ),
           ),
         ],
@@ -166,18 +217,13 @@ class _BinBalancePageState extends State<BinBalancePage> {
   }
 
   Widget _totalsCard() {
-    final color = totalSaldo > 0
-        ? Colors.orangeAccent
-        : Colors.greenAccent;
+    final color = totalSaldo > 0 ? Colors.orangeAccent : Colors.greenAccent;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [
-            Color(0xFF4C1D95),
-            Color(0xFF2563EB),
-          ],
+          colors: [Color(0xFF4C1D95), Color(0xFF2563EB)],
         ),
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
@@ -189,8 +235,7 @@ class _BinBalancePageState extends State<BinBalancePage> {
         ],
       ),
       child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
             "Resumen general",
@@ -214,8 +259,7 @@ class _BinBalancePageState extends State<BinBalancePage> {
               const SizedBox(width: 10),
               _summaryBox(
                 label: "Depósito pendiente",
-                value:
-                    "\$${totalDeposito.toStringAsFixed(0)}",
+                value: "\$${totalDeposito.toStringAsFixed(0)}",
                 icon: Icons.savings_outlined,
                 color: Colors.greenAccent,
               ),
@@ -238,19 +282,12 @@ class _BinBalancePageState extends State<BinBalancePage> {
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.10),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.12),
-          ),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
         ),
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(
-              icon,
-              color: color,
-              size: 22,
-            ),
+            Icon(icon, color: color, size: 22),
             const SizedBox(height: 8),
             Text(
               value,
@@ -279,9 +316,7 @@ class _BinBalancePageState extends State<BinBalancePage> {
     );
   }
 
-  Widget _balanceCard(
-    BinBalance balance,
-  ) {
+  Widget _balanceCard(BinBalance balance) {
     final color = saldoColor(balance.saldo);
 
     return Container(
@@ -290,9 +325,7 @@ class _BinBalancePageState extends State<BinBalancePage> {
       decoration: BoxDecoration(
         color: card,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: color.withValues(alpha: 0.24),
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.24)),
         boxShadow: const [
           BoxShadow(
             color: Colors.black26,
@@ -302,21 +335,16 @@ class _BinBalancePageState extends State<BinBalancePage> {
         ],
       ),
       child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CircleAvatar(
                 radius: 24,
-                backgroundColor:
-                    color.withValues(alpha: 0.16),
+                backgroundColor: color.withValues(alpha: 0.16),
                 child: Icon(
-                  balance.saldo > 0
-                      ? Icons.warning_amber
-                      : Icons.check_circle,
+                  balance.saldo > 0 ? Icons.warning_amber : Icons.check_circle,
                   color: color,
                 ),
               ),
@@ -325,8 +353,7 @@ class _BinBalancePageState extends State<BinBalancePage> {
 
               Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       balance.clienteNombre,
@@ -354,10 +381,7 @@ class _BinBalancePageState extends State<BinBalancePage> {
 
               const SizedBox(width: 8),
 
-              _statusPill(
-                text: saldoTexto(balance.saldo),
-                color: color,
-              ),
+              _statusPill(text: saldoTexto(balance.saldo), color: color),
             ],
           ),
 
@@ -391,8 +415,7 @@ class _BinBalancePageState extends State<BinBalancePage> {
               const SizedBox(width: 10),
               _smallMetric(
                 label: "Depósito",
-                value:
-                    "\$${balance.depositoPendiente}",
+                value: "\$${balance.depositoPendiente}",
                 color: Colors.greenAccent,
               ),
             ],
@@ -409,21 +432,13 @@ class _BinBalancePageState extends State<BinBalancePage> {
     );
   }
 
-  Widget _statusPill({
-    required String text,
-    required Color color,
-  }) {
+  Widget _statusPill({required String text, required Color color}) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 9,
-        vertical: 5,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: color.withValues(alpha: 0.30),
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.30)),
       ),
       child: Text(
         text,
@@ -447,13 +462,10 @@ class _BinBalancePageState extends State<BinBalancePage> {
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.10),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: color.withValues(alpha: 0.22),
-          ),
+          border: Border.all(color: color.withValues(alpha: 0.22)),
         ),
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               value,
@@ -468,10 +480,7 @@ class _BinBalancePageState extends State<BinBalancePage> {
             const SizedBox(height: 3),
             Text(
               label,
-              style: const TextStyle(
-                color: Colors.white60,
-                fontSize: 11.5,
-              ),
+              style: const TextStyle(color: Colors.white60, fontSize: 11.5),
             ),
           ],
         ),
@@ -479,27 +488,16 @@ class _BinBalancePageState extends State<BinBalancePage> {
     );
   }
 
-  Widget _infoLine(
-    IconData icon,
-    String text,
-  ) {
+  Widget _infoLine(IconData icon, String text) {
     return Row(
-      crossAxisAlignment:
-          CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          icon,
-          size: 16,
-          color: Colors.white54,
-        ),
+        Icon(icon, size: 16, color: Colors.white54),
         const SizedBox(width: 6),
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(
-              color: Colors.white70,
-              height: 1.25,
-            ),
+            style: const TextStyle(color: Colors.white70, height: 1.25),
           ),
         ),
       ],
@@ -508,6 +506,7 @@ class _BinBalancePageState extends State<BinBalancePage> {
 
   Widget _emptyState() {
     return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(24),
       children: [
         const SizedBox(height: 90),
@@ -532,10 +531,7 @@ class _BinBalancePageState extends State<BinBalancePage> {
           "Registra préstamos o devoluciones de envases "
           "para ver saldos por cliente.",
           textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Colors.white60,
-            height: 1.35,
-          ),
+          style: TextStyle(color: Colors.white60, height: 1.35),
         ),
       ],
     );
@@ -545,14 +541,11 @@ class _BinBalancePageState extends State<BinBalancePage> {
     return RefreshIndicator(
       onRefresh: loadBalance,
       child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(24),
         children: [
           const SizedBox(height: 90),
-          const Icon(
-            Icons.error_outline,
-            size: 72,
-            color: Colors.redAccent,
-          ),
+          const Icon(Icons.error_outline, size: 72, color: Colors.redAccent),
           const SizedBox(height: 16),
           const Center(
             child: Text(
@@ -568,10 +561,7 @@ class _BinBalancePageState extends State<BinBalancePage> {
           Text(
             errorMessage ?? "",
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white60,
-              height: 1.35,
-            ),
+            style: const TextStyle(color: Colors.white60, height: 1.35),
           ),
           const SizedBox(height: 20),
           FilledButton.icon(
