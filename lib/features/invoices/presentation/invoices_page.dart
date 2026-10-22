@@ -3,22 +3,20 @@ import 'package:share_plus/share_plus.dart';
 
 import '../data/invoices_service.dart';
 import '../models/invoice_model.dart';
+import 'edit_invoice_page.dart';
+import 'invoice_history_page.dart';
 
 class InvoicesPage extends StatefulWidget {
   const InvoicesPage({super.key});
 
   @override
-  State<InvoicesPage> createState() =>
-      _InvoicesPageState();
+  State<InvoicesPage> createState() => _InvoicesPageState();
 }
 
-class _InvoicesPageState
-    extends State<InvoicesPage> {
-  final InvoicesService service =
-      InvoicesService();
+class _InvoicesPageState extends State<InvoicesPage> {
+  final InvoicesService service = InvoicesService();
 
-  final TextEditingController buscarController =
-      TextEditingController();
+  final TextEditingController buscarController = TextEditingController();
 
   late Future<List<Invoice>> futureInvoices;
 
@@ -42,12 +40,25 @@ class _InvoicesPageState
     await futureInvoices;
   }
 
-  List<Invoice> filtrarComprobantes(
-    List<Invoice> invoices,
-  ) {
-    final query = buscarController.text
-        .trim()
-        .toLowerCase();
+  Future<void> editarComprobante(Invoice invoice) async {
+    final updated = await Navigator.of(context).push<Invoice>(
+      MaterialPageRoute(
+        builder: (_) => EditInvoicePage(invoice: invoice, service: service),
+      ),
+    );
+    if (!mounted || updated == null) return;
+    // Replace the loaded snapshot immediately, including the text used to share.
+    final current = await futureInvoices;
+    if (!mounted) return;
+    setState(() {
+      futureInvoices = Future.value(
+        current.map((item) => item.id == updated.id ? updated : item).toList(),
+      );
+    });
+  }
+
+  List<Invoice> filtrarComprobantes(List<Invoice> invoices) {
+    final query = buscarController.text.trim().toLowerCase();
 
     if (query.isEmpty) {
       return invoices;
@@ -78,6 +89,7 @@ class _InvoicesPageState
         invoice.clienteNombre,
         invoice.clienteRut,
         invoice.clienteDireccion ?? "",
+        invoice.observaciones,
         invoice.fechaEmision,
         formatearFecha(invoice.fechaEmision),
         invoice.subtotal.toStringAsFixed(0),
@@ -131,24 +143,17 @@ class _InvoicesPageState
 
     final local = date.toLocal();
 
-    final day =
-        local.day.toString().padLeft(2, "0");
-    final month =
-        local.month.toString().padLeft(2, "0");
-    final hour =
-        local.hour.toString().padLeft(2, "0");
-    final minute =
-        local.minute.toString().padLeft(2, "0");
+    final day = local.day.toString().padLeft(2, "0");
+    final month = local.month.toString().padLeft(2, "0");
+    final hour = local.hour.toString().padLeft(2, "0");
+    final minute = local.minute.toString().padLeft(2, "0");
 
     return "$day/$month/${local.year} "
         "$hour:$minute";
   }
 
   double totalComprobantes(List<Invoice> invoices) {
-    return invoices.fold<double>(
-      0,
-      (total, invoice) => total + invoice.total,
-    );
+    return invoices.fold<double>(0, (total, invoice) => total + invoice.total);
   }
 
   String textoCompartirComprobante(Invoice invoice) {
@@ -165,9 +170,11 @@ class _InvoicesPageState
     buffer.writeln("RUT: ${invoice.clienteRut}");
 
     if (invoice.clienteDireccion?.isNotEmpty == true) {
-      buffer.writeln(
-        "Dirección: ${invoice.clienteDireccion}",
-      );
+      buffer.writeln("Dirección: ${invoice.clienteDireccion}");
+    }
+
+    if (invoice.observaciones.isNotEmpty) {
+      buffer.writeln('Observaciones: ${invoice.observaciones}');
     }
 
     if (invoice.items.isNotEmpty) {
@@ -175,9 +182,7 @@ class _InvoicesPageState
       buffer.writeln("Detalle:");
 
       for (final item in invoice.items) {
-        buffer.writeln(
-          "- ${item.productNombre} / ${item.binNombre}",
-        );
+        buffer.writeln("- ${item.productNombre} / ${item.binNombre}");
 
         if (item.esPorKilo) {
           buffer.writeln(
@@ -189,31 +194,21 @@ class _InvoicesPageState
             "\$${formatearMonto(item.precioUnitario)} / kg",
           );
         } else {
-          buffer.writeln(
-            "  Cantidad: ${item.cantidad} envase(s)",
-          );
+          buffer.writeln("  Cantidad: ${item.cantidad} envase(s)");
           buffer.writeln(
             "  Precio: "
             "\$${formatearMonto(item.precioUnitario)} / envase",
           );
         }
 
-        buffer.writeln(
-          "  Subtotal: \$${formatearMonto(item.subtotal)}",
-        );
+        buffer.writeln("  Subtotal: \$${formatearMonto(item.subtotal)}");
       }
     }
 
     buffer.writeln("");
-    buffer.writeln(
-      "Subtotal: \$${formatearMonto(invoice.subtotal)}",
-    );
-    buffer.writeln(
-      "IVA informativo: \$${formatearMonto(invoice.iva)}",
-    );
-    buffer.writeln(
-      "Total: \$${formatearMonto(invoice.total)}",
-    );
+    buffer.writeln("Subtotal: \$${formatearMonto(invoice.subtotal)}");
+    buffer.writeln("IVA informativo: \$${formatearMonto(invoice.iva)}");
+    buffer.writeln("Total: \$${formatearMonto(invoice.total)}");
     buffer.writeln("");
     buffer.writeln(
       "Documento interno no tributario. "
@@ -223,9 +218,7 @@ class _InvoicesPageState
     return buffer.toString();
   }
 
-  Future<void> compartirComprobante(
-    Invoice invoice,
-  ) async {
+  Future<void> compartirComprobante(Invoice invoice) async {
     await SharePlus.instance.share(
       ShareParams(
         text: textoCompartirComprobante(invoice),
@@ -247,21 +240,15 @@ class _InvoicesPageState
       body: FutureBuilder<List<Invoice>>(
         future: futureInvoices,
         builder: (context, snapshot) {
-          if (snapshot.connectionState ==
-              ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.hasError) {
-            return _errorState(
-              snapshot.error.toString(),
-            );
+            return _errorState(snapshot.error.toString());
           }
 
-          final invoices =
-              snapshot.data ?? [];
+          final invoices = snapshot.data ?? [];
 
           if (invoices.isEmpty) {
             return _emptyState();
@@ -272,8 +259,7 @@ class _InvoicesPageState
           return RefreshIndicator(
             onRefresh: recargar,
             child: ListView(
-              physics:
-                  const AlwaysScrollableScrollPhysics(),
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16),
               children: [
                 _summaryCard(invoices),
@@ -301,17 +287,12 @@ class _InvoicesPageState
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [
-            Color(0xFF312E81),
-            Color(0xFF111827),
-          ],
+          colors: [Color(0xFF312E81), Color(0xFF111827)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.08),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.22),
@@ -325,9 +306,7 @@ class _InvoicesPageState
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.purpleAccent.withValues(
-                alpha: 0.16,
-              ),
+              color: Colors.purpleAccent.withValues(alpha: 0.16),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -339,14 +318,11 @@ class _InvoicesPageState
           const SizedBox(width: 14),
           Expanded(
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
                   "Comprobantes generados",
-                  style: TextStyle(
-                    color: Colors.white70,
-                  ),
+                  style: TextStyle(color: Colors.white70),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -380,27 +356,18 @@ class _InvoicesPageState
       decoration: BoxDecoration(
         color: Colors.amber.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Colors.amber.withValues(alpha: 0.35),
-        ),
+        border: Border.all(color: Colors.amber.withValues(alpha: 0.35)),
       ),
       child: const Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.info_outline,
-            color: Colors.amber,
-            size: 22,
-          ),
+          Icon(Icons.info_outline, color: Colors.amber, size: 22),
           SizedBox(width: 10),
           Expanded(
             child: Text(
               "Documento interno no tributario. "
               "No es boleta ni factura válida ante el SII.",
-              style: TextStyle(
-                color: Colors.white,
-                height: 1.35,
-              ),
+              style: TextStyle(color: Colors.white, height: 1.35),
             ),
           ),
         ],
@@ -414,24 +381,15 @@ class _InvoicesPageState
       decoration: BoxDecoration(
         color: const Color(0xFF172033),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Colors.purpleAccent.withValues(
-            alpha: 0.24,
-          ),
-        ),
+        border: Border.all(color: Colors.purpleAccent.withValues(alpha: 0.24)),
       ),
       child: TextField(
         controller: buscarController,
         onChanged: (_) => setState(() {}),
-        style: const TextStyle(
-          color: Colors.white,
-        ),
+        style: const TextStyle(color: Colors.white),
         cursorColor: Colors.purpleAccent,
         decoration: InputDecoration(
-          prefixIcon: const Icon(
-            Icons.search,
-            color: Colors.purpleAccent,
-          ),
+          prefixIcon: const Icon(Icons.search, color: Colors.purpleAccent),
           suffixIcon: buscarController.text.isEmpty
               ? null
               : IconButton(
@@ -439,37 +397,21 @@ class _InvoicesPageState
                     buscarController.clear();
                     setState(() {});
                   },
-                  icon: const Icon(
-                    Icons.clear,
-                    color: Colors.white70,
-                  ),
+                  icon: const Icon(Icons.clear, color: Colors.white70),
                 ),
           labelText: "Buscar comprobante",
-          hintText:
-              "Cliente, RUT, comprobante, venta, producto, fecha o monto",
-          labelStyle: const TextStyle(
-            color: Colors.white70,
-          ),
-          hintStyle: const TextStyle(
-            color: Colors.white38,
-          ),
+          hintText: "Cliente, RUT, comprobante, venta, producto, fecha o monto",
+          labelStyle: const TextStyle(color: Colors.white70),
+          hintStyle: const TextStyle(color: Colors.white38),
           filled: true,
-          fillColor: Colors.black.withValues(
-            alpha: 0.18,
-          ),
+          fillColor: Colors.black.withValues(alpha: 0.18),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(
-              color: Colors.white.withValues(
-                alpha: 0.12,
-              ),
-            ),
+            borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(
-              color: Colors.purpleAccent,
-            ),
+            borderSide: const BorderSide(color: Colors.purpleAccent),
           ),
         ),
       ),
@@ -480,16 +422,11 @@ class _InvoicesPageState
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: const [
-        Icon(
-          Icons.description_outlined,
-          color: Colors.cyanAccent,
-          size: 22,
-        ),
+        Icon(Icons.description_outlined, color: Colors.cyanAccent, size: 22),
         SizedBox(width: 10),
         Expanded(
           child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 "Historial de comprobantes",
@@ -502,10 +439,7 @@ class _InvoicesPageState
               SizedBox(height: 3),
               Text(
                 "Comprobantes internos generados desde ventas pagadas.",
-                style: TextStyle(
-                  color: Colors.white54,
-                  fontSize: 13,
-                ),
+                style: TextStyle(color: Colors.white54, fontSize: 13),
               ),
             ],
           ),
@@ -523,24 +457,18 @@ class _InvoicesPageState
       decoration: BoxDecoration(
         color: const Color(0xFF172033),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.07),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
       ),
       child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.purpleAccent.withValues(
-                    alpha: 0.14,
-                  ),
+                  color: Colors.purpleAccent.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(
@@ -551,8 +479,7 @@ class _InvoicesPageState
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       "Comprobante #${invoice.numero}",
@@ -567,9 +494,7 @@ class _InvoicesPageState
                     Text(
                       "Venta #${invoice.saleNumero}",
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white70,
-                      ),
+                      style: const TextStyle(color: Colors.white70),
                     ),
                   ],
                 ),
@@ -586,22 +511,10 @@ class _InvoicesPageState
               ),
             ],
           ),
-          const Divider(
-            color: Colors.white12,
-            height: 24,
-          ),
-          _infoLine(
-            Icons.person_outline,
-            "Cliente",
-            invoice.clienteNombre,
-          ),
-          _infoLine(
-            Icons.badge_outlined,
-            "RUT",
-            invoice.clienteRut,
-          ),
-          if (invoice.clienteDireccion?.isNotEmpty ==
-              true)
+          const Divider(color: Colors.white12, height: 24),
+          _infoLine(Icons.person_outline, "Cliente", invoice.clienteNombre),
+          _infoLine(Icons.badge_outlined, "RUT", invoice.clienteRut),
+          if (invoice.clienteDireccion?.isNotEmpty == true)
             _infoLine(
               Icons.location_on_outlined,
               "Dirección",
@@ -609,16 +522,11 @@ class _InvoicesPageState
             ),
           const SizedBox(height: 8),
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 7,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-                color: color.withValues(alpha: 0.35),
-              ),
+              border: Border.all(color: color.withValues(alpha: 0.35)),
             ),
             child: Text(
               "Venta ${estadoVenta(invoice.saleEstado)}",
@@ -631,10 +539,7 @@ class _InvoicesPageState
           ),
           if (invoice.items.isNotEmpty) ...[
             const SizedBox(height: 10),
-            const Divider(
-              color: Colors.white12,
-              height: 20,
-            ),
+            const Divider(color: Colors.white12, height: 20),
             const Text(
               "Detalle de productos",
               style: TextStyle(
@@ -646,36 +551,48 @@ class _InvoicesPageState
             ...invoice.items.map(_invoiceItemLine),
           ],
           const SizedBox(height: 12),
-          _amountLine(
-            "Subtotal",
-            invoice.subtotal,
-          ),
-          _amountLine(
-            "IVA informativo",
-            invoice.iva,
-          ),
-          const Divider(
-            color: Colors.white12,
-            height: 20,
-          ),
-          _amountLine(
-            "Total",
-            invoice.total,
-            highlighted: true,
-          ),
+          _amountLine("Subtotal", invoice.subtotal),
+          _amountLine("IVA informativo", invoice.iva),
+          const Divider(color: Colors.white12, height: 20),
+          _amountLine("Total", invoice.total, highlighted: true),
           const SizedBox(height: 10),
           _infoLine(
             Icons.calendar_month_outlined,
             "Generado",
             formatearFecha(invoice.fechaEmision),
           ),
+          if (invoice.observaciones.isNotEmpty)
+            _infoLine(Icons.notes, 'Observaciones', invoice.observaciones),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            children: [
+              TextButton.icon(
+                onPressed: () => editarComprobante(invoice),
+                icon: const Icon(Icons.edit_outlined),
+                label: const Text('Editar datos'),
+                style: TextButton.styleFrom(foregroundColor: Colors.cyanAccent),
+              ),
+              TextButton.icon(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => InvoiceHistoryPage(
+                      invoiceId: invoice.id,
+                      service: service,
+                    ),
+                  ),
+                ),
+                icon: const Icon(Icons.history),
+                label: const Text('Historial'),
+                style: TextButton.styleFrom(foregroundColor: Colors.cyanAccent),
+              ),
+            ],
+          ),
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: () => compartirComprobante(
-                invoice,
-              ),
+              onPressed: () => compartirComprobante(invoice),
               icon: const Icon(Icons.share_outlined),
               label: const Text("Compartir comprobante"),
             ),
@@ -688,7 +605,7 @@ class _InvoicesPageState
   Widget _invoiceItemLine(InvoiceItem item) {
     final detalleCantidad = item.esPorKilo
         ? "${item.binsCantidad} envase(s) · "
-            "${item.kilosPesados?.toStringAsFixed(2) ?? "0.00"} kg"
+              "${item.kilosPesados?.toStringAsFixed(2) ?? "0.00"} kg"
         : "${item.cantidad} envase(s)";
 
     final precioLabel = item.esPorKilo
@@ -701,13 +618,10 @@ class _InvoicesPageState
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.06),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
       ),
       child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             "${item.productNombre} / ${item.binNombre}",
@@ -719,24 +633,17 @@ class _InvoicesPageState
           const SizedBox(height: 4),
           Text(
             detalleCantidad,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 12.5,
-            ),
+            style: const TextStyle(color: Colors.white70, fontSize: 12.5),
           ),
           const SizedBox(height: 4),
           Row(
-            mainAxisAlignment:
-                MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Flexible(
                 child: Text(
                   precioLabel,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white54,
-                    fontSize: 12.5,
-                  ),
+                  style: const TextStyle(color: Colors.white54, fontSize: 12.5),
                 ),
               ),
               const SizedBox(width: 8),
@@ -754,41 +661,26 @@ class _InvoicesPageState
     );
   }
 
-  Widget _infoLine(
-    IconData icon,
-    String label,
-    String value,
-  ) {
+  Widget _infoLine(IconData icon, String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            icon,
-            color: Colors.white38,
-            size: 18,
-          ),
+          Icon(icon, color: Colors.white38, size: 18),
           const SizedBox(width: 8),
           SizedBox(
             width: 86,
             child: Text(
               label,
-              style: const TextStyle(
-                color: Colors.white54,
-                fontSize: 13,
-              ),
+              style: const TextStyle(color: Colors.white54, fontSize: 13),
             ),
           ),
           Expanded(
             child: Text(
               value,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 13,
-              ),
+              style: const TextStyle(color: Colors.white, fontSize: 13),
             ),
           ),
         ],
@@ -796,35 +688,24 @@ class _InvoicesPageState
     );
   }
 
-  Widget _amountLine(
-    String label,
-    double value, {
-    bool highlighted = false,
-  }) {
+  Widget _amountLine(String label, double value, {bool highlighted = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 5),
       child: Row(
-        mainAxisAlignment:
-            MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             label,
             style: TextStyle(
-              color: highlighted
-                  ? Colors.white
-                  : Colors.white60,
+              color: highlighted ? Colors.white : Colors.white60,
               fontSize: highlighted ? 16 : 13,
-              fontWeight: highlighted
-                  ? FontWeight.bold
-                  : FontWeight.normal,
+              fontWeight: highlighted ? FontWeight.bold : FontWeight.normal,
             ),
           ),
           Text(
             "\$${formatearMonto(value)}",
             style: TextStyle(
-              color: highlighted
-                  ? Colors.greenAccent
-                  : Colors.white,
+              color: highlighted ? Colors.greenAccent : Colors.white,
               fontSize: highlighted ? 17 : 13,
               fontWeight: FontWeight.bold,
             ),
@@ -840,20 +721,14 @@ class _InvoicesPageState
       decoration: BoxDecoration(
         color: const Color(0xFF172033),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Colors.white.withValues(
-            alpha: 0.10,
-          ),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
       ),
       child: Column(
         children: [
           Icon(
             Icons.search_off,
             size: 52,
-            color: Colors.white.withValues(
-              alpha: 0.45,
-            ),
+            color: Colors.white.withValues(alpha: 0.45),
           ),
           const SizedBox(height: 12),
           const Text(
@@ -868,10 +743,7 @@ class _InvoicesPageState
           const Text(
             "Prueba buscar por cliente, RUT, comprobante, venta, producto, envase, fecha o monto.",
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white60,
-              height: 1.35,
-            ),
+            style: TextStyle(color: Colors.white60, height: 1.35),
           ),
         ],
       ),
@@ -882,8 +754,7 @@ class _InvoicesPageState
     return RefreshIndicator(
       onRefresh: recargar,
       child: ListView(
-        physics:
-            const AlwaysScrollableScrollPhysics(),
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(24),
         children: [
           const SizedBox(height: 120),
@@ -892,9 +763,7 @@ class _InvoicesPageState
             decoration: BoxDecoration(
               color: const Color(0xFF172033),
               borderRadius: BorderRadius.circular(22),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.07),
-              ),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
             ),
             child: const Column(
               children: [
@@ -917,10 +786,7 @@ class _InvoicesPageState
                 Text(
                   "Cuando una venta pagada tenga comprobante, aparecerá en este historial.",
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white60,
-                    height: 1.35,
-                  ),
+                  style: TextStyle(color: Colors.white60, height: 1.35),
                 ),
                 SizedBox(height: 12),
                 Text(
@@ -947,11 +813,7 @@ class _InvoicesPageState
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.error_outline,
-              color: Colors.redAccent,
-              size: 52,
-            ),
+            const Icon(Icons.error_outline, color: Colors.redAccent, size: 52),
             const SizedBox(height: 12),
             const Text(
               "No se pudieron cargar los comprobantes",
@@ -965,9 +827,7 @@ class _InvoicesPageState
             Text(
               error,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white60,
-              ),
+              style: const TextStyle(color: Colors.white60),
             ),
             const SizedBox(height: 18),
             FilledButton.icon(

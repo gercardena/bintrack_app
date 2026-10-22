@@ -19,43 +19,23 @@ class InvoiceItem {
     required this.subtotal,
   });
 
-  factory InvoiceItem.fromJson(
-    Map<String, dynamic> json,
-  ) {
+  factory InvoiceItem.fromJson(Map<String, dynamic> json) {
     return InvoiceItem(
-      productNombre:
-          (json["product_nombre"] ?? "").toString(),
-      binNombre:
-          (json["bin_nombre"] ?? "").toString(),
-      cantidad: int.tryParse(
-            json["cantidad"].toString(),
-          ) ??
-          0,
-      binsCantidad: int.tryParse(
-            json["bins_cantidad"].toString(),
-          ) ??
-          0,
-      tipoCobro:
-          (json["tipo_cobro"] ?? "envase").toString(),
+      productNombre: (json["product_nombre"] ?? "").toString(),
+      binNombre: (json["bin_nombre"] ?? "").toString(),
+      cantidad: int.tryParse(json["cantidad"].toString()) ?? 0,
+      binsCantidad: int.tryParse(json["bins_cantidad"].toString()) ?? 0,
+      tipoCobro: (json["tipo_cobro"] ?? "envase").toString(),
       kilosPesados: json["kilos_pesados"] == null
           ? null
-          : double.tryParse(
-              json["kilos_pesados"].toString(),
-            ),
-      precioUnitario: double.tryParse(
-            json["precio_unitario"].toString(),
-          ) ??
-          0,
-      subtotal: double.tryParse(
-            json["subtotal"].toString(),
-          ) ??
-          0,
+          : double.tryParse(json["kilos_pesados"].toString()),
+      precioUnitario: double.tryParse(json["precio_unitario"].toString()) ?? 0,
+      subtotal: double.tryParse(json["subtotal"].toString()) ?? 0,
     );
   }
 
   bool get esPorKilo => tipoCobro == "kilo";
 }
-
 
 class Invoice {
   final int id;
@@ -71,6 +51,8 @@ class Invoice {
   final double total;
   final String fechaEmision;
   final List<InvoiceItem> items;
+  final String observaciones;
+  final int version;
 
   Invoice({
     required this.id,
@@ -86,56 +68,34 @@ class Invoice {
     required this.total,
     required this.fechaEmision,
     required this.items,
+    this.observaciones = '',
+    this.version = 0,
   });
 
-  factory Invoice.fromJson(
-    Map<String, dynamic> json,
-  ) {
+  factory Invoice.fromJson(Map<String, dynamic> json) {
     final rawItems = json["items"];
 
     return Invoice(
-      id: int.tryParse(
-            json["id"].toString(),
-          ) ??
-          0,
-      saleId: int.tryParse(
-            json["sale"].toString(),
-          ) ??
-          0,
-      saleNumero:
-          (json["sale_numero"] ?? "").toString(),
-      saleEstado:
-          (json["sale_estado"] ?? "").toString(),
-      numero:
-          (json["numero"] ?? "").toString(),
-      clienteNombre:
-          (json["cliente_nombre"] ?? "").toString(),
-      clienteRut:
-          (json["cliente_rut"] ?? "").toString(),
-      clienteDireccion:
-          json["cliente_direccion"]?.toString(),
-      subtotal: double.tryParse(
-            json["subtotal"].toString(),
-          ) ??
-          0,
-      iva: double.tryParse(
-            json["iva"].toString(),
-          ) ??
-          0,
-      total: double.tryParse(
-            json["total"].toString(),
-          ) ??
-          0,
-      fechaEmision:
-          (json["fecha_emision"] ?? "").toString(),
+      observaciones: (json['observaciones'] ?? '').toString(),
+      version: int.tryParse(json['version'].toString()) ?? 0,
+      id: int.tryParse(json["id"].toString()) ?? 0,
+      saleId: int.tryParse(json["sale"].toString()) ?? 0,
+      saleNumero: (json["sale_numero"] ?? "").toString(),
+      saleEstado: (json["sale_estado"] ?? "").toString(),
+      numero: (json["numero"] ?? "").toString(),
+      clienteNombre: (json["cliente_nombre"] ?? "").toString(),
+      clienteRut: (json["cliente_rut"] ?? "").toString(),
+      clienteDireccion: json["cliente_direccion"]?.toString(),
+      subtotal: double.tryParse(json["subtotal"].toString()) ?? 0,
+      iva: double.tryParse(json["iva"].toString()) ?? 0,
+      total: double.tryParse(json["total"].toString()) ?? 0,
+      fechaEmision: (json["fecha_emision"] ?? "").toString(),
       items: rawItems is List
           ? rawItems
-              .map(
-                (item) => InvoiceItem.fromJson(
-                  item as Map<String, dynamic>,
-                ),
-              )
-              .toList()
+                .map(
+                  (item) => InvoiceItem.fromJson(item as Map<String, dynamic>),
+                )
+                .toList()
           : const [],
     );
   }

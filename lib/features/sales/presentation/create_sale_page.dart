@@ -6,17 +6,16 @@ import '../../clientes/models/cliente.dart';
 import '../data/services/sale_service.dart';
 
 import 'sale_detail_page.dart';
+import 'sale_client_picker.dart';
 
 class CreateSalePage extends StatefulWidget {
   const CreateSalePage({super.key});
 
   @override
-  State<CreateSalePage> createState() =>
-      _CreateSalePageState();
+  State<CreateSalePage> createState() => _CreateSalePageState();
 }
 
-class _CreateSalePageState
-    extends State<CreateSalePage> {
+class _CreateSalePageState extends State<CreateSalePage> {
   final SalesService _salesService = SalesService();
 
   final ClientsService _clientsService = ClientsService();
@@ -45,11 +44,7 @@ class _CreateSalePageState
       if (!mounted) return;
 
       setState(() {
-        clientes = data
-            .where(
-              (cliente) => cliente.activo,
-            )
-            .toList();
+        clientes = data.where((cliente) => cliente.activo).toList();
         loading = false;
       });
     } catch (e) {
@@ -68,9 +63,7 @@ class _CreateSalePageState
     if (cliente == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            "Selecciona un cliente activo para crear la venta.",
-          ),
+          content: Text("Selecciona un cliente activo para crear la venta."),
         ),
       );
 
@@ -82,27 +75,17 @@ class _CreateSalePageState
     });
 
     try {
-      final saleId = await _salesService.createSale(
-        clienteId: cliente.id,
-      );
+      final saleId = await _salesService.createSale(clienteId: cliente.id);
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            "Venta #$saleId creada.",
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Venta #$saleId creada.")));
 
       await Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (_) => SaleDetailPage(
-            saleId: saleId,
-          ),
-        ),
+        MaterialPageRoute(builder: (_) => SaleDetailPage(saleId: saleId)),
       );
 
       if (!mounted) return;
@@ -116,13 +99,21 @@ class _CreateSalePageState
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            "No fue posible crear la venta: $e",
-          ),
-        ),
+        SnackBar(content: Text("No fue posible crear la venta: $e")),
       );
     }
+  }
+
+  Future<void> seleccionarCliente() async {
+    final cliente = await showDialog<Cliente>(
+      context: context,
+      builder: (_) => SaleClientPicker(
+        clientes: clientes,
+        selectedId: clienteSeleccionado?.id,
+      ),
+    );
+    if (!mounted || cliente == null) return;
+    setState(() => clienteSeleccionado = cliente);
   }
 
   @override
@@ -132,32 +123,22 @@ class _CreateSalePageState
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.white.withValues(alpha: 0.06),
-          labelStyle: const TextStyle(
-            color: Colors.white70,
-          ),
+          labelStyle: const TextStyle(color: Colors.white70),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(
-              color: Colors.white.withValues(alpha: 0.14),
-            ),
+            borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.14)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(
-              color: Colors.blueAccent,
-            ),
+            borderSide: const BorderSide(color: Colors.blueAccent),
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(
-              color: Colors.redAccent,
-            ),
+            borderSide: const BorderSide(color: Colors.redAccent),
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(
-              color: Colors.redAccent,
-            ),
+            borderSide: const BorderSide(color: Colors.redAccent),
           ),
         ),
       ),
@@ -171,116 +152,85 @@ class _CreateSalePageState
           elevation: 0,
         ),
         body: loading
-            ? const Center(
-                child: CircularProgressIndicator(),
-              )
+            ? const Center(child: CircularProgressIndicator())
             : errorMessage != null
-                ? _errorState()
-                : clientes.isEmpty
-                    ? _emptyState()
-                    : ListView(
-                        padding:
-                            const EdgeInsets.all(16),
-                        children: [
-                          _introCard(),
-                          const SizedBox(height: 16),
-                          _sectionCard(
-                            title: "Cliente",
-                            icon: Icons.person_outline,
-                            color: Colors.blueAccent,
-                            children: [
-                              DropdownButtonFormField<Cliente>(
-                                initialValue:
-                                    clienteSeleccionado,
-                                isExpanded: true,
-                                dropdownColor: card,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                ),
-                                items: clientes.map(
-                                  (cliente) {
-                                    return DropdownMenuItem<
-                                        Cliente>(
-                                      value: cliente,
-                                      child: Text(
-                                        cliente.nombre,
-                                        overflow:
-                                            TextOverflow
-                                                .ellipsis,
-                                      ),
-                                    );
-                                  },
-                                ).toList(),
-                                onChanged: saving
-                                    ? null
-                                    : (value) {
-                                        setState(() {
-                                          clienteSeleccionado =
-                                              value;
-                                        });
-                                      },
-                                decoration:
-                                    const InputDecoration(
-                                  labelText:
-                                      "Cliente activo",
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              _smallHelp(
-                                "Solo aparecen clientes activos. "
-                                "Si no encuentras uno, revisa el módulo Clientes.",
-                              ),
-                            ],
+            ? _errorState()
+            : clientes.isEmpty
+            ? _emptyState()
+            : ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  _introCard(),
+                  const SizedBox(height: 16),
+                  _sectionCard(
+                    title: "Cliente",
+                    icon: Icons.person_outline,
+                    color: Colors.blueAccent,
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: saving ? null : seleccionarCliente,
+                        icon: const Icon(Icons.search),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.all(16),
+                        ),
+                        label: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            clienteSeleccionado == null
+                                ? 'Buscar cliente por nombre o RUT'
+                                : '${clienteSeleccionado!.nombre}\nRUT: ${clienteSeleccionado!.rut}',
                           ),
-                          const SizedBox(height: 16),
-                          _sectionCard(
-                            title: "Flujo de venta",
-                            icon: Icons.route,
-                            color: Colors.cyanAccent,
-                            children: const [
-                              _StepText(
-                                number: "1",
-                                text:
-                                    "Se crea una venta en borrador.",
-                              ),
-                              SizedBox(height: 8),
-                              _StepText(
-                                number: "2",
-                                text:
-                                    "Luego agregas productos y cantidades.",
-                              ),
-                              SizedBox(height: 8),
-                              _StepText(
-                                number: "3",
-                                text:
-                                    "Al confirmar, se descuenta stock y se registran envases.",
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 28),
-                          SizedBox(
-                            width: double.infinity,
-                            child: FilledButton.icon(
-                              onPressed:
-                                  saving ? null : crearVenta,
-                              icon: saving
-                                  ? const SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child:
-                                          CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Icon(Icons.add),
-                              label: const Text(
-                                "Crear venta",
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                        ],
+                        ),
                       ),
+                      const SizedBox(height: 10),
+                      _smallHelp(
+                        "Solo aparecen clientes activos. "
+                        "Si no encuentras uno, revisa el módulo Clientes.",
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _sectionCard(
+                    title: "Flujo de venta",
+                    icon: Icons.route,
+                    color: Colors.cyanAccent,
+                    children: const [
+                      _StepText(
+                        number: "1",
+                        text: "Se crea una venta en borrador.",
+                      ),
+                      SizedBox(height: 8),
+                      _StepText(
+                        number: "2",
+                        text: "Luego agregas productos y cantidades.",
+                      ),
+                      SizedBox(height: 8),
+                      _StepText(
+                        number: "3",
+                        text:
+                            "Al confirmar, se descuenta stock y se registran envases.",
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 28),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: saving ? null : crearVenta,
+                      icon: saving
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.add),
+                      label: const Text("Crear venta"),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
       ),
     );
   }
@@ -290,10 +240,7 @@ class _CreateSalePageState
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [
-            Color(0xFF1D4ED8),
-            Color(0xFF0EA5E9),
-          ],
+          colors: [Color(0xFF1D4ED8), Color(0xFF0EA5E9)],
         ),
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
@@ -305,24 +252,16 @@ class _CreateSalePageState
         ],
       ),
       child: const Row(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.add_shopping_cart,
-            color: Colors.white,
-            size: 32,
-          ),
+          Icon(Icons.add_shopping_cart, color: Colors.white, size: 32),
           SizedBox(width: 12),
           Expanded(
             child: Text(
               "Crea una venta seleccionando primero el cliente. "
               "Después podrás agregar productos, confirmar, registrar "
               "pago y generar comprobante.",
-              style: TextStyle(
-                color: Colors.white,
-                height: 1.35,
-              ),
+              style: TextStyle(color: Colors.white, height: 1.35),
             ),
           ),
         ],
@@ -341,20 +280,14 @@ class _CreateSalePageState
       decoration: BoxDecoration(
         color: card,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.06),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
       ),
       child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                icon,
-                color: color,
-              ),
+              Icon(icon, color: color),
               const SizedBox(width: 8),
               Text(
                 title,
@@ -375,14 +308,9 @@ class _CreateSalePageState
 
   Widget _smallHelp(String text) {
     return Row(
-      crossAxisAlignment:
-          CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Icon(
-          Icons.info_outline,
-          size: 18,
-          color: Colors.white54,
-        ),
+        const Icon(Icons.info_outline, size: 18, color: Colors.white54),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
@@ -423,10 +351,7 @@ class _CreateSalePageState
         const Text(
           "Para crear una venta primero necesitas un cliente activo.",
           textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Colors.white60,
-            height: 1.35,
-          ),
+          style: TextStyle(color: Colors.white60, height: 1.35),
         ),
       ],
     );
@@ -437,11 +362,7 @@ class _CreateSalePageState
       padding: const EdgeInsets.all(24),
       children: [
         const SizedBox(height: 90),
-        const Icon(
-          Icons.error_outline,
-          size: 72,
-          color: Colors.redAccent,
-        ),
+        const Icon(Icons.error_outline, size: 72, color: Colors.redAccent),
         const SizedBox(height: 16),
         const Center(
           child: Text(
@@ -457,10 +378,7 @@ class _CreateSalePageState
         Text(
           errorMessage ?? "",
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: Colors.white60,
-            height: 1.35,
-          ),
+          style: const TextStyle(color: Colors.white60, height: 1.35),
         ),
       ],
     );
@@ -471,21 +389,16 @@ class _StepText extends StatelessWidget {
   final String number;
   final String text;
 
-  const _StepText({
-    required this.number,
-    required this.text,
-  });
+  const _StepText({required this.number, required this.text});
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment:
-          CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         CircleAvatar(
           radius: 12,
-          backgroundColor:
-              Colors.cyanAccent.withValues(alpha: 0.18),
+          backgroundColor: Colors.cyanAccent.withValues(alpha: 0.18),
           child: Text(
             number,
             style: const TextStyle(
@@ -499,10 +412,7 @@ class _StepText extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(
-              color: Colors.white70,
-              height: 1.3,
-            ),
+            style: const TextStyle(color: Colors.white70, height: 1.3),
           ),
         ),
       ],
