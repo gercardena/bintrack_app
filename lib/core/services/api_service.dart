@@ -7,13 +7,12 @@ import 'package:http/http.dart' as http;
 import '../../features/auth/data/auth_api.dart';
 import '../../features/auth/data/token_storage.dart';
 import '../config/api_config.dart';
+import '../api/subscription_response.dart';
 
 class ApiService {
   static const String baseUrl = ApiConfig.apiBaseUrl;
 
-  static const Duration _timeout = Duration(
-    seconds: 15,
-  );
+  static const Duration _timeout = Duration(seconds: 15);
 
   static const String connectionErrorMessage =
       "No pudimos conectar con el servidor. "
@@ -46,14 +45,12 @@ class ApiService {
       );
 
       if (response.statusCode == 401) {
-        return await _retryWithRefresh(
-          method: method,
-          url: url,
-          body: body,
+        return checkSubscriptionResponse(
+          await _retryWithRefresh(method: method, url: url, body: body),
         );
       }
 
-      return response;
+      return checkSubscriptionResponse(response);
     } on TimeoutException {
       throw Exception(
         "El servidor tardó demasiado en responder. "
@@ -92,20 +89,10 @@ class ApiService {
             .timeout(_timeout);
 
       case "DELETE":
-        return await http
-            .delete(
-              url,
-              headers: headers,
-            )
-            .timeout(_timeout);
+        return await http.delete(url, headers: headers).timeout(_timeout);
 
       default:
-        return await http
-            .get(
-              url,
-              headers: headers,
-            )
-            .timeout(_timeout);
+        return await http.get(url, headers: headers).timeout(_timeout);
     }
   }
 
@@ -139,38 +126,24 @@ class ApiService {
   // ==========================
 
   static Future<http.Response> get(String endpoint) {
-    return _request(
-      method: "GET",
-      endpoint: endpoint,
-    );
+    return _request(method: "GET", endpoint: endpoint);
   }
 
   static Future<http.Response> post(
     String endpoint, {
     Map<String, dynamic>? body,
   }) {
-    return _request(
-      method: "POST",
-      endpoint: endpoint,
-      body: body,
-    );
+    return _request(method: "POST", endpoint: endpoint, body: body);
   }
 
   static Future<http.Response> put(
     String endpoint, {
     Map<String, dynamic>? body,
   }) {
-    return _request(
-      method: "PUT",
-      endpoint: endpoint,
-      body: body,
-    );
+    return _request(method: "PUT", endpoint: endpoint, body: body);
   }
 
   static Future<http.Response> delete(String endpoint) {
-    return _request(
-      method: "DELETE",
-      endpoint: endpoint,
-    );
+    return _request(method: "DELETE", endpoint: endpoint);
   }
 }

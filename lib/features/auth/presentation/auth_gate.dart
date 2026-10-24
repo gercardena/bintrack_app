@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../data/token_storage.dart';
 import '../data/auth_api.dart';
+import '../../../core/auth/user_controller.dart';
 
 import '../../home/presentation/home_page.dart';
 import 'login_page.dart';
@@ -45,6 +46,8 @@ class _AuthGateState extends State<AuthGate> {
     if (!mounted) return;
 
     if (refreshedToken != null) {
+      await UserController().loadUser();
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../../../core/api/subscription_response.dart';
 
 import 'package:http/http.dart' as http;
 
@@ -19,6 +20,7 @@ class BinTypeService {
         "Authorization": "Bearer $token",
       },
     );
+    checkSubscriptionResponse(response);
 
     if (response.statusCode == 200) {
       final List data = jsonDecode(response.body);
@@ -56,6 +58,7 @@ class BinTypeService {
         "valor_deposito": valorDeposito,
       }),
     );
+    checkSubscriptionResponse(response);
 
     if (response.statusCode != 201) {
       throw Exception(
@@ -86,6 +89,7 @@ class BinTypeService {
         "valor_deposito": valorDeposito,
       }),
     );
+    checkSubscriptionResponse(response);
 
     if (response.statusCode != 200) {
       throw Exception(

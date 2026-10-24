@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../../core/api/subscription_response.dart';
 
 import 'package:http/http.dart' as http;
 
@@ -19,6 +20,7 @@ class ProductsApi {
         'Authorization': 'Bearer $token',
       },
     );
+    checkSubscriptionResponse(response);
 
     if (response.statusCode == 200) {
       final List data = jsonDecode(response.body);
@@ -48,6 +50,7 @@ class ProductsApi {
         "descripcion": descripcion ?? "",
       }),
     );
+    checkSubscriptionResponse(response);
 
     if (response.statusCode == 201) {
       return jsonDecode(response.body);
@@ -65,6 +68,7 @@ class ProductsApi {
         'Authorization': 'Bearer $token',
       },
     );
+    checkSubscriptionResponse(response);
 
     return response.statusCode == 204;
   }
@@ -89,6 +93,7 @@ class ProductsApi {
         "descripcion": descripcion ?? "",
       }),
     );
+    checkSubscriptionResponse(response);
 
     return response.statusCode == 200;
   }

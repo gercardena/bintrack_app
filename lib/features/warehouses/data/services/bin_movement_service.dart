@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../../../core/api/subscription_response.dart';
 
 import 'package:http/http.dart' as http;
 
@@ -19,6 +20,7 @@ class BinMovementService {
         "Authorization": "Bearer $token",
       },
     );
+    checkSubscriptionResponse(response);
 
     if (response.statusCode == 200) {
       final List data = jsonDecode(response.body);
@@ -56,6 +58,7 @@ class BinMovementService {
       },
       body: jsonEncode(body),
     );
+    checkSubscriptionResponse(response);
 
     return response.statusCode == 201;
   }

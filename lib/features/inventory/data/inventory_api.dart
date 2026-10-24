@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../../core/api/subscription_response.dart';
 
 import 'package:http/http.dart' as http;
 
@@ -18,6 +19,7 @@ class InventoryApi {
         'Authorization': 'Bearer $token',
       },
     );
+    checkSubscriptionResponse(response);
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -45,6 +47,7 @@ class InventoryApi {
         "cantidad": cantidad,
       }),
     );
+    checkSubscriptionResponse(response);
 
     return response.statusCode == 201;
   }
@@ -68,6 +71,7 @@ class InventoryApi {
         "cantidad": cantidad,
       }),
     );
+    checkSubscriptionResponse(response);
 
     return response.statusCode == 200;
   }
