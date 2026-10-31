@@ -1,22 +1,18 @@
 import 'dart:convert';
-import '../../../core/http/http_client.dart';
+
+import '../../../core/services/api_service.dart';
 
 class UserApi {
-
-  /// Endpoint protegido de prueba
-  /// Debe requerir JWT en el backend
   static Future<Map<String, dynamic>> getProfile() async {
-
-    final response = await HttpClient.get(
-      '/api/accounts/user/profile/', // ⚠️ ajusta según tu endpoint real
-    );
+    // ApiService refreshes an expired access token before retrying. The profile
+    // drives the home and subscription state, so it must not use a separate
+    // HTTP path that logs the user out prematurely.
+    final response = await ApiService.get('/accounts/user/profile/');
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
-    } else {
-      throw Exception(
-        'Error loading profile (${response.statusCode}) ${response.body}',
-      );
     }
+
+    throw Exception('No se pudo actualizar el perfil.');
   }
 }
