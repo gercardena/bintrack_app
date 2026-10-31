@@ -156,6 +156,18 @@ void main() {
     await showAccount(tester, FakeAccountService());
     expect(find.text(r'$50.000 CLP / mes'), findsOneWidget);
     expect(find.textContaining('No se realizan cobros'), findsOneWidget);
+    expect(find.text('Renovación de suscripción'), findsOneWidget);
+    expect(
+      find.textContaining('no inicia cobros ni abre enlaces de pago'),
+      findsOneWidget,
+    );
+    final renew = tester.widget<FilledButton>(
+      find.ancestor(
+        of: find.text('Renovación disponible próximamente'),
+        matching: find.byWidgetPredicate((widget) => widget is FilledButton),
+      ),
+    );
+    expect(renew.onPressed, isNull);
     expect(find.text('0 de 2 secundarios activos'), findsOneWidget);
   });
 

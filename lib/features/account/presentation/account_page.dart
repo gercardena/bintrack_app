@@ -202,6 +202,55 @@ class _AccountPageState extends State<AccountPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(
+                              Icons.autorenew_outlined,
+                              color: Colors.cyanAccent,
+                            ),
+                            SizedBox(width: 10),
+                            Text(
+                              'Renovación de suscripción',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          summary.selectedPlan == null
+                              ? 'Primero debemos revisar la configuración de usuarios de esta cuenta.'
+                              : 'Al habilitar pagos, podrás renovar el período mensual por ${clp(summary.selectedPlan!.price)}.',
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'La renovación con Mercado Pago aún está en preparación. Esta versión no inicia cobros ni abre enlaces de pago.',
+                          style: TextStyle(color: Colors.amberAccent),
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.icon(
+                            onPressed: null,
+                            icon: const Icon(Icons.lock_outline),
+                            label: const Text(
+                              'Renovación disponible próximamente',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 const Text(
                   'Planes mensuales',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
