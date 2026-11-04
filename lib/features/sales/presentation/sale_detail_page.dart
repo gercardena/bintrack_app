@@ -740,8 +740,8 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
       ),
       decoration: InputDecoration(
         labelText: cobraPorKilo
-            ? "Precio por kilo para esta venta"
-            : "Precio para esta venta",
+            ? "Precio por kilo para esta venta (editable)"
+            : "Precio para esta venta (editable)",
         hintText: cobraPorKilo ? "Ej: 600" : "Ej: 100000",
         prefixText: "\$ ",
       ),
@@ -819,16 +819,24 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
 
           const SizedBox(height: 10),
 
-          Row(
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
             children: [
               _miniMetric(
-                label: "Cantidad",
+                label: "Envases",
                 value: "${item.cantidad}",
                 color: Colors.cyanAccent,
               ),
-              const SizedBox(width: 10),
+              if (item.esPorKilo)
+                _miniMetric(
+                  label: "Kilos vendidos",
+                  value:
+                      "${(item.kilosPesados ?? 0).toStringAsFixed(2)} kg",
+                  color: Colors.orangeAccent,
+                ),
               _miniMetric(
-                label: "Precio venta",
+                label: item.esPorKilo ? "Precio / kg" : "Precio venta",
                 value:
                     "\$${precioFormateado(item.precioUnitario)}",
                 color: Colors.greenAccent,
@@ -1088,7 +1096,8 @@ class _SaleDetailPageState extends State<SaleDetailPage> {
     required String value,
     required Color color,
   }) {
-    return Expanded(
+    return SizedBox(
+      width: 142,
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(

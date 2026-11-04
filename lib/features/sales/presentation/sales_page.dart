@@ -320,6 +320,10 @@ class _SalesPageState extends State<SalesPage> {
   Future<void> registrarPago(Sale sale) async {
     String metodoSeleccionado = "transferencia";
     String referencia = "";
+    String? errorMonto;
+    final montoController = TextEditingController(
+      text: sale.saldoPendiente.toStringAsFixed(0),
+    );
 
     final datos = await showDialog<Map<String, String>>(
       context: context,
@@ -344,10 +348,40 @@ class _SalesPageState extends State<SalesPage> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      "Monto total: "
+                      "Total de la venta: "
                       "\$${precioFormateado(sale.total)}",
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (sale.totalPagado > 0) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        "Ya abonado: "
+                        "\$${precioFormateado(sale.totalPagado)}",
+                      ),
+                    ],
+                    const SizedBox(height: 6),
+                    Text(
+                      "Saldo pendiente: "
+                      "\$${precioFormateado(sale.saldoPendiente)}",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: montoController,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: "Monto recibido",
+                        hintText: "Ej: 20000",
+                        prefixText: "\$ ",
+                        border: const OutlineInputBorder(),
+                        errorText: errorMonto,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -405,11 +439,30 @@ class _SalesPageState extends State<SalesPage> {
                 ),
                 FilledButton(
                   onPressed: () {
+                    final monto = double.tryParse(
+                      montoController.text.trim().replaceAll(",", "."),
+                    );
+
+                    if (monto == null || monto <= 0) {
+                      setDialogState(() {
+                        errorMonto = "Ingresa un monto válido mayor que cero.";
+                      });
+                      return;
+                    }
+
+                    if (monto > sale.saldoPendiente) {
+                      setDialogState(() {
+                        errorMonto = "El monto no puede superar el saldo pendiente.";
+                      });
+                      return;
+                    }
+
                     Navigator.pop(
                       dialogContext,
                       {
                         "metodo": metodoSeleccionado,
                         "referencia": referencia,
+                        "monto": monto.toString(),
                       },
                     );
                   },
@@ -424,7 +477,12 @@ class _SalesPageState extends State<SalesPage> {
       },
     );
 
+    montoController.dispose();
+
     if (datos == null || !mounted) return;
+
+    final monto = double.tryParse(datos["monto"] ?? "");
+    if (monto == null) return;
 
     setState(() {
       processingSaleId = sale.id;
@@ -433,16 +491,21 @@ class _SalesPageState extends State<SalesPage> {
     try {
       await _service.registerPayment(
         saleId: sale.id,
+        monto: monto,
         metodo: datos["metodo"]!,
         referencia: datos["referencia"],
       );
 
       if (!mounted) return;
 
+      final saldoRestante = sale.saldoPendiente - monto;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            "Pago registrado correctamente.",
+            saldoRestante > 0
+                ? "Abono registrado. Saldo pendiente: "
+                    "\$${precioFormateado(saldoRestante)}."
+                : "Pago registrado correctamente.",
           ),
         ),
       );
@@ -509,6 +572,8 @@ class _SalesPageState extends State<SalesPage> {
         return "Borrador";
       case "confirmed":
         return "Confirmada";
+      case "partial":
+        return "Abono parcial";
       case "paid":
         return "Pagada";
       case "cancelled":
@@ -524,6 +589,8 @@ class _SalesPageState extends State<SalesPage> {
         return "Puedes seguir agregando o quitando artículos.";
       case "confirmed":
         return "Stock descontado. Lista para registrar pago.";
+      case "partial":
+        return "Tiene abonos registrados y un saldo pendiente.";
       case "paid":
         return "Pago registrado. Puedes generar comprobante.";
       case "cancelled":
@@ -539,6 +606,8 @@ class _SalesPageState extends State<SalesPage> {
         return Colors.cyanAccent;
       case "confirmed":
         return Colors.orangeAccent;
+      case "partial":
+        return Colors.amberAccent;
       case "paid":
         return Colors.greenAccent;
       case "cancelled":
@@ -554,6 +623,8 @@ class _SalesPageState extends State<SalesPage> {
         return Icons.edit_note;
       case "confirmed":
         return Icons.check_circle_outline;
+      case "partial":
+        return Icons.account_balance_wallet_outlined;
       case "paid":
         return Icons.payments;
       case "cancelled":
@@ -596,7 +667,8 @@ class _SalesPageState extends State<SalesPage> {
         .where(
           (sale) =>
               sale.estado == "paid" ||
-              sale.estado == "confirmed",
+              sale.estado == "confirmed" ||
+              sale.estado == "partial",
         )
         .fold(
           0,
@@ -1034,6 +1106,19 @@ class _SalesPageState extends State<SalesPage> {
             "Total: \$${precioFormateado(sale.total)}",
           ),
 
+          if (sale.totalPagado > 0)
+            _infoLine(
+              Icons.payments_outlined,
+              "Abonado: \$${precioFormateado(sale.totalPagado)}",
+            ),
+
+          if (sale.saldoPendiente > 0)
+            _infoLine(
+              Icons.pending_actions_outlined,
+              "Saldo pendiente: "
+              "\$${precioFormateado(sale.saldoPendiente)}",
+            ),
+
           const SizedBox(height: 14),
 
           _actionButtons(
@@ -1135,6 +1220,33 @@ class _SalesPageState extends State<SalesPage> {
                   : () => cancelarVenta(sale),
               icon: const Icon(Icons.cancel_outlined),
               label: const Text("Cancelar venta"),
+            ),
+          ),
+          const SizedBox(height: 8),
+          _detailButton(sale, processing),
+        ],
+      );
+    }
+
+    if (sale.estado == "partial") {
+      return Column(
+        children: [
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: processing
+                  ? null
+                  : () => registrarPago(sale),
+              icon: processing
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Icon(Icons.account_balance_wallet_outlined),
+              label: const Text("Registrar otro abono"),
             ),
           ),
           const SizedBox(height: 8),

@@ -199,11 +199,17 @@ class SalesService {
 
   Future<void> registerPayment({
     required int saleId,
+    required double monto,
     required String metodo,
     String? referencia,
   }) async {
+    if (monto <= 0) {
+      throw Exception("El abono debe ser mayor que cero");
+    }
+
     final body = {
       "sale": saleId,
+      "monto": monto.toStringAsFixed(2),
       "metodo": metodo,
     };
 

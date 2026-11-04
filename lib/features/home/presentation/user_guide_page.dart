@@ -103,17 +103,17 @@ class UserGuidePage extends StatelessWidget {
           ),
           _stepCard(
             number: "11",
-            title: "Registra el pago",
+            title: "Registra un pago o abono",
             description:
-                "Cuando el cliente paga, registra el pago para cerrar la venta y reflejar el ingreso.",
-            icon: Icons.payments,
+                "Al abrir Registrar pago, el monto pendiente aparece cargado automáticamente. Si el cliente paga todo, confirma ese monto. Si abona una parte, escribe el monto recibido, elige efectivo, transferencia o tarjeta y registra el abono. La venta mostrará lo abonado y el saldo pendiente para continuar después.",
+            icon: Icons.account_balance_wallet,
             color: Colors.purple,
           ),
           _stepCard(
             number: "12",
             title: "Genera comprobante si corresponde",
             description:
-                "El comprobante es opcional y queda asociado a la venta pagada. No es boleta ni factura tributaria.",
+                "Cuando los abonos completan el total, la venta queda pagada. El comprobante es opcional y queda asociado a esa venta pagada. No es boleta ni factura tributaria.",
             icon: Icons.receipt_long,
             color: Colors.deepPurple,
           ),
@@ -211,7 +211,7 @@ class UserGuidePage extends StatelessWidget {
           Expanded(
             child: Text(
               "En el Home puedes ver el estado de tu suscripción. "
-              "Por ahora este estado es informativo y no bloquea módulos durante las pruebas internas.",
+              "Para operar normalmente, el período debe estar activo. Si vence, la cuenta queda en modo de solo lectura hasta renovarla o recibir una autorización de prueba.",
               style: TextStyle(
                 color: Colors.white,
                 height: 1.35,

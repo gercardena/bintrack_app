@@ -7,6 +7,8 @@ class Sale {
   final double subtotal;
   final double iva;
   final double total;
+  final double totalPagado;
+  final double saldoPendiente;
   final String estado;
   final List<SaleItem> items;
 
@@ -16,6 +18,8 @@ class Sale {
     required this.subtotal,
     required this.iva,
     required this.total,
+    required this.totalPagado,
+    required this.saldoPendiente,
     required this.estado,
     required this.items,
     this.clienteId,
@@ -34,6 +38,10 @@ class Sale {
       subtotal: double.tryParse(json['subtotal'].toString()) ?? 0.0,
       iva: double.tryParse(json['iva'].toString()) ?? 0.0,
       total: double.tryParse(json['total'].toString()) ?? 0.0,
+      totalPagado:
+          double.tryParse(json['total_pagado'].toString()) ?? 0.0,
+      saldoPendiente:
+          double.tryParse(json['saldo_pendiente'].toString()) ?? 0.0,
       estado: (json['estado'] ?? '').toString(),
       items: itemsJson is List
           ? itemsJson.map((e) => SaleItem.fromJson(e)).toList()
@@ -54,6 +62,8 @@ class SaleItem {
   final String binNombre;
   final int cantidad;
   final int binsCantidad;
+  final String tipoCobro;
+  final double? kilosPesados;
   final double precioUnitario;
   final double subtotal;
 
@@ -66,6 +76,8 @@ class SaleItem {
     required this.binNombre,
     required this.cantidad,
     required this.binsCantidad,
+    required this.tipoCobro,
+    required this.kilosPesados,
     required this.precioUnitario,
     required this.subtotal,
   });
@@ -81,8 +93,14 @@ class SaleItem {
       binNombre: (json['bin_nombre'] ?? '').toString(),
       cantidad: json['cantidad'] ?? 0,
       binsCantidad: json['bins_cantidad'] ?? 0,
+      tipoCobro: (json['tipo_cobro_snapshot'] ?? 'envase').toString(),
+      kilosPesados: json['kilos_pesados'] == null
+          ? null
+          : double.tryParse(json['kilos_pesados'].toString()),
       precioUnitario: double.tryParse(json['precio_unitario'].toString()) ?? 0.0,
       subtotal: double.tryParse(json['subtotal'].toString()) ?? 0.0,
     );
   }
+
+  bool get esPorKilo => tipoCobro == 'kilo';
 }
