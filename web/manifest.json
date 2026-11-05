@@ -1,11 +1,11 @@
 {
-    "name": "bintrack_app",
-    "short_name": "bintrack_app",
+    "name": "BINTRACK",
+    "short_name": "BINTRACK",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Control de envases, productos, ventas y pagos.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
