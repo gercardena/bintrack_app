@@ -66,6 +66,8 @@ class SalesReportSale {
   final String estado;
   final String tipoReporte;
   final double total;
+  final double totalPagado;
+  final double saldoPendiente;
   final List<SalesReportItem> items;
 
   SalesReportSale({
@@ -77,6 +79,8 @@ class SalesReportSale {
     required this.estado,
     required this.tipoReporte,
     required this.total,
+    required this.totalPagado,
+    required this.saldoPendiente,
     required this.items,
   });
 
@@ -108,6 +112,14 @@ class SalesReportSale {
             json["total"].toString(),
           ) ??
           0,
+      totalPagado: double.tryParse(
+            json["total_pagado"].toString(),
+          ) ??
+          0,
+      saldoPendiente: double.tryParse(
+            json["saldo_pendiente"].toString(),
+          ) ??
+          0,
       items: rawItems is List
           ? rawItems
               .map(
@@ -120,7 +132,8 @@ class SalesReportSale {
     );
   }
 
-  bool get esContado => tipoReporte == "contado";
+  bool get esPagada => tipoReporte == "pagada";
+  bool get esAbonada => tipoReporte == "abonada";
 }
 
 
@@ -130,12 +143,16 @@ class SalesReport {
   final String hasta;
 
   final double totalVendido;
+  final double totalAbonado;
+  final double totalPendiente;
   final double totalContado;
   final double totalCredito;
 
   final int cantidadVentas;
   final int cantidadVentasContado;
   final int cantidadVentasCredito;
+  final int cantidadVentasPagadas;
+  final int cantidadVentasPendientes;
 
   final int cantidadClientesPagados;
   final int cantidadClientesCredito;
@@ -147,11 +164,15 @@ class SalesReport {
     required this.desde,
     required this.hasta,
     required this.totalVendido,
+    required this.totalAbonado,
+    required this.totalPendiente,
     required this.totalContado,
     required this.totalCredito,
     required this.cantidadVentas,
     required this.cantidadVentasContado,
     required this.cantidadVentasCredito,
+    required this.cantidadVentasPagadas,
+    required this.cantidadVentasPendientes,
     required this.cantidadClientesPagados,
     required this.cantidadClientesCredito,
     required this.ventas,
@@ -173,6 +194,16 @@ class SalesReport {
             json["total_vendido"].toString(),
           ) ??
           0,
+      totalAbonado: double.tryParse(
+            json["total_abonado"].toString(),
+          ) ??
+          double.tryParse(json["total_contado"].toString()) ??
+          0,
+      totalPendiente: double.tryParse(
+            json["total_pendiente"].toString(),
+          ) ??
+          double.tryParse(json["total_credito"].toString()) ??
+          0,
       totalContado: double.tryParse(
             json["total_contado"].toString(),
           ) ??
@@ -192,6 +223,16 @@ class SalesReport {
       cantidadVentasCredito: int.tryParse(
             json["cantidad_ventas_credito"].toString(),
           ) ??
+          0,
+      cantidadVentasPagadas: int.tryParse(
+            json["cantidad_ventas_pagadas"].toString(),
+          ) ??
+          int.tryParse(json["cantidad_ventas_contado"].toString()) ??
+          0,
+      cantidadVentasPendientes: int.tryParse(
+            json["cantidad_ventas_pendientes"].toString(),
+          ) ??
+          int.tryParse(json["cantidad_ventas_credito"].toString()) ??
           0,
       cantidadClientesPagados: int.tryParse(
             json["cantidad_clientes_pagados"].toString(),

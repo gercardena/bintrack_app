@@ -15,25 +15,56 @@ class _SalesReportPageState extends State<SalesReportPage> {
   final SalesReportService service = SalesReportService();
 
   String selectedPeriodo = "semana";
+  DateTimeRange? selectedRange;
 
   late Future<SalesReport> futureReport;
 
   @override
   void initState() {
     super.initState();
-    futureReport = service.getReport(periodo: selectedPeriodo);
+    futureReport = _loadReport();
   }
 
   void cambiarPeriodo(String periodo) {
     setState(() {
       selectedPeriodo = periodo;
-      futureReport = service.getReport(periodo: selectedPeriodo);
+      selectedRange = null;
+      futureReport = _loadReport();
+    });
+  }
+
+  Future<SalesReport> _loadReport() {
+    return service.getReport(
+      periodo: selectedPeriodo,
+      desde: selectedRange?.start,
+      hasta: selectedRange?.end,
+    );
+  }
+
+  Future<void> seleccionarRango() async {
+    final today = DateTime.now();
+    final range = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(today.year, today.month, today.day),
+      initialDateRange: selectedRange ?? DateTimeRange(start: today, end: today),
+      helpText: 'Selecciona el período de ventas',
+      cancelText: 'Cancelar',
+      confirmText: 'Aplicar',
+    );
+
+    if (range == null || !mounted) return;
+
+    setState(() {
+      selectedPeriodo = 'personalizado';
+      selectedRange = range;
+      futureReport = _loadReport();
     });
   }
 
   Future<void> recargar() async {
     setState(() {
-      futureReport = service.getReport(periodo: selectedPeriodo);
+      futureReport = _loadReport();
     });
 
     await futureReport;
@@ -45,6 +76,8 @@ class _SalesReportPageState extends State<SalesReportPage> {
         return "Hoy";
       case "mes":
         return "Mes";
+      case "personalizado":
+        return "Personalizado";
       case "semana":
       default:
         return "Semana";
@@ -69,19 +102,27 @@ class _SalesReportPageState extends State<SalesReportPage> {
   }
 
   Color tipoColor(String tipo) {
-    if (tipo == "contado") {
+    if (tipo == "pagada") {
       return Colors.greenAccent;
+    }
+
+    if (tipo == "abonada") {
+      return Colors.lightBlueAccent;
     }
 
     return Colors.amber;
   }
 
   String tipoLabel(String tipo) {
-    if (tipo == "contado") {
-      return "Contado / pagado";
+    if (tipo == "pagada") {
+      return "Pagada";
     }
 
-    return "Crédito / pendiente";
+    if (tipo == "abonada") {
+      return "Abonada parcialmente";
+    }
+
+    return "Pendiente de pago";
   }
 
   @override
@@ -148,13 +189,26 @@ class _SalesReportPageState extends State<SalesReportPage> {
   }
 
   Widget _periodSelector() {
-    return Row(
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
       children: [
         _periodButton("hoy"),
-        const SizedBox(width: 8),
         _periodButton("semana"),
-        const SizedBox(width: 8),
         _periodButton("mes"),
+        ActionChip(
+          avatar: const Icon(Icons.date_range_outlined, size: 18),
+          label: const Text('Elegir fechas'),
+          onPressed: seleccionarRango,
+          backgroundColor: selectedPeriodo == 'personalizado'
+              ? Colors.cyanAccent.withValues(alpha: 0.18)
+              : const Color(0xFF172033),
+          side: BorderSide(
+            color: selectedPeriodo == 'personalizado'
+                ? Colors.cyanAccent.withValues(alpha: 0.65)
+                : Colors.white.withValues(alpha: 0.08),
+          ),
+        ),
       ],
     );
   }
@@ -162,22 +216,20 @@ class _SalesReportPageState extends State<SalesReportPage> {
   Widget _periodButton(String periodo) {
     final selected = selectedPeriodo == periodo;
 
-    return Expanded(
-      child: ChoiceChip(
-        selected: selected,
-        label: Text(tituloPeriodo(periodo)),
-        onSelected: (_) => cambiarPeriodo(periodo),
-        selectedColor: Colors.cyanAccent.withValues(alpha: 0.24),
-        backgroundColor: const Color(0xFF172033),
-        labelStyle: TextStyle(
-          color: selected ? Colors.cyanAccent : Colors.white70,
-          fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-        ),
-        side: BorderSide(
-          color: selected
-              ? Colors.cyanAccent.withValues(alpha: 0.65)
-              : Colors.white.withValues(alpha: 0.08),
-        ),
+    return ChoiceChip(
+      selected: selected,
+      label: Text(tituloPeriodo(periodo)),
+      onSelected: (_) => cambiarPeriodo(periodo),
+      selectedColor: Colors.cyanAccent.withValues(alpha: 0.24),
+      backgroundColor: const Color(0xFF172033),
+      labelStyle: TextStyle(
+        color: selected ? Colors.cyanAccent : Colors.white70,
+        fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+      ),
+      side: BorderSide(
+        color: selected
+            ? Colors.cyanAccent.withValues(alpha: 0.65)
+            : Colors.white.withValues(alpha: 0.08),
       ),
     );
   }
@@ -257,8 +309,8 @@ class _SalesReportPageState extends State<SalesReportPage> {
           children: [
             Expanded(
               child: _metricCard(
-                title: "Contado / pagado",
-                value: "\$${formatearMonto(report.totalContado)}",
+                title: "Abonado",
+                value: "\$${formatearMonto(report.totalAbonado)}",
                 subtitle: "Clientes pagados: ${report.cantidadClientesPagados}",
                 color: Colors.greenAccent,
                 icon: Icons.payments_outlined,
@@ -267,8 +319,8 @@ class _SalesReportPageState extends State<SalesReportPage> {
             const SizedBox(width: 10),
             Expanded(
               child: _metricCard(
-                title: "Crédito / pendiente",
-                value: "\$${formatearMonto(report.totalCredito)}",
+                title: "Saldo pendiente",
+                value: "\$${formatearMonto(report.totalPendiente)}",
                 subtitle: "Clientes deben: ${report.cantidadClientesCredito}",
                 color: Colors.amber,
                 icon: Icons.pending_actions_outlined,
@@ -283,7 +335,7 @@ class _SalesReportPageState extends State<SalesReportPage> {
               child: _metricCard(
                 title: "Ventas",
                 value: report.cantidadVentas.toString(),
-                subtitle: "Pagadas: ${report.cantidadVentasContado}",
+                subtitle: "Pagadas: ${report.cantidadVentasPagadas}",
                 color: Colors.lightBlueAccent,
                 icon: Icons.receipt_long_outlined,
               ),
@@ -292,7 +344,7 @@ class _SalesReportPageState extends State<SalesReportPage> {
             Expanded(
               child: _metricCard(
                 title: "Pendientes",
-                value: report.cantidadVentasCredito.toString(),
+                value: report.cantidadVentasPendientes.toString(),
                 subtitle: "Ventas por cobrar",
                 color: Colors.orangeAccent,
                 icon: Icons.warning_amber_outlined,
@@ -368,8 +420,7 @@ class _SalesReportPageState extends State<SalesReportPage> {
               ),
               const SizedBox(height: 3),
               Text(
-                "${report.cantidadVentas} venta(s) "
-                "entre contado y crédito.",
+                "${report.cantidadVentas} venta(s) en el período seleccionado.",
                 style: const TextStyle(color: Colors.white54, fontSize: 13),
               ),
             ],
@@ -403,7 +454,7 @@ class _SalesReportPageState extends State<SalesReportPage> {
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(
-                  sale.esContado
+                  sale.esPagada
                       ? Icons.check_circle_outline
                       : Icons.schedule_outlined,
                   color: color,
@@ -459,6 +510,24 @@ class _SalesReportPageState extends State<SalesReportPage> {
                 fontWeight: FontWeight.bold,
               ),
             ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 12,
+            runSpacing: 4,
+            children: [
+              Text(
+                'Abonado: \$${formatearMonto(sale.totalPagado)}',
+                style: const TextStyle(color: Colors.greenAccent, fontSize: 12.5),
+              ),
+              Text(
+                'Saldo: \$${formatearMonto(sale.saldoPendiente)}',
+                style: TextStyle(
+                  color: sale.saldoPendiente == 0 ? Colors.white54 : Colors.amber,
+                  fontSize: 12.5,
+                ),
+              ),
+            ],
           ),
           if (sale.items.isNotEmpty) ...[
             const Divider(color: Colors.white12, height: 22),

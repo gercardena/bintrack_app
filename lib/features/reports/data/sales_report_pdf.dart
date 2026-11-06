@@ -56,10 +56,10 @@ Future<Uint8List> buildSalesReportPdf(
           'Total vendido: ${_money(report.totalVendido)}',
           style: pw.TextStyle(fontSize: 15, fontWeight: pw.FontWeight.bold),
         ),
-        pw.Text('Contado / pagado: ${_money(report.totalContado)}'),
-        pw.Text('Crédito / pendiente: ${_money(report.totalCredito)}'),
+        pw.Text('Total abonado: ${_money(report.totalAbonado)}'),
+        pw.Text('Saldo pendiente: ${_money(report.totalPendiente)}'),
         pw.Text(
-          'Ventas: ${report.cantidadVentas} | Pagadas: ${report.cantidadVentasContado} | Pendientes: ${report.cantidadVentasCredito}',
+          'Ventas: ${report.cantidadVentas} | Pagadas: ${report.cantidadVentasPagadas} | Pendientes: ${report.cantidadVentasPendientes}',
         ),
         pw.Text(
           'Clientes pagados: ${report.cantidadClientesPagados} | Clientes deben: ${report.cantidadClientesCredito}',
@@ -73,7 +73,7 @@ Future<Uint8List> buildSalesReportPdf(
             style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 11),
           ),
           pw.Text(
-            '${sale.esContado ? 'Contado / pagado' : 'Crédito / pendiente'} | Total: ${_money(sale.total)}',
+            '${_paymentLabel(sale)} | Total: ${_money(sale.total)} | Abonado: ${_money(sale.totalPagado)} | Saldo: ${_money(sale.saldoPendiente)}',
             style: const pw.TextStyle(fontSize: 10),
           ),
           pw.SizedBox(height: 5),
@@ -93,4 +93,10 @@ Future<Uint8List> buildSalesReportPdf(
     ),
   );
   return document.save();
+}
+
+String _paymentLabel(SalesReportSale sale) {
+  if (sale.esPagada) return 'Pagada';
+  if (sale.esAbonada) return 'Abonada parcialmente';
+  return 'Pendiente de pago';
 }
