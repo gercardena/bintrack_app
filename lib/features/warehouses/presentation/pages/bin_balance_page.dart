@@ -21,6 +21,7 @@ class _BinBalancePageState extends State<BinBalancePage> {
   final searchController = TextEditingController();
   String search = '';
   bool onlyPending = false;
+  String? selectedBinType;
 
   String normalize(String value) {
     var result = value.toLowerCase().trim();
@@ -34,7 +35,8 @@ class _BinBalancePageState extends State<BinBalancePage> {
 
   List<BinBalance> get filteredBalances => balances.where((balance) {
     return (!onlyPending || balance.saldo > 0) &&
-        normalize(balance.clienteNombre).contains(normalize(search));
+        normalize(balance.clienteNombre).contains(normalize(search)) &&
+        (selectedBinType == null || balance.binNombre == selectedBinType);
   }).toList();
 
   @override
@@ -79,14 +81,15 @@ class _BinBalancePageState extends State<BinBalancePage> {
     }
   }
 
-  int get totalSaldo {
-    return balances.fold(0, (sum, balance) => sum + balance.saldo);
+  int totalSaldoFor(List<BinBalance> items) {
+    return items.fold(0, (sum, balance) => sum + balance.saldo.clamp(0, 1 << 30));
   }
 
-  double get totalDeposito {
-    return balances.fold(
+  double totalDepositoFor(List<BinBalance> items) {
+    return items.fold(
       0,
-      (sum, balance) => sum + (double.tryParse(balance.depositoPendiente) ?? 0),
+      (sum, balance) =>
+          sum + (balance.saldo > 0 ? (double.tryParse(balance.depositoPendiente) ?? 0) : 0),
     );
   }
 
@@ -109,6 +112,8 @@ class _BinBalancePageState extends State<BinBalancePage> {
   @override
   Widget build(BuildContext context) {
     final visibleBalances = filteredBalances;
+    final binTypes = balances.map((balance) => balance.binNombre).toSet().toList()
+      ..sort();
     return Scaffold(
       backgroundColor: background,
       appBar: AppBar(
@@ -132,7 +137,7 @@ class _BinBalancePageState extends State<BinBalancePage> {
                       children: [
                         _introCard(),
                         const SizedBox(height: 14),
-                        _totalsCard(),
+                        _totalsCard(visibleBalances),
                         const SizedBox(height: 14),
                         TextField(
                           controller: searchController,
@@ -173,6 +178,30 @@ class _BinBalancePageState extends State<BinBalancePage> {
                                 setState(() => onlyPending = value),
                           ),
                         ),
+                        if (binTypes.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 6,
+                            children: [
+                              ChoiceChip(
+                                label: const Text('Todos los envases'),
+                                selected: selectedBinType == null,
+                                onSelected: (_) =>
+                                    setState(() => selectedBinType = null),
+                              ),
+                              ...binTypes.map(
+                                (binType) => ChoiceChip(
+                                  label: Text(binType),
+                                  selected: selectedBinType == binType,
+                                  onSelected: (selected) => setState(
+                                    () => selectedBinType = selected ? binType : null,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                         const SizedBox(height: 8),
                         if (visibleBalances.isEmpty)
                           const Padding(
@@ -216,7 +245,14 @@ class _BinBalancePageState extends State<BinBalancePage> {
     );
   }
 
-  Widget _totalsCard() {
+  Widget _totalsCard(List<BinBalance> visibleBalances) {
+    final totalSaldo = totalSaldoFor(visibleBalances);
+    final totalDeposito = totalDepositoFor(visibleBalances);
+    final clientesConPendientes = visibleBalances
+        .where((balance) => balance.saldo > 0)
+        .map((balance) => balance.clienteId)
+        .toSet()
+        .length;
     final color = totalSaldo > 0 ? Colors.orangeAccent : Colors.greenAccent;
 
     return Container(
@@ -251,19 +287,26 @@ class _BinBalancePageState extends State<BinBalancePage> {
           Row(
             children: [
               _summaryBox(
-                label: "Envases pendientes",
+                label: "Envases por devolver",
                 value: "$totalSaldo",
                 icon: Icons.inventory_2,
                 color: color,
               ),
               const SizedBox(width: 10),
               _summaryBox(
-                label: "Depósito pendiente",
+                label: "Depósito asociado",
                 value: "\$${totalDeposito.toStringAsFixed(0)}",
                 icon: Icons.savings_outlined,
                 color: Colors.greenAccent,
               ),
             ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            clientesConPendientes == 1
+                ? '1 cliente tiene envases pendientes.'
+                : '$clientesConPendientes clientes tienen envases pendientes.',
+            style: const TextStyle(color: Colors.white70, fontSize: 12),
           ),
         ],
       ),
@@ -414,7 +457,7 @@ class _BinBalancePageState extends State<BinBalancePage> {
               ),
               const SizedBox(width: 10),
               _smallMetric(
-                label: "Depósito",
+                label: "Depósito asociado",
                 value: "\$${balance.depositoPendiente}",
                 color: Colors.greenAccent,
               ),
