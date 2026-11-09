@@ -7,6 +7,7 @@ class BinMovement {
   final String tipoMovimiento;
   final int cantidad;
   final String depositoPagado;
+  final String depositoDevuelto;
   final String referencia;
   final String fecha;
 
@@ -19,6 +20,7 @@ class BinMovement {
     required this.tipoMovimiento,
     required this.cantidad,
     required this.depositoPagado,
+    required this.depositoDevuelto,
     required this.referencia,
     required this.fecha,
   });
@@ -39,6 +41,8 @@ class BinMovement {
       cantidad: json['cantidad'] ?? 0,
       depositoPagado:
           (json['deposito_pagado'] ?? '0').toString(),
+      depositoDevuelto:
+          (json['deposito_devuelto'] ?? '0').toString(),
       referencia:
           (json['referencia'] ?? '').toString(),
       fecha: (json['fecha'] ?? '').toString(),

@@ -13,6 +13,9 @@ class BinBalance {
   final int saldo;
 
   final String depositoPendiente;
+  final String depositoRecibido;
+  final String depositoDevuelto;
+  final String depositoRetenido;
 
   BinBalance({
     required this.clienteId,
@@ -28,6 +31,9 @@ class BinBalance {
     required this.saldo,
 
     required this.depositoPendiente,
+    required this.depositoRecibido,
+    required this.depositoDevuelto,
+    required this.depositoRetenido,
   });
 
   factory BinBalance.fromJson(
@@ -51,6 +57,12 @@ class BinBalance {
 
       depositoPendiente:
           json["deposito_pendiente"].toString(),
+      depositoRecibido:
+          (json["deposito_recibido"] ?? "0").toString(),
+      depositoDevuelto:
+          (json["deposito_devuelto"] ?? "0").toString(),
+      depositoRetenido:
+          (json["deposito_retenido"] ?? "0").toString(),
     );
   }
 }

@@ -33,10 +33,12 @@ class _CreateBinMovementPageState
   BinClient? selectedClient;
   BinType? selectedType;
 
-  String movementType = "entrada";
+  // La acción más frecuente es prestar un bin a un cliente.
+  String movementType = "prestamo";
 
   final cantidadController = TextEditingController();
-  final depositoController = TextEditingController();
+  final depositoRecibidoController = TextEditingController();
+  final depositoDevueltoController = TextEditingController();
   final referenciaController = TextEditingController();
 
   bool loading = true;
@@ -47,8 +49,12 @@ class _CreateBinMovementPageState
         movementType == "devolucion";
   }
 
-  bool get muestraDeposito {
+  bool get muestraDepositoRecibido {
     return movementType == "prestamo";
+  }
+
+  bool get muestraDepositoDevuelto {
+    return movementType == "devolucion";
   }
 
   @override
@@ -60,7 +66,8 @@ class _CreateBinMovementPageState
   @override
   void dispose() {
     cantidadController.dispose();
-    depositoController.dispose();
+    depositoRecibidoController.dispose();
+    depositoDevueltoController.dispose();
     referenciaController.dispose();
     super.dispose();
   }
@@ -221,9 +228,17 @@ class _CreateBinMovementPageState
 
     if (!validarFormulario()) return;
 
-    final deposito = muestraDeposito
+    final depositoRecibido = muestraDepositoRecibido
         ? double.tryParse(
-              depositoController.text
+              depositoRecibidoController.text
+                  .trim()
+                  .replaceAll(",", "."),
+            ) ??
+            0
+        : 0.0;
+    final depositoDevuelto = muestraDepositoDevuelto
+        ? double.tryParse(
+              depositoDevueltoController.text
                   .trim()
                   .replaceAll(",", "."),
             ) ??
@@ -243,7 +258,8 @@ class _CreateBinMovementPageState
         cantidad: int.parse(
           cantidadController.text.trim(),
         ),
-        depositoPagado: deposito,
+        depositoPagado: depositoRecibido,
+        depositoDevuelto: depositoDevuelto,
         referencia:
             referenciaController.text.trim().isEmpty
                 ? referenciaSugerida()
@@ -289,6 +305,91 @@ class _CreateBinMovementPageState
           ),
         ),
       );
+    }
+  }
+
+  Future<void> seleccionarCliente() async {
+    final searchController = TextEditingController();
+    final selected = await showModalBottomSheet<BinClient>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: card,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final query = searchController.text.trim().toLowerCase();
+            final matches = clients.where((client) {
+              return client.nombre.toLowerCase().contains(query);
+            }).toList();
+
+            return SafeArea(
+              child: SizedBox(
+                height: MediaQuery.sizeOf(context).height * 0.72,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Buscar cliente',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 19,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: searchController,
+                        autofocus: true,
+                        style: const TextStyle(color: Colors.white),
+                        onChanged: (_) => setModalState(() {}),
+                        decoration: const InputDecoration(
+                          labelText: 'Nombre del cliente',
+                          prefixIcon: Icon(Icons.search),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: matches.isEmpty
+                            ? const Center(
+                                child: Text(
+                                  'No encontramos clientes.',
+                                  style: TextStyle(color: Colors.white70),
+                                ),
+                              )
+                            : ListView.separated(
+                                itemCount: matches.length,
+                                separatorBuilder: (_, _) => const Divider(),
+                                itemBuilder: (_, index) {
+                                  final client = matches[index];
+                                  return ListTile(
+                                    leading: const Icon(
+                                      Icons.person_outline,
+                                      color: Colors.cyanAccent,
+                                    ),
+                                    title: Text(
+                                      client.nombre,
+                                      style: const TextStyle(color: Colors.white),
+                                    ),
+                                    onTap: () => Navigator.pop(context, client),
+                                  );
+                                },
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+    searchController.dispose();
+
+    if (selected != null && mounted) {
+      setState(() => selectedClient = selected);
     }
   }
 
@@ -400,12 +501,20 @@ class _CreateBinMovementPageState
               color: Colors.orangeAccent,
               children: [
                 campoCantidad(),
-                if (muestraDeposito) ...[
+                if (muestraDepositoRecibido) ...[
                   const SizedBox(height: 12),
-                  campoDeposito(),
+                  campoDepositoRecibido(),
                   const SizedBox(height: 10),
                   _smallHelp(
-                    "El depósito pagado es una garantía asociada a envases prestados. No es precio de venta.",
+                    "Regístralo solo si el cliente realmente dejó una garantía. No es precio de venta.",
+                  ),
+                ],
+                if (muestraDepositoDevuelto) ...[
+                  const SizedBox(height: 12),
+                  campoDepositoDevuelto(),
+                  const SizedBox(height: 10),
+                  _smallHelp(
+                    "Indica el dinero que devuelves al cliente por esta devolución de envases. Puede ser cero o parcial.",
                   ),
                 ],
                 const SizedBox(height: 12),
@@ -422,31 +531,21 @@ class _CreateBinMovementPageState
   }
 
   Widget selectorCliente() {
-    return DropdownButtonFormField<BinClient>(
-      initialValue: selectedClient,
-      isExpanded: true,
-      dropdownColor: card,
-      style: const TextStyle(
-        color: Colors.white,
-      ),
-      items: clients.map((client) {
-        return DropdownMenuItem<BinClient>(
-          value: client,
-          child: Text(
-            client.nombre,
-            overflow: TextOverflow.ellipsis,
+    return InkWell(
+      onTap: saving ? null : seleccionarCliente,
+      borderRadius: BorderRadius.circular(14),
+      child: InputDecorator(
+        isEmpty: selectedClient == null,
+        decoration: const InputDecoration(
+          labelText: "Cliente",
+          suffixIcon: Icon(Icons.search),
+        ),
+        child: Text(
+          selectedClient?.nombre ?? "Buscar y seleccionar cliente",
+          style: TextStyle(
+            color: selectedClient == null ? Colors.white54 : Colors.white,
           ),
-        );
-      }).toList(),
-      onChanged: saving
-          ? null
-          : (value) {
-              setState(() {
-                selectedClient = value;
-              });
-            },
-      decoration: const InputDecoration(
-        labelText: "Cliente",
+        ),
       ),
     );
   }
@@ -496,11 +595,11 @@ class _CreateBinMovementPageState
         ),
         DropdownMenuItem(
           value: "prestamo",
-          child: Text("Préstamo a cliente"),
+          child: Text("Prestar bins a cliente"),
         ),
         DropdownMenuItem(
           value: "devolucion",
-          child: Text("Devolución de cliente"),
+          child: Text("Recibir devolución de bins"),
         ),
         DropdownMenuItem(
           value: "baja",
@@ -517,13 +616,13 @@ class _CreateBinMovementPageState
 
                 if (!requiereCliente) {
                   selectedClient = null;
-                } else if (selectedClient == null &&
-                    clients.isNotEmpty) {
-                  selectedClient = clients.first;
                 }
 
-                if (!muestraDeposito) {
-                  depositoController.clear();
+                if (!muestraDepositoRecibido) {
+                  depositoRecibidoController.clear();
+                }
+                if (!muestraDepositoDevuelto) {
+                  depositoDevueltoController.clear();
                 }
               });
             },
@@ -547,9 +646,9 @@ class _CreateBinMovementPageState
     );
   }
 
-  Widget campoDeposito() {
+  Widget campoDepositoRecibido() {
     return TextField(
-      controller: depositoController,
+      controller: depositoRecibidoController,
       style: const TextStyle(
         color: Colors.white,
       ),
@@ -558,7 +657,22 @@ class _CreateBinMovementPageState
         decimal: true,
       ),
       decoration: const InputDecoration(
-        labelText: "Depósito pagado",
+        labelText: "Garantía recibida",
+        prefixText: "\$",
+        hintText: "Ej: 140000",
+      ),
+    );
+  }
+
+  Widget campoDepositoDevuelto() {
+    return TextField(
+      controller: depositoDevueltoController,
+      style: const TextStyle(
+        color: Colors.white,
+      ),
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      decoration: const InputDecoration(
+        labelText: "Garantía devuelta",
         prefixText: "\$",
         hintText: "Ej: 140000",
       ),

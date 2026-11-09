@@ -438,10 +438,16 @@ class _BinMovementsPageState
                   Icons.inventory_2_outlined,
                   "Envase: ${movement.binNombre}",
                 ),
-                _infoLine(
-                  Icons.savings_outlined,
-                  "Depósito pagado: \$${movement.depositoPagado}",
-                ),
+                if (movement.tipoMovimiento == "prestamo")
+                  _infoLine(
+                    Icons.savings_outlined,
+                    "Garantía recibida: \$${movement.depositoPagado}",
+                  ),
+                if (movement.tipoMovimiento == "devolucion")
+                  _infoLine(
+                    Icons.currency_exchange,
+                    "Garantía devuelta: \$${movement.depositoDevuelto}",
+                  ),
                 if (movement.referencia.isNotEmpty)
                   _infoLine(
                     Icons.notes_outlined,

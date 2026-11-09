@@ -37,6 +37,7 @@ class BinMovementService {
     required String tipoMovimiento,
     required int cantidad,
     required double depositoPagado,
+    required double depositoDevuelto,
     String? referencia,
   }) async {
     final token = await TokenStorage.getAccessToken();
@@ -47,6 +48,7 @@ class BinMovementService {
       "tipo_movimiento": tipoMovimiento,
       "cantidad": cantidad,
       "deposito_pagado": depositoPagado,
+      "deposito_devuelto": depositoDevuelto,
       "referencia": referencia ?? "",
     };
 

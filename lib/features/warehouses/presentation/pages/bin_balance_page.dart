@@ -21,6 +21,7 @@ class _BinBalancePageState extends State<BinBalancePage> {
   final searchController = TextEditingController();
   String search = '';
   bool onlyPending = false;
+  bool onlyDepositRetained = false;
   String? selectedBinType;
 
   String normalize(String value) {
@@ -35,6 +36,8 @@ class _BinBalancePageState extends State<BinBalancePage> {
 
   List<BinBalance> get filteredBalances => balances.where((balance) {
     return (!onlyPending || balance.saldo > 0) &&
+        (!onlyDepositRetained ||
+            (double.tryParse(balance.depositoRetenido) ?? 0) > 0) &&
         normalize(balance.clienteNombre).contains(normalize(search)) &&
         (selectedBinType == null || balance.binNombre == selectedBinType);
   }).toList();
@@ -89,7 +92,7 @@ class _BinBalancePageState extends State<BinBalancePage> {
     return items.fold(
       0,
       (sum, balance) =>
-          sum + (balance.saldo > 0 ? (double.tryParse(balance.depositoPendiente) ?? 0) : 0),
+          sum + (double.tryParse(balance.depositoRetenido) ?? 0),
     );
   }
 
@@ -171,11 +174,23 @@ class _BinBalancePageState extends State<BinBalancePage> {
                         const SizedBox(height: 8),
                         Align(
                           alignment: Alignment.centerLeft,
-                          child: FilterChip(
-                            label: const Text('Solo pendientes'),
-                            selected: onlyPending,
-                            onSelected: (value) =>
-                                setState(() => onlyPending = value),
+                          child: Wrap(
+                            spacing: 8,
+                            children: [
+                              FilterChip(
+                                label: const Text('Bins por devolver'),
+                                selected: onlyPending,
+                                onSelected: (value) =>
+                                    setState(() => onlyPending = value),
+                              ),
+                              FilterChip(
+                                label: const Text('Garantía retenida'),
+                                selected: onlyDepositRetained,
+                                onSelected: (value) => setState(
+                                  () => onlyDepositRetained = value,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         if (binTypes.isNotEmpty) ...[
@@ -235,8 +250,8 @@ class _BinBalancePageState extends State<BinBalancePage> {
           SizedBox(width: 12),
           Expanded(
             child: Text(
-              "El balance muestra cuántos envases tiene pendiente "
-              "cada cliente y el depósito asociado a esos envases.",
+              "Consulta quién tiene envases, cuántos debe devolver y la "
+              "garantía efectivamente retenida para cada cliente.",
               style: TextStyle(color: Colors.white, height: 1.35),
             ),
           ),
@@ -294,7 +309,7 @@ class _BinBalancePageState extends State<BinBalancePage> {
               ),
               const SizedBox(width: 10),
               _summaryBox(
-                label: "Depósito asociado",
+                label: "Garantía retenida",
                 value: "\$${totalDeposito.toStringAsFixed(0)}",
                 icon: Icons.savings_outlined,
                 color: Colors.greenAccent,
@@ -457,8 +472,8 @@ class _BinBalancePageState extends State<BinBalancePage> {
               ),
               const SizedBox(width: 10),
               _smallMetric(
-                label: "Depósito asociado",
-                value: "\$${balance.depositoPendiente}",
+                label: "Garantía retenida",
+                value: "\$${balance.depositoRetenido}",
                 color: Colors.greenAccent,
               ),
             ],
@@ -468,7 +483,12 @@ class _BinBalancePageState extends State<BinBalancePage> {
 
           _infoLine(
             Icons.savings_outlined,
-            "Valor depósito por envase: \$${balance.valorDeposito}",
+            "Garantía recibida: \$${balance.depositoRecibido} · devuelta: \$${balance.depositoDevuelto}",
+          ),
+          const SizedBox(height: 5),
+          _infoLine(
+            Icons.inventory_2_outlined,
+            "Valor referencial de los envases pendientes: \$${balance.depositoPendiente}",
           ),
         ],
       ),
