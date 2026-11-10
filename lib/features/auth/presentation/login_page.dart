@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../data/auth_api.dart';
+import '../../../core/auth/user_controller.dart';
 import '../../home/presentation/home_page.dart';
+import 'change_password_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -43,7 +45,9 @@ class _LoginPageState extends State<LoginPage> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => const HomePage(),
+          builder: (_) => UserController().user?['debe_cambiar_contrasena'] == true
+              ? const ChangePasswordPage(requiredChange: true)
+              : const HomePage(),
         ),
       );
     } catch (e) {

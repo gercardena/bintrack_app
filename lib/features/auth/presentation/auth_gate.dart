@@ -5,6 +5,7 @@ import '../data/auth_api.dart';
 import '../../../core/auth/user_controller.dart';
 
 import '../../home/presentation/home_page.dart';
+import 'change_password_page.dart';
 import 'login_page.dart';
 
 class AuthGate extends StatefulWidget {
@@ -48,10 +49,14 @@ class _AuthGateState extends State<AuthGate> {
     if (refreshedToken != null) {
       await UserController().loadUser();
       if (!mounted) return;
+      final mustChangePassword =
+          UserController().user?['debe_cambiar_contrasena'] == true;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => const HomePage(),
+          builder: (_) => mustChangePassword
+              ? const ChangePasswordPage(requiredChange: true)
+              : const HomePage(),
         ),
       );
     } else {

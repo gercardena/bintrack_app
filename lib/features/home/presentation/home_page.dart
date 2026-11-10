@@ -17,6 +17,7 @@ import '../../reports/presentation/sales_report_page.dart';
 import 'user_guide_page.dart';
 import 'privacy_policy_page.dart';
 import '../../account/presentation/account_shortcut.dart';
+import '../../auth/presentation/change_password_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -135,6 +136,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             tooltip: 'Actualizar suscripción',
             icon: const Icon(Icons.refresh),
             onPressed: _refresh,
+          ),
+          IconButton(
+            tooltip: 'Cambiar contraseña',
+            icon: const Icon(Icons.lock_reset_outlined),
+            onPressed: () => abrir(context, const ChangePasswordPage()),
           ),
           IconButton(
             tooltip: "Cerrar sesión",
