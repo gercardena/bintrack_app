@@ -19,6 +19,8 @@ class UserGuidePage extends StatelessWidget {
           _introCard(),
           const SizedBox(height: 18),
           _subscriptionNote(),
+          const SizedBox(height: 12),
+          _accessNote(),
           const SizedBox(height: 18),
           _sectionTitle("Flujo recomendado"),
           _stepCard(
@@ -97,7 +99,7 @@ class UserGuidePage extends StatelessWidget {
             number: "10",
             title: "Confirma la venta",
             description:
-                "Al confirmar, la app descuenta el stock lleno de la presentación vendida y registra automáticamente los envases como entregados al cliente.",
+                "Al confirmar, la app descuenta el stock lleno y registra automáticamente los envases como prestados al cliente. Esto no registra dinero: una garantía solo se anota cuando realmente fue recibida.",
             icon: Icons.check_circle,
             color: Colors.teal,
           ),
@@ -127,17 +129,25 @@ class UserGuidePage extends StatelessWidget {
           ),
           _stepCard(
             number: "14",
-            title: "Revisa balance de envases",
+            title: "Presta bins sin una venta",
             description:
-                "Consulta qué clientes tienen envases pendientes y el depósito asociado a esos envases. Una venta por kilo también entrega envases, por lo tanto también afecta el balance.",
+                "Para prestar un bin, caja u otro envase sin vender producto, entra a Bodega > Movimientos. Elige Préstamo, busca al cliente, indica cantidad y registra una garantía solo si el cliente entregó dinero.",
+            icon: Icons.handshake,
+            color: Colors.blueAccent,
+          ),
+          _stepCard(
+            number: "15",
+            title: "Revisa bins y garantías",
+            description:
+                "En el balance puedes buscar al cliente y ver sus bins pendientes, la garantía realmente recibida, la devuelta y la que sigue retenida. Una venta por kilo también entrega envases y afecta este balance.",
             icon: Icons.assessment,
             color: Colors.deepPurpleAccent,
           ),
           _stepCard(
-            number: "15",
+            number: "16",
             title: "Registra devolución de envases",
             description:
-                "Si el cliente devuelve envases vacíos después de la venta, regístralo en Bodega > Movimientos > Devolución. Eso descuenta el saldo pendiente del cliente.",
+                "Si el cliente devuelve envases vacíos, regístralo en Bodega > Movimientos > Devolución. Eso descuenta sus bins pendientes. Si además devuelves dinero, escribe la garantía devuelta; puede ser total o parcial. Nunca se devuelve automáticamente.",
             icon: Icons.assignment_return,
             color: Colors.orangeAccent,
           ),
@@ -212,6 +222,38 @@ class UserGuidePage extends StatelessWidget {
             child: Text(
               "En el Home puedes ver el estado de tu suscripción. "
               "Para operar normalmente, el período debe estar activo. Si vence, la cuenta queda en modo de solo lectura hasta renovarla o recibir una autorización de prueba.",
+              style: TextStyle(
+                color: Colors.white,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _accessNote() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.blue.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.lightBlueAccent.withValues(alpha: 0.35),
+        ),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.lock_outline,
+            color: Colors.lightBlueAccent,
+          ),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              "Si recibiste una contraseña temporal, en tu primer ingreso BINTRACK te pedirá crear una contraseña personal. Después puedes cambiarla desde el ícono de candado en Inicio.",
               style: TextStyle(
                 color: Colors.white,
                 height: 1.35,
