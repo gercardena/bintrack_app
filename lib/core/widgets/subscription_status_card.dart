@@ -14,6 +14,7 @@ class SubscriptionStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     final access = SubscriptionAccess.fromProfile(profile);
     final color = access.state == 'activa'
         ? Colors.greenAccent
@@ -48,18 +49,18 @@ class SubscriptionStatusCard extends StatelessWidget {
                   access.description(
                     isOwner: profile?['puede_gestionar_cuenta'] == true,
                   ),
-                  style: const TextStyle(color: Colors.white70),
+                  style: TextStyle(color: scheme.onSurface),
                 ),
                 if (end != null)
                   Text(
                     'Vencimiento: $end',
-                    style: const TextStyle(color: Colors.white70),
+                    style: TextStyle(color: scheme.onSurface),
                   ),
                 if (grace != null &&
                     (access.state == 'en_gracia' || access.state == 'vencida'))
                   Text(
                     'Fin de la gracia: $grace',
-                    style: const TextStyle(color: Colors.white70),
+                    style: TextStyle(color: scheme.onSurface),
                   ),
               ],
             ),

@@ -75,9 +75,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  static const Color background = Color(0xFF0F172A);
-  static const Color card = Color(0xFF1E293B);
-
   Future<void> abrir(BuildContext context, Widget page) async {
     await Navigator.push(context, MaterialPageRoute(builder: (_) => page));
     if (mounted) await _refresh();
@@ -87,15 +84,16 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
+        final scheme = Theme.of(dialogContext).colorScheme;
         return AlertDialog(
-          backgroundColor: const Color(0xFF172033),
-          title: const Text(
+          backgroundColor: scheme.surface,
+          title: Text(
             "Cerrar sesión",
-            style: TextStyle(color: Colors.white),
+            style: TextStyle(color: scheme.onSurface),
           ),
-          content: const Text(
+          content: Text(
             "¿Quieres cerrar tu sesión en este dispositivo?",
-            style: TextStyle(color: Colors.white70),
+            style: TextStyle(color: scheme.onSurfaceVariant),
           ),
           actions: [
             TextButton(
@@ -122,16 +120,17 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     final canOperate = SubscriptionAccess.fromProfile(
       UserController().user,
     ).canOperate;
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text("BINTRACK"),
         centerTitle: true,
-        backgroundColor: background,
-        foregroundColor: Colors.white,
+        backgroundColor: scheme.surface,
+        foregroundColor: scheme.onSurface,
         elevation: 0,
         actions: [
           IconButton(
@@ -173,7 +172,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 : null,
           ),
           const SizedBox(height: 20),
-          _sectionTitle("Primeros pasos"),
+          _sectionTitle(context, "Primeros pasos"),
           _menuGrid(
             children: [
               _menuButton(
@@ -228,7 +227,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             ],
           ),
           const SizedBox(height: 20),
-          _sectionTitle("Operación diaria"),
+          _sectionTitle(context, "Operación diaria"),
           _menuGrid(
             children: [
               _menuButton(
@@ -266,7 +265,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             ],
           ),
           const SizedBox(height: 20),
-          _helpCard(),
+          _helpCard(context),
         ],
       ),
     );
@@ -276,40 +275,46 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       SubscriptionStatusCard(profile: UserController().user);
 
   Widget _moduleDrawer(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final muted = scheme.onSurfaceVariant;
     final canManageAccount =
         UserController().user?['puede_gestionar_cuenta'] == true;
 
     return Drawer(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: scheme.surface,
       child: SafeArea(
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 24, 20, 16),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.apps_outlined, color: Colors.cyanAccent, size: 30),
-                  SizedBox(height: 10),
+                  const Icon(
+                    Icons.apps_outlined,
+                    color: Colors.cyanAccent,
+                    size: 30,
+                  ),
+                  const SizedBox(height: 10),
                   Text(
                     'Módulos BINTRACK',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: scheme.onSurface,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
                     'Accede a cada módulo sin recorrer el Inicio.',
-                    style: TextStyle(color: Colors.white60),
+                    style: TextStyle(color: muted),
                   ),
                 ],
               ),
             ),
-            const Divider(color: Colors.white24),
-            _drawerSection('Operación'),
+            Divider(color: scheme.outlineVariant),
+            _drawerSection(context, 'Operación'),
             _drawerItem(
               context,
               title: 'Nueva venta',
@@ -348,8 +353,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               color: Colors.lightGreen,
               page: const SalesReportPage(),
             ),
-            const Divider(color: Colors.white24),
-            _drawerSection('Catálogo y bodega'),
+            Divider(color: scheme.outlineVariant),
+            _drawerSection(context, 'Catálogo y bodega'),
             _drawerItem(
               context,
               title: 'Clientes',
@@ -378,8 +383,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               color: Colors.brown,
               page: const WarehousesPage(),
             ),
-            const Divider(color: Colors.white24),
-            _drawerSection('Ayuda y cuenta'),
+            Divider(color: scheme.outlineVariant),
+            _drawerSection(context, 'Ayuda y cuenta'),
             _drawerItem(
               context,
               title: 'Guía de usuario',
@@ -402,7 +407,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 color: Colors.cyanAccent,
                 page: const AccountPage(),
               ),
-            const Divider(color: Colors.white24),
+            Divider(color: scheme.outlineVariant),
             SwitchListTile(
               secondary: Icon(
                 ThemeController.instance.isDarkMode
@@ -414,11 +419,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 ThemeController.instance.isDarkMode
                     ? 'Modo oscuro'
                     : 'Modo claro',
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(color: scheme.onSurface),
               ),
-              subtitle: const Text(
+              subtitle: Text(
                 'La preferencia queda guardada.',
-                style: TextStyle(color: Colors.white60),
+                style: TextStyle(color: muted),
               ),
               activeThumbColor: Colors.cyanAccent,
               value: ThemeController.instance.isDarkMode,
@@ -430,12 +435,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     );
   }
 
-  Widget _drawerSection(String title) => Padding(
+  Widget _drawerSection(BuildContext context, String title) => Padding(
     padding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
     child: Text(
       title.toUpperCase(),
-      style: const TextStyle(
-        color: Colors.white54,
+      style: TextStyle(
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
         fontWeight: FontWeight.w700,
         fontSize: 12,
         letterSpacing: 0.6,
@@ -451,16 +456,17 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     required Widget page,
     bool enabled = true,
   }) {
+    final scheme = Theme.of(context).colorScheme;
     return ListTile(
       enabled: enabled,
-      leading: Icon(icon, color: enabled ? color : Colors.white30),
+      leading: Icon(icon, color: enabled ? color : scheme.outline),
       title: Text(
         title,
-        style: TextStyle(color: enabled ? Colors.white : Colors.white38),
+        style: TextStyle(color: enabled ? scheme.onSurface : scheme.outline),
       ),
       trailing: Icon(
         Icons.chevron_right,
-        color: enabled ? Colors.white54 : Colors.white24,
+        color: enabled ? scheme.onSurfaceVariant : scheme.outline,
       ),
       onTap: enabled
           ? () {
@@ -561,13 +567,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     );
   }
 
-  Widget _sectionTitle(String title) {
+  Widget _sectionTitle(BuildContext context, String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Text(
         title,
-        style: const TextStyle(
-          color: Colors.white,
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.onSurface,
           fontSize: 17,
           fontWeight: FontWeight.bold,
         ),
@@ -596,11 +602,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     required Widget page,
     bool highlighted = false,
   }) {
-    final cardColor = highlighted ? color.withValues(alpha: 0.18) : card;
+    final scheme = Theme.of(context).colorScheme;
+    final cardColor = highlighted
+        ? color.withValues(alpha: 0.18)
+        : scheme.surfaceContainerHighest;
 
     final borderColor = highlighted
         ? color.withValues(alpha: 0.45)
-        : Colors.white.withValues(alpha: 0.06);
+        : scheme.outlineVariant;
 
     return InkWell(
       borderRadius: BorderRadius.circular(18),
@@ -633,8 +642,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             const Spacer(),
             Text(
               title,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: scheme.onSurface,
                 fontSize: 15.5,
                 fontWeight: FontWeight.bold,
               ),
@@ -642,7 +651,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             const SizedBox(height: 3),
             Text(
               subtitle,
-              style: const TextStyle(fontSize: 12, color: Colors.white60),
+              style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -650,7 +659,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     );
   }
 
-  Widget _helpCard() {
+  Widget _helpCard(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -658,17 +667,20 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: Colors.amber.withValues(alpha: 0.35)),
       ),
-      child: const Row(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.lightbulb_outline, color: Colors.amber),
-          SizedBox(width: 10),
+          const Icon(Icons.lightbulb_outline, color: Colors.amber),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               "Consejo: antes de crear productos con stock, "
               "registra una entrada de envases. Así el inventario "
               "sabrá cuántos envases físicos hay disponibles.",
-              style: TextStyle(color: Colors.white, height: 1.35),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                height: 1.35,
+              ),
             ),
           ),
         ],
