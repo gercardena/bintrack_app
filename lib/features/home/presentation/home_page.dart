@@ -4,6 +4,7 @@ import '../../../core/auth/subscription_access.dart';
 import '../../../core/widgets/subscription_status_card.dart';
 
 import '../../../core/auth/user_controller.dart';
+import '../../../core/theme/theme_controller.dart';
 import '../../auth/presentation/logout.dart';
 import '../../clientes/presentation/clientes_page.dart';
 import '../../products/presentation/products_page.dart';
@@ -17,6 +18,7 @@ import '../../reports/presentation/sales_report_page.dart';
 import 'user_guide_page.dart';
 import 'privacy_policy_page.dart';
 import '../../account/presentation/account_shortcut.dart';
+import '../../account/presentation/account_page.dart';
 import '../../auth/presentation/change_password_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -149,6 +151,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           ),
         ],
       ),
+      drawer: _moduleDrawer(context),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -271,6 +274,202 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   Widget _subscriptionCard() =>
       SubscriptionStatusCard(profile: UserController().user);
+
+  Widget _moduleDrawer(BuildContext context) {
+    final canManageAccount =
+        UserController().user?['puede_gestionar_cuenta'] == true;
+
+    return Drawer(
+      backgroundColor: const Color(0xFF0F172A),
+      child: SafeArea(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 24, 20, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.apps_outlined, color: Colors.cyanAccent, size: 30),
+                  SizedBox(height: 10),
+                  Text(
+                    'Módulos BINTRACK',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Accede a cada módulo sin recorrer el Inicio.',
+                    style: TextStyle(color: Colors.white60),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(color: Colors.white24),
+            _drawerSection('Operación'),
+            _drawerItem(
+              context,
+              title: 'Nueva venta',
+              icon: Icons.add_shopping_cart,
+              color: Colors.blueAccent,
+              page: const CreateSalePage(),
+              enabled: SubscriptionAccess.fromProfile(
+                UserController().user,
+              ).canOperate,
+            ),
+            _drawerItem(
+              context,
+              title: 'Ventas',
+              icon: Icons.point_of_sale,
+              color: Colors.blue,
+              page: const SalesPage(),
+            ),
+            _drawerItem(
+              context,
+              title: 'Pagos',
+              icon: Icons.payments,
+              color: Colors.teal,
+              page: const PaymentsPage(),
+            ),
+            _drawerItem(
+              context,
+              title: 'Comprobantes',
+              icon: Icons.receipt_long,
+              color: Colors.deepPurpleAccent,
+              page: const InvoicesPage(),
+            ),
+            _drawerItem(
+              context,
+              title: 'Reportes',
+              icon: Icons.analytics_outlined,
+              color: Colors.lightGreen,
+              page: const SalesReportPage(),
+            ),
+            const Divider(color: Colors.white24),
+            _drawerSection('Catálogo y bodega'),
+            _drawerItem(
+              context,
+              title: 'Clientes',
+              icon: Icons.people,
+              color: Colors.indigoAccent,
+              page: const ClientesPage(),
+            ),
+            _drawerItem(
+              context,
+              title: 'Productos',
+              icon: Icons.inventory_2,
+              color: Colors.green,
+              page: const ProductsPage(),
+            ),
+            _drawerItem(
+              context,
+              title: 'Inventario',
+              icon: Icons.storage,
+              color: Colors.orangeAccent,
+              page: const InventoryPage(),
+            ),
+            _drawerItem(
+              context,
+              title: 'Envases y bins',
+              icon: Icons.warehouse,
+              color: Colors.brown,
+              page: const WarehousesPage(),
+            ),
+            const Divider(color: Colors.white24),
+            _drawerSection('Ayuda y cuenta'),
+            _drawerItem(
+              context,
+              title: 'Guía de usuario',
+              icon: Icons.route,
+              color: Colors.cyan,
+              page: const UserGuidePage(),
+            ),
+            _drawerItem(
+              context,
+              title: 'Privacidad',
+              icon: Icons.privacy_tip_outlined,
+              color: Colors.blueGrey,
+              page: const PrivacyPolicyPage(),
+            ),
+            if (canManageAccount)
+              _drawerItem(
+                context,
+                title: 'Usuarios y suscripción',
+                icon: Icons.manage_accounts_outlined,
+                color: Colors.cyanAccent,
+                page: const AccountPage(),
+              ),
+            const Divider(color: Colors.white24),
+            SwitchListTile(
+              secondary: Icon(
+                ThemeController.instance.isDarkMode
+                    ? Icons.dark_mode_outlined
+                    : Icons.light_mode_outlined,
+                color: Colors.amberAccent,
+              ),
+              title: Text(
+                ThemeController.instance.isDarkMode
+                    ? 'Modo oscuro'
+                    : 'Modo claro',
+                style: const TextStyle(color: Colors.white),
+              ),
+              subtitle: const Text(
+                'La preferencia queda guardada.',
+                style: TextStyle(color: Colors.white60),
+              ),
+              activeThumbColor: Colors.cyanAccent,
+              value: ThemeController.instance.isDarkMode,
+              onChanged: ThemeController.instance.setDarkMode,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _drawerSection(String title) => Padding(
+    padding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
+    child: Text(
+      title.toUpperCase(),
+      style: const TextStyle(
+        color: Colors.white54,
+        fontWeight: FontWeight.w700,
+        fontSize: 12,
+        letterSpacing: 0.6,
+      ),
+    ),
+  );
+
+  Widget _drawerItem(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required Color color,
+    required Widget page,
+    bool enabled = true,
+  }) {
+    return ListTile(
+      enabled: enabled,
+      leading: Icon(icon, color: enabled ? color : Colors.white30),
+      title: Text(
+        title,
+        style: TextStyle(color: enabled ? Colors.white : Colors.white38),
+      ),
+      trailing: Icon(
+        Icons.chevron_right,
+        color: enabled ? Colors.white54 : Colors.white24,
+      ),
+      onTap: enabled
+          ? () {
+              Navigator.pop(context);
+              abrir(context, page);
+            }
+          : null,
+    );
+  }
 
   Widget _welcomeCard() {
     return Container(

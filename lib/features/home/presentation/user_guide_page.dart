@@ -21,6 +21,8 @@ class UserGuidePage extends StatelessWidget {
           _subscriptionNote(),
           const SizedBox(height: 12),
           _accessNote(),
+          const SizedBox(height: 12),
+          _interfaceNote(),
           const SizedBox(height: 18),
           _sectionTitle("Flujo recomendado"),
           _stepCard(
@@ -163,21 +165,14 @@ class UserGuidePage extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [
-            Color(0xFF2563EB),
-            Color(0xFF0EA5E9),
-          ],
+          colors: [Color(0xFF2563EB), Color(0xFF0EA5E9)],
         ),
         borderRadius: BorderRadius.circular(20),
       ),
       child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.route,
-            color: Colors.white,
-            size: 38,
-          ),
+          Icon(Icons.route, color: Colors.white, size: 38),
           SizedBox(height: 12),
           Text(
             "Cómo usar BINTRACK",
@@ -190,10 +185,7 @@ class UserGuidePage extends StatelessWidget {
           SizedBox(height: 6),
           Text(
             "Sigue este orden para evitar errores de inventario y mantener trazabilidad clara.",
-            style: TextStyle(
-              color: Colors.white70,
-              height: 1.35,
-            ),
+            style: TextStyle(color: Colors.white70, height: 1.35),
           ),
         ],
       ),
@@ -206,26 +198,18 @@ class UserGuidePage extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.green.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Colors.greenAccent.withValues(alpha: 0.35),
-        ),
+        border: Border.all(color: Colors.greenAccent.withValues(alpha: 0.35)),
       ),
       child: const Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.verified_user,
-            color: Colors.greenAccent,
-          ),
+          Icon(Icons.verified_user, color: Colors.greenAccent),
           SizedBox(width: 10),
           Expanded(
             child: Text(
               "En el Home puedes ver el estado de tu suscripción. "
               "Para operar normalmente, el período debe estar activo. Si vence, la cuenta queda en modo de solo lectura hasta renovarla o recibir una autorización de prueba.",
-              style: TextStyle(
-                color: Colors.white,
-                height: 1.35,
-              ),
+              style: TextStyle(color: Colors.white, height: 1.35),
             ),
           ),
         ],
@@ -246,18 +230,36 @@ class UserGuidePage extends StatelessWidget {
       child: const Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.lock_outline,
-            color: Colors.lightBlueAccent,
-          ),
+          Icon(Icons.lock_outline, color: Colors.lightBlueAccent),
           SizedBox(width: 10),
           Expanded(
             child: Text(
               "Si recibiste una contraseña temporal, en tu primer ingreso BINTRACK te pedirá crear una contraseña personal. Después puedes cambiarla desde el ícono de candado en Inicio.",
-              style: TextStyle(
-                color: Colors.white,
-                height: 1.35,
-              ),
+              style: TextStyle(color: Colors.white, height: 1.35),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _interfaceNote() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.cyan.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.cyanAccent.withValues(alpha: 0.28)),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.menu_open, color: Colors.cyanAccent),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              "Usa el menú de tres líneas de Inicio para abrir cualquier módulo sin recorrer toda la pantalla. En Inventario puedes buscar un envase por nombre. Desde ese mismo menú puedes elegir modo claro u oscuro; la preferencia queda guardada en este dispositivo.",
+              style: TextStyle(color: Colors.white, height: 1.35),
             ),
           ),
         ],
@@ -267,9 +269,7 @@ class UserGuidePage extends StatelessWidget {
 
   Widget _sectionTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.only(
-        bottom: 10,
-      ),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Text(
         title,
         style: const TextStyle(
@@ -289,18 +289,12 @@ class UserGuidePage extends StatelessWidget {
     required Color color,
   }) {
     return Container(
-      margin: const EdgeInsets.only(
-        bottom: 12,
-      ),
+      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Colors.white.withValues(
-            alpha: 0.06,
-          ),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -319,16 +313,11 @@ class UserGuidePage extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Icon(
-                      icon,
-                      color: color,
-                      size: 22,
-                    ),
+                    Icon(icon, color: color, size: 22),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -345,10 +334,7 @@ class UserGuidePage extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   description,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    height: 1.35,
-                  ),
+                  style: const TextStyle(color: Colors.white70, height: 1.35),
                 ),
               ],
             ),
@@ -362,23 +348,14 @@ class UserGuidePage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.amber.withValues(
-          alpha: 0.12,
-        ),
+        color: Colors.amber.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Colors.amber.withValues(
-            alpha: 0.35,
-          ),
-        ),
+        border: Border.all(color: Colors.amber.withValues(alpha: 0.35)),
       ),
       child: const Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.info_outline,
-            color: Colors.amber,
-          ),
+          Icon(Icons.info_outline, color: Colors.amber),
           SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -389,10 +366,7 @@ class UserGuidePage extends StatelessWidget {
               "Si vendes por kilo, la plata se calcula por kilos pesados, pero el inventario descuenta envases llenos.\n\n"
               "Si vendes un pallet, la app descuenta el stock del pallet, no las cajas contenidas. "
               "Para transformar pallets o bins en cajas se usará el flujo futuro de reenvasado.",
-              style: TextStyle(
-                color: Colors.white,
-                height: 1.35,
-              ),
+              style: TextStyle(color: Colors.white, height: 1.35),
             ),
           ),
         ],
