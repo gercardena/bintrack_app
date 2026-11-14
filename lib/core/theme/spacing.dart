@@ -1,5 +1,4 @@
 class AppSpacing {
-
   // XS
   static const double xs = 4;
 
@@ -17,4 +16,10 @@ class AppSpacing {
 
   // 🔥 PADDING GLOBAL PANTALLAS
   static const double screenPadding = 16;
+}
+
+class AppRadius {
+  static const double control = 12;
+  static const double card = 18;
+  static const double hero = 22;
 }

@@ -5,6 +5,8 @@ import '../../../core/widgets/subscription_status_card.dart';
 
 import '../../../core/auth/user_controller.dart';
 import '../../../core/theme/theme_controller.dart';
+import '../../../core/theme/colors.dart';
+import '../../../core/theme/spacing.dart';
 import '../../auth/presentation/logout.dart';
 import '../../clientes/presentation/clientes_page.dart';
 import '../../products/presentation/products_page.dart';
@@ -152,7 +154,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       ),
       drawer: _moduleDrawer(context),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.screenPadding),
         children: [
           _welcomeCard(),
           const SizedBox(height: 12),
@@ -166,105 +168,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 ? "Crea una venta para un cliente activo."
                 : "Solo lectura: no puedes crear ventas.",
             icon: Icons.add_shopping_cart,
-            color: canOperate ? const Color(0xFF2563EB) : Colors.blueGrey,
+            color: canOperate ? AppColors.primary : Colors.blueGrey,
             onTap: canOperate
                 ? () => abrir(context, const CreateSalePage())
                 : null,
           ),
-          const SizedBox(height: 20),
-          _sectionTitle(context, "Primeros pasos"),
-          _menuGrid(
-            children: [
-              _menuButton(
-                context,
-                title: "Guía de usuario",
-                subtitle: "Aprende el flujo",
-                icon: Icons.route,
-                color: Colors.cyan,
-                page: const UserGuidePage(),
-                highlighted: true,
-              ),
-              _menuButton(
-                context,
-                title: "Privacidad",
-                subtitle: "Uso de datos",
-                icon: Icons.privacy_tip,
-                color: Colors.blueGrey,
-                page: const PrivacyPolicyPage(),
-              ),
-              _menuButton(
-                context,
-                title: "Envases",
-                subtitle: "Tipos y movimientos",
-                icon: Icons.warehouse,
-                color: Colors.brown,
-                page: const WarehousesPage(),
-              ),
-              _menuButton(
-                context,
-                title: "Clientes",
-                subtitle: "Registra compradores",
-                icon: Icons.people,
-                color: Colors.indigo,
-                page: const ClientesPage(),
-              ),
-              _menuButton(
-                context,
-                title: "Productos",
-                subtitle: "Presentaciones y stock",
-                icon: Icons.inventory_2,
-                color: Colors.green,
-                page: const ProductsPage(),
-              ),
-              _menuButton(
-                context,
-                title: "Inventario",
-                subtitle: "Disponibles y llenos",
-                icon: Icons.storage,
-                color: Colors.orange,
-                page: const InventoryPage(),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          _sectionTitle(context, "Operación diaria"),
-          _menuGrid(
-            children: [
-              _menuButton(
-                context,
-                title: "Ventas",
-                subtitle: "Borradores y estados",
-                icon: Icons.point_of_sale,
-                color: Colors.blue,
-                page: const SalesPage(),
-              ),
-              _menuButton(
-                context,
-                title: "Pagos",
-                subtitle: "Ventas pagadas",
-                icon: Icons.payments,
-                color: Colors.teal,
-                page: const PaymentsPage(),
-              ),
-              _menuButton(
-                context,
-                title: "Comprobantes",
-                subtitle: "Respaldos internos",
-                icon: Icons.receipt_long,
-                color: Colors.deepPurple,
-                page: const InvoicesPage(),
-              ),
-              _menuButton(
-                context,
-                title: "Reportes",
-                subtitle: "Ventas y crédito",
-                icon: Icons.analytics_outlined,
-                color: Colors.lightGreen,
-                page: const SalesReportPage(),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppSpacing.lg),
+          _quickAccess(context),
+          const SizedBox(height: AppSpacing.lg),
           _helpCard(context),
         ],
       ),
@@ -567,95 +478,71 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     );
   }
 
-  Widget _sectionTitle(BuildContext context, String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Text(
-        title,
-        style: TextStyle(
-          color: Theme.of(context).colorScheme.onSurface,
-          fontSize: 17,
-          fontWeight: FontWeight.bold,
-        ),
+  Widget _quickAccess(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Accesos frecuentes',
+            style: TextStyle(
+              color: scheme.onSurface,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              _quickLink(
+                context,
+                title: 'Ventas',
+                icon: Icons.point_of_sale,
+                page: const SalesPage(),
+              ),
+              _quickLink(
+                context,
+                title: 'Inventario',
+                icon: Icons.storage,
+                page: const InventoryPage(),
+              ),
+              _quickLink(
+                context,
+                title: 'Envases',
+                icon: Icons.warehouse,
+                page: const WarehousesPage(),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            'Para todos los módulos, abre el menú ☰ de la parte superior.',
+            style: TextStyle(color: scheme.onSurfaceVariant, height: 1.3),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _menuGrid({required List<Widget> children}) {
-    return GridView.count(
-      crossAxisCount: 2,
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 1.10,
-      children: children,
-    );
-  }
-
-  Widget _menuButton(
+  Widget _quickLink(
     BuildContext context, {
     required String title,
-    required String subtitle,
     required IconData icon,
-    required Color color,
     required Widget page,
-    bool highlighted = false,
   }) {
-    final scheme = Theme.of(context).colorScheme;
-    final cardColor = highlighted
-        ? color.withValues(alpha: 0.18)
-        : scheme.surfaceContainerHighest;
-
-    final borderColor = highlighted
-        ? color.withValues(alpha: 0.45)
-        : scheme.outlineVariant;
-
-    return InkWell(
-      borderRadius: BorderRadius.circular(18),
-      onTap: () => abrir(context, page),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: borderColor),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 8,
-              offset: Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: color, size: 28),
-            ),
-            const Spacer(),
-            Text(
-              title,
-              style: TextStyle(
-                color: scheme.onSurface,
-                fontSize: 15.5,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              subtitle,
-              style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
-            ),
-          ],
-        ),
-      ),
+    return OutlinedButton.icon(
+      onPressed: () => abrir(context, page),
+      icon: Icon(icon, size: 18),
+      label: Text(title),
     );
   }
 
