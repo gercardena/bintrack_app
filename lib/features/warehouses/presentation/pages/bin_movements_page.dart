@@ -6,31 +6,28 @@ import '../../data/models/bin_movement_model.dart';
 import 'create_bin_movement_page.dart';
 
 class BinMovementsPage extends StatefulWidget {
-  const BinMovementsPage({super.key});
+  const BinMovementsPage({super.key, this.historyOnly = false});
+
+  final bool historyOnly;
 
   @override
-  State<BinMovementsPage> createState() =>
-      _BinMovementsPageState();
+  State<BinMovementsPage> createState() => _BinMovementsPageState();
 }
 
-class _BinMovementsPageState
-    extends State<BinMovementsPage> {
+class _BinMovementsPageState extends State<BinMovementsPage> {
   final BinMovementService service = BinMovementService();
 
   static const Color background = Color(0xFF0F172A);
   static const Color card = Color(0xFF1E293B);
 
-  final TextEditingController buscarController =
-      TextEditingController();
+  final TextEditingController buscarController = TextEditingController();
 
   List<BinMovement> movements = [];
   bool loading = true;
   String? errorMessage;
 
   List<BinMovement> get movimientosFiltrados {
-    final query = buscarController.text
-        .trim()
-        .toLowerCase();
+    final query = buscarController.text.trim().toLowerCase();
 
     if (query.isEmpty) {
       return movements;
@@ -95,9 +92,7 @@ class _BinMovementsPageState
   Future<void> crearMovimiento() async {
     final result = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(
-        builder: (_) => const CreateBinMovementPage(),
-      ),
+      MaterialPageRoute(builder: (_) => const CreateBinMovementPage()),
     );
 
     if (result == true && mounted) {
@@ -189,47 +184,46 @@ class _BinMovementsPageState
     return Scaffold(
       backgroundColor: background,
       appBar: AppBar(
-        title: const Text("Movimientos"),
+        title: Text(
+          widget.historyOnly ? "Historial de bins" : "Prestar o recibir bins",
+        ),
         centerTitle: true,
         backgroundColor: background,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
       body: loading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
+          ? const Center(child: CircularProgressIndicator())
           : errorMessage != null
-              ? _errorState()
-              : RefreshIndicator(
-                  onRefresh: loadMovements,
-                  child: movements.isEmpty
-                      ? _emptyState()
-                      : ListView(
-                          padding:
-                              const EdgeInsets.all(16),
-                          children: [
-                            _introCard(),
-                            const SizedBox(height: 14),
-                            _searchCard(),
-                            const SizedBox(height: 14),
-                            if (visibles.isEmpty)
-                              _emptySearchState()
-                            else
-                              ...visibles.map(
-                                _movementCard,
-                              ),
-                            const SizedBox(height: 80),
-                          ],
-                        ),
-                ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: const Color(0xFF2563EB),
-        foregroundColor: Colors.white,
-        onPressed: crearMovimiento,
-        icon: const Icon(Icons.add),
-        label: const Text("Nuevo movimiento"),
-      ),
+          ? _errorState()
+          : RefreshIndicator(
+              onRefresh: loadMovements,
+              child: movements.isEmpty
+                  ? _emptyState()
+                  : ListView(
+                      padding: const EdgeInsets.all(16),
+                      children: [
+                        _introCard(),
+                        const SizedBox(height: 14),
+                        _searchCard(),
+                        const SizedBox(height: 14),
+                        if (visibles.isEmpty)
+                          _emptySearchState()
+                        else
+                          ...visibles.map(_movementCard),
+                        const SizedBox(height: 80),
+                      ],
+                    ),
+            ),
+      floatingActionButton: widget.historyOnly
+          ? null
+          : FloatingActionButton.extended(
+              backgroundColor: const Color(0xFF2563EB),
+              foregroundColor: Colors.white,
+              onPressed: crearMovimiento,
+              icon: const Icon(Icons.add),
+              label: const Text("Registrar movimiento"),
+            ),
     );
   }
 
@@ -239,28 +233,19 @@ class _BinMovementsPageState
       decoration: BoxDecoration(
         color: Colors.orange.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.orangeAccent.withValues(alpha: 0.30),
-        ),
+        border: Border.all(color: Colors.orangeAccent.withValues(alpha: 0.30)),
       ),
-      child: const Row(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.swap_horiz,
-            color: Colors.orangeAccent,
-            size: 30,
-          ),
-          SizedBox(width: 12),
+          const Icon(Icons.swap_horiz, color: Colors.orangeAccent, size: 30),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
-              "Aquí se registran entradas, préstamos, devoluciones "
-              "y bajas de envases. Estos movimientos alimentan el "
-              "inventario y el balance por cliente.",
-              style: TextStyle(
-                color: Colors.white,
-                height: 1.35,
-              ),
+              widget.historyOnly
+                  ? "Busca aquí todos los préstamos, devoluciones, entradas y bajas registrados."
+                  : "Registra préstamos, devoluciones, entradas o bajas. Estos movimientos actualizan el inventario y el balance por cliente.",
+              style: const TextStyle(color: Colors.white, height: 1.35),
             ),
           ),
         ],
@@ -269,9 +254,7 @@ class _BinMovementsPageState
   }
 
   Widget _searchCard() {
-    final buscando = buscarController.text
-        .trim()
-        .isNotEmpty;
+    final buscando = buscarController.text.trim().isNotEmpty;
 
     final totalResultados = movimientosFiltrados.length;
 
@@ -280,13 +263,10 @@ class _BinMovementsPageState
       decoration: BoxDecoration(
         color: card,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.07),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
       ),
       child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           TextField(
             controller: buscarController,
@@ -298,41 +278,26 @@ class _BinMovementsPageState
             cursorColor: Colors.orangeAccent,
             decoration: InputDecoration(
               filled: true,
-              fillColor:
-                  Colors.white.withValues(alpha: 0.08),
+              fillColor: Colors.white.withValues(alpha: 0.08),
               labelText: "Buscar movimiento",
-              hintText:
-                  "Cliente, envase, tipo, referencia...",
-              labelStyle: const TextStyle(
-                color: Colors.white70,
-              ),
-              hintStyle: const TextStyle(
-                color: Colors.white38,
-              ),
-              prefixIcon: const Icon(
-                Icons.search,
-                color: Colors.white54,
-              ),
+              hintText: "Cliente, envase, tipo, referencia...",
+              labelStyle: const TextStyle(color: Colors.white70),
+              hintStyle: const TextStyle(color: Colors.white38),
+              prefixIcon: const Icon(Icons.search, color: Colors.white54),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide(
-                  color:
-                      Colors.white.withValues(alpha: 0.14),
+                  color: Colors.white.withValues(alpha: 0.14),
                 ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(
-                  color: Colors.orangeAccent,
-                ),
+                borderSide: const BorderSide(color: Colors.orangeAccent),
               ),
               suffixIcon: buscando
                   ? IconButton(
                       tooltip: "Limpiar búsqueda",
-                      icon: const Icon(
-                        Icons.close,
-                        color: Colors.white54,
-                      ),
+                      icon: const Icon(Icons.close, color: Colors.white54),
                       onPressed: () {
                         setState(() {
                           buscarController.clear();
@@ -361,12 +326,8 @@ class _BinMovementsPageState
     );
   }
 
-  Widget _movementCard(
-    BinMovement movement,
-  ) {
-    final color = movementColor(
-      movement.tipoMovimiento,
-    );
+  Widget _movementCard(BinMovement movement) {
+    final color = movementColor(movement.tipoMovimiento);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -374,9 +335,7 @@ class _BinMovementsPageState
       decoration: BoxDecoration(
         color: card,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: color.withValues(alpha: 0.24),
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.24)),
         boxShadow: const [
           BoxShadow(
             color: Colors.black26,
@@ -386,28 +345,20 @@ class _BinMovementsPageState
         ],
       ),
       child: Row(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CircleAvatar(
             radius: 24,
-            backgroundColor:
-                color.withValues(alpha: 0.16),
-            child: Icon(
-              movementIcon(movement.tipoMovimiento),
-              color: color,
-            ),
+            backgroundColor: color.withValues(alpha: 0.16),
+            child: Icon(movementIcon(movement.tipoMovimiento), color: color),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  movementLabel(
-                    movement.tipoMovimiento,
-                  ),
+                  movementLabel(movement.tipoMovimiento),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 17,
@@ -416,9 +367,7 @@ class _BinMovementsPageState
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  movementHelp(
-                    movement.tipoMovimiento,
-                  ),
+                  movementHelp(movement.tipoMovimiento),
                   style: const TextStyle(
                     color: Colors.white60,
                     height: 1.25,
@@ -426,10 +375,7 @@ class _BinMovementsPageState
                   ),
                 ),
                 const SizedBox(height: 10),
-                _infoLine(
-                  Icons.numbers,
-                  "Cantidad: ${movement.cantidad}",
-                ),
+                _infoLine(Icons.numbers, "Cantidad: ${movement.cantidad}"),
                 _infoLine(
                   Icons.person_outline,
                   "Cliente: ${movement.clienteNombre}",
@@ -465,31 +411,20 @@ class _BinMovementsPageState
     );
   }
 
-  Widget _infoLine(
-    IconData icon,
-    String text,
-  ) {
+  Widget _infoLine(IconData icon, String text) {
     return Padding(
       padding: const EdgeInsets.only(top: 3),
       child: Row(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            icon,
-            size: 16,
-            color: Colors.white54,
-          ),
+          Icon(icon, size: 16, color: Colors.white54),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
               text,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Colors.white70,
-                height: 1.25,
-              ),
+              style: const TextStyle(color: Colors.white70, height: 1.25),
             ),
           ),
         ],
@@ -504,34 +439,22 @@ class _BinMovementsPageState
       decoration: BoxDecoration(
         color: card,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.orangeAccent.withValues(alpha: 0.24),
-        ),
+        border: Border.all(color: Colors.orangeAccent.withValues(alpha: 0.24)),
       ),
       child: const Column(
         children: [
-          Icon(
-            Icons.search_off,
-            color: Colors.orangeAccent,
-            size: 42,
-          ),
+          Icon(Icons.search_off, color: Colors.orangeAccent, size: 42),
           SizedBox(height: 12),
           Text(
             "No encontramos movimientos",
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 6),
           Text(
             "Prueba buscando por cliente, envase, tipo, referencia o fecha.",
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white60,
-              height: 1.35,
-            ),
+            style: TextStyle(color: Colors.white60, height: 1.35),
           ),
         ],
       ),
@@ -560,21 +483,21 @@ class _BinMovementsPageState
           ),
         ),
         const SizedBox(height: 8),
-        const Text(
-          "Registra una entrada para cargar envases físicos, "
-          "o un préstamo/devolución para controlar envases por cliente.",
+        Text(
+          widget.historyOnly
+              ? "Cuando registres préstamos, devoluciones, entradas o bajas, aparecerán aquí."
+              : "Registra una entrada para cargar envases físicos, o un préstamo/devolución para controlar envases por cliente.",
           textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Colors.white60,
-            height: 1.35,
+          style: const TextStyle(color: Colors.white60, height: 1.35),
+        ),
+        if (!widget.historyOnly) ...[
+          const SizedBox(height: 22),
+          FilledButton.icon(
+            onPressed: crearMovimiento,
+            icon: const Icon(Icons.add),
+            label: const Text("Registrar movimiento"),
           ),
-        ),
-        const SizedBox(height: 22),
-        FilledButton.icon(
-          onPressed: crearMovimiento,
-          icon: const Icon(Icons.add),
-          label: const Text("Crear movimiento"),
-        ),
+        ],
       ],
     );
   }
@@ -586,11 +509,7 @@ class _BinMovementsPageState
         padding: const EdgeInsets.all(24),
         children: [
           const SizedBox(height: 90),
-          const Icon(
-            Icons.error_outline,
-            size: 72,
-            color: Colors.redAccent,
-          ),
+          const Icon(Icons.error_outline, size: 72, color: Colors.redAccent),
           const SizedBox(height: 16),
           const Center(
             child: Text(
@@ -606,10 +525,7 @@ class _BinMovementsPageState
           Text(
             errorMessage ?? "",
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white60,
-              height: 1.35,
-            ),
+            style: const TextStyle(color: Colors.white60, height: 1.35),
           ),
           const SizedBox(height: 20),
           FilledButton.icon(

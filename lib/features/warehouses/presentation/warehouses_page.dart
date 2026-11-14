@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'pages/bin_types_page.dart';
-import 'pages/bin_clients_page.dart';
 import 'pages/bin_movements_page.dart';
 import 'pages/bin_balance_page.dart';
 
@@ -11,16 +10,8 @@ class WarehousesPage extends StatelessWidget {
   static const Color background = Color(0xFF0F172A);
   static const Color card = Color(0xFF1E293B);
 
-  void abrir(
-    BuildContext context,
-    Widget page,
-  ) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => page,
-      ),
-    );
+  void abrir(BuildContext context, Widget page) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
   }
 
   @override
@@ -41,39 +32,14 @@ class WarehousesPage extends StatelessWidget {
 
           const SizedBox(height: 18),
 
-          _sectionTitle("Configuración"),
+          _sectionTitle("Qué necesitas hacer"),
 
           _menuGrid(
             children: [
               _menuButton(
                 context,
-                title: "Tipos de envase",
-                subtitle: "Bins, pallets y valores",
-                icon: Icons.inventory_2,
-                color: Colors.blueAccent,
-                page: const BinTypesPage(),
-              ),
-              _menuButton(
-                context,
-                title: "Clientes con envases",
-                subtitle: "Envases por cliente",
-                icon: Icons.people,
-                color: Colors.greenAccent,
-                page: const BinClientsPage(),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 20),
-
-          _sectionTitle("Operación"),
-
-          _menuGrid(
-            children: [
-              _menuButton(
-                context,
-                title: "Movimientos",
-                subtitle: "Entrada, préstamo, devolución o baja",
+                title: "Prestar o recibir bins",
+                subtitle: "Préstamo, devolución, entrada o baja",
                 icon: Icons.swap_horiz,
                 color: Colors.orangeAccent,
                 page: const BinMovementsPage(),
@@ -81,14 +47,35 @@ class WarehousesPage extends StatelessWidget {
               ),
               _menuButton(
                 context,
-                title: "Balance",
-                subtitle: "Saldos y depósitos pendientes",
+                title: "Bins por devolver",
+                subtitle: "Ver quién tiene envases pendientes",
                 icon: Icons.assessment,
                 color: Colors.deepPurpleAccent,
-                page: const BinBalancePage(),
+                page: const BinBalancePage(initialOnlyPending: true),
+              ),
+              _menuButton(
+                context,
+                title: "Garantías retenidas",
+                subtitle: "Dinero recibido aún pendiente",
+                icon: Icons.savings_outlined,
+                color: Colors.greenAccent,
+                page: const BinBalancePage(initialOnlyDepositRetained: true),
+              ),
+              _menuButton(
+                context,
+                title: "Historial de movimientos",
+                subtitle: "Buscar préstamos, devoluciones y entradas",
+                icon: Icons.history,
+                color: Colors.cyanAccent,
+                page: const BinMovementsPage(historyOnly: true),
               ),
             ],
           ),
+
+          const SizedBox(height: 20),
+
+          _sectionTitle("Configuración"),
+          _settingsLink(context),
 
           const SizedBox(height: 20),
 
@@ -103,10 +90,7 @@ class WarehousesPage extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [
-            Color(0xFF92400E),
-            Color(0xFFEA580C),
-          ],
+          colors: [Color(0xFF92400E), Color(0xFFEA580C)],
         ),
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
@@ -120,20 +104,13 @@ class WarehousesPage extends StatelessWidget {
       child: const Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.warehouse,
-            color: Colors.white,
-            size: 34,
-          ),
+          Icon(Icons.warehouse, color: Colors.white, size: 34),
           SizedBox(width: 12),
           Expanded(
             child: Text(
-              "Controla los envases físicos: entradas al stock, "
-              "préstamos a clientes, devoluciones, bajas y depósitos.",
-              style: TextStyle(
-                color: Colors.white,
-                height: 1.35,
-              ),
+              "Presta bins, recibe devoluciones y revisa rápidamente "
+              "quién debe envases o tiene una garantía retenida.",
+              style: TextStyle(color: Colors.white, height: 1.35),
             ),
           ),
         ],
@@ -143,9 +120,7 @@ class WarehousesPage extends StatelessWidget {
 
   Widget _sectionTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.only(
-        bottom: 10,
-      ),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Text(
         title,
         style: const TextStyle(
@@ -157,9 +132,20 @@ class WarehousesPage extends StatelessWidget {
     );
   }
 
-  Widget _menuGrid({
-    required List<Widget> children,
-  }) {
+  Widget _settingsLink(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: () => abrir(context, const BinTypesPage()),
+      icon: const Icon(Icons.inventory_2),
+      label: const Text("Tipos de bins y envases"),
+      style: OutlinedButton.styleFrom(
+        alignment: Alignment.centerLeft,
+        foregroundColor: Colors.blueAccent,
+        padding: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
+  Widget _menuGrid({required List<Widget> children}) {
     return GridView.count(
       crossAxisCount: 2,
       crossAxisSpacing: 12,
@@ -183,9 +169,7 @@ class WarehousesPage extends StatelessWidget {
     required Widget page,
     bool highlighted = false,
   }) {
-    final cardColor = highlighted
-        ? color.withValues(alpha: 0.16)
-        : card;
+    final cardColor = highlighted ? color.withValues(alpha: 0.16) : card;
 
     final borderColor = highlighted
         ? color.withValues(alpha: 0.42)
@@ -193,18 +177,13 @@ class WarehousesPage extends StatelessWidget {
 
     return InkWell(
       borderRadius: BorderRadius.circular(18),
-      onTap: () => abrir(
-        context,
-        page,
-      ),
+      onTap: () => abrir(context, page),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: borderColor,
-          ),
+          border: Border.all(color: borderColor),
           boxShadow: const [
             BoxShadow(
               color: Colors.black26,
@@ -214,8 +193,7 @@ class WarehousesPage extends StatelessWidget {
           ],
         ),
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
               padding: const EdgeInsets.all(10),
@@ -223,19 +201,14 @@ class WarehousesPage extends StatelessWidget {
                 color: color.withValues(alpha: 0.16),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                icon,
-                color: color,
-                size: 28,
-              ),
+              child: Icon(icon, color: color, size: 28),
             ),
 
             const SizedBox(height: 14),
 
             Expanded(
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Text(
@@ -277,27 +250,19 @@ class WarehousesPage extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.amber.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Colors.amber.withValues(alpha: 0.35),
-        ),
+        border: Border.all(color: Colors.amber.withValues(alpha: 0.35)),
       ),
       child: const Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.lightbulb_outline,
-            color: Colors.amber,
-          ),
+          Icon(Icons.lightbulb_outline, color: Colors.amber),
           SizedBox(width: 10),
           Expanded(
             child: Text(
-              "Consejo: para cargar envases disponibles, registra "
-              "un movimiento de tipo Entrada. Los préstamos y ventas "
-              "reducen la disponibilidad física.",
-              style: TextStyle(
-                color: Colors.white,
-                height: 1.35,
-              ),
+              "Consejo: una venta con envase crea el préstamo del bin "
+              "automáticamente. Usa esta sección para movimientos "
+              "realizados fuera de una venta.",
+              style: TextStyle(color: Colors.white, height: 1.35),
             ),
           ),
         ],

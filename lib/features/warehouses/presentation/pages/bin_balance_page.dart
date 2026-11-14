@@ -4,7 +4,14 @@ import '../../data/services/bin_balance_service.dart';
 import '../../data/models/bin_balance_model.dart';
 
 class BinBalancePage extends StatefulWidget {
-  const BinBalancePage({super.key});
+  const BinBalancePage({
+    super.key,
+    this.initialOnlyPending = false,
+    this.initialOnlyDepositRetained = false,
+  });
+
+  final bool initialOnlyPending;
+  final bool initialOnlyDepositRetained;
 
   @override
   State<BinBalancePage> createState() => _BinBalancePageState();
@@ -54,6 +61,8 @@ class _BinBalancePageState extends State<BinBalancePage> {
   @override
   void initState() {
     super.initState();
+    onlyPending = widget.initialOnlyPending;
+    onlyDepositRetained = widget.initialOnlyDepositRetained;
     loadBalance();
   }
 
@@ -85,14 +94,16 @@ class _BinBalancePageState extends State<BinBalancePage> {
   }
 
   int totalSaldoFor(List<BinBalance> items) {
-    return items.fold(0, (sum, balance) => sum + balance.saldo.clamp(0, 1 << 30));
+    return items.fold(
+      0,
+      (sum, balance) => sum + balance.saldo.clamp(0, 1 << 30),
+    );
   }
 
   double totalDepositoFor(List<BinBalance> items) {
     return items.fold(
       0,
-      (sum, balance) =>
-          sum + (double.tryParse(balance.depositoRetenido) ?? 0),
+      (sum, balance) => sum + (double.tryParse(balance.depositoRetenido) ?? 0),
     );
   }
 
@@ -115,12 +126,18 @@ class _BinBalancePageState extends State<BinBalancePage> {
   @override
   Widget build(BuildContext context) {
     final visibleBalances = filteredBalances;
-    final binTypes = balances.map((balance) => balance.binNombre).toSet().toList()
-      ..sort();
+    final binTypes =
+        balances.map((balance) => balance.binNombre).toSet().toList()..sort();
     return Scaffold(
       backgroundColor: background,
       appBar: AppBar(
-        title: const Text("Balance de envases"),
+        title: Text(
+          widget.initialOnlyDepositRetained
+              ? "Garantías retenidas"
+              : widget.initialOnlyPending
+              ? "Bins por devolver"
+              : "Balance de envases",
+        ),
         centerTitle: true,
         backgroundColor: background,
         foregroundColor: Colors.white,
@@ -186,9 +203,8 @@ class _BinBalancePageState extends State<BinBalancePage> {
                               FilterChip(
                                 label: const Text('Garantía retenida'),
                                 selected: onlyDepositRetained,
-                                onSelected: (value) => setState(
-                                  () => onlyDepositRetained = value,
-                                ),
+                                onSelected: (value) =>
+                                    setState(() => onlyDepositRetained = value),
                               ),
                             ],
                           ),
@@ -210,7 +226,9 @@ class _BinBalancePageState extends State<BinBalancePage> {
                                   label: Text(binType),
                                   selected: selectedBinType == binType,
                                   onSelected: (selected) => setState(
-                                    () => selectedBinType = selected ? binType : null,
+                                    () => selectedBinType = selected
+                                        ? binType
+                                        : null,
                                   ),
                                 ),
                               ),
