@@ -1,6 +1,7 @@
 import 'sales_report_pdf_page.dart';
 import 'package:flutter/material.dart';
 
+import '../data/sales_report_excel.dart';
 import '../data/sales_report_service.dart';
 import '../models/sales_report_model.dart';
 
@@ -18,6 +19,7 @@ class _SalesReportPageState extends State<SalesReportPage> {
   DateTimeRange? selectedRange;
 
   late Future<SalesReport> futureReport;
+  bool _exportingExcel = false;
 
   @override
   void initState() {
@@ -47,7 +49,8 @@ class _SalesReportPageState extends State<SalesReportPage> {
       context: context,
       firstDate: DateTime(2020),
       lastDate: DateTime(today.year, today.month, today.day),
-      initialDateRange: selectedRange ?? DateTimeRange(start: today, end: today),
+      initialDateRange:
+          selectedRange ?? DateTimeRange(start: today, end: today),
       helpText: 'Selecciona el período de ventas',
       cancelText: 'Cancelar',
       confirmText: 'Aplicar',
@@ -68,6 +71,28 @@ class _SalesReportPageState extends State<SalesReportPage> {
     });
 
     await futureReport;
+  }
+
+  Future<void> _exportarExcel(SalesReport report) async {
+    setState(() => _exportingExcel = true);
+    try {
+      await SalesReportExcel.export(report);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Reporte Excel generado. Revisa tus descargas.'),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo generar el Excel. Inténtalo nuevamente.'),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _exportingExcel = false);
+    }
   }
 
   String tituloPeriodo(String periodo) {
@@ -168,6 +193,22 @@ class _SalesReportPageState extends State<SalesReportPage> {
                       builder: (_) => SalesReportPdfPage(report: report),
                     ),
                   ),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  icon: _exportingExcel
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.table_view_outlined),
+                  label: Text(
+                    _exportingExcel ? 'Generando Excel...' : 'Exportar a Excel',
+                  ),
+                  onPressed: _exportingExcel
+                      ? null
+                      : () => _exportarExcel(report),
                 ),
                 const SizedBox(height: 12),
                 _summaryCard(report),
@@ -518,12 +559,17 @@ class _SalesReportPageState extends State<SalesReportPage> {
             children: [
               Text(
                 'Abonado: \$${formatearMonto(sale.totalPagado)}',
-                style: const TextStyle(color: Colors.greenAccent, fontSize: 12.5),
+                style: const TextStyle(
+                  color: Colors.greenAccent,
+                  fontSize: 12.5,
+                ),
               ),
               Text(
                 'Saldo: \$${formatearMonto(sale.saldoPendiente)}',
                 style: TextStyle(
-                  color: sale.saldoPendiente == 0 ? Colors.white54 : Colors.amber,
+                  color: sale.saldoPendiente == 0
+                      ? Colors.white54
+                      : Colors.amber,
                   fontSize: 12.5,
                 ),
               ),
