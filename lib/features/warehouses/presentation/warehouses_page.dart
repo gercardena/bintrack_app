@@ -34,42 +34,38 @@ class WarehousesPage extends StatelessWidget {
 
           _sectionTitle("Qué necesitas hacer"),
 
-          _menuGrid(
-            children: [
-              _menuButton(
-                context,
-                title: "Prestar o recibir bins",
-                subtitle: "Préstamo, devolución, entrada o baja",
-                icon: Icons.swap_horiz,
-                color: Colors.orangeAccent,
-                page: const BinMovementsPage(),
-                highlighted: true,
-              ),
-              _menuButton(
-                context,
-                title: "Bins por devolver",
-                subtitle: "Ver quién tiene envases pendientes",
-                icon: Icons.assessment,
-                color: Colors.deepPurpleAccent,
-                page: const BinBalancePage(initialOnlyPending: true),
-              ),
-              _menuButton(
-                context,
-                title: "Garantías retenidas",
-                subtitle: "Dinero recibido aún pendiente",
-                icon: Icons.savings_outlined,
-                color: Colors.greenAccent,
-                page: const BinBalancePage(initialOnlyDepositRetained: true),
-              ),
-              _menuButton(
-                context,
-                title: "Historial de movimientos",
-                subtitle: "Buscar préstamos, devoluciones y entradas",
-                icon: Icons.history,
-                color: Colors.cyanAccent,
-                page: const BinMovementsPage(historyOnly: true),
-              ),
-            ],
+          _actionTile(
+            context,
+            title: "Prestar o recibir bins",
+            subtitle: "Préstamo, devolución, entrada o baja",
+            icon: Icons.swap_horiz,
+            color: Colors.orangeAccent,
+            page: const BinMovementsPage(),
+            highlighted: true,
+          ),
+          _actionTile(
+            context,
+            title: "Bins por devolver",
+            subtitle: "Ver quién tiene envases pendientes",
+            icon: Icons.assessment,
+            color: Colors.deepPurpleAccent,
+            page: const BinBalancePage(initialOnlyPending: true),
+          ),
+          _actionTile(
+            context,
+            title: "Garantías retenidas",
+            subtitle: "Dinero recibido aún pendiente",
+            icon: Icons.savings_outlined,
+            color: Colors.greenAccent,
+            page: const BinBalancePage(initialOnlyDepositRetained: true),
+          ),
+          _actionTile(
+            context,
+            title: "Historial de movimientos",
+            subtitle: "Buscar préstamos, devoluciones y entradas",
+            icon: Icons.history,
+            color: Colors.cyanAccent,
+            page: const BinMovementsPage(historyOnly: true),
           ),
 
           const SizedBox(height: 20),
@@ -145,22 +141,7 @@ class WarehousesPage extends StatelessWidget {
     );
   }
 
-  Widget _menuGrid({required List<Widget> children}) {
-    return GridView.count(
-      crossAxisCount: 2,
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-
-      // Más alto para evitar overflow en teléfonos angostos.
-      childAspectRatio: 0.88,
-
-      children: children,
-    );
-  }
-
-  Widget _menuButton(
+  Widget _actionTile(
     BuildContext context, {
     required String title,
     required String subtitle,
@@ -175,70 +156,60 @@ class WarehousesPage extends StatelessWidget {
         ? color.withValues(alpha: 0.42)
         : Colors.white.withValues(alpha: 0.06);
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(18),
-      onTap: () => abrir(context, page),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: borderColor),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 8,
-              offset: Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.16),
-                borderRadius: BorderRadius.circular(12),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 9),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => abrir(context, page),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: borderColor),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(9),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: color, size: 24),
               ),
-              child: Icon(icon, color: color, size: 28),
-            ),
-
-            const SizedBox(height: 14),
-
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Text(
-                    title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 15.5,
-                      fontWeight: FontWeight.bold,
-                      height: 1.15,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-
-                  const SizedBox(height: 6),
-
-                  Text(
-                    subtitle,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white60,
-                      fontSize: 12,
-                      height: 1.25,
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white60,
+                        fontSize: 12,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+              const SizedBox(width: 6),
+              Icon(Icons.chevron_right, color: color),
+            ],
+          ),
         ),
       ),
     );
